@@ -34,7 +34,7 @@ function AuthScreen({ onAuth }) {
     } else {
       const { error } = await supabase.auth.signUp({ email, password: pass, options:{ data:{ nombre } } });
       if (error) setError(error.message);
-      else { setMsg("¡Cuenta creada! Revisa tu email para confirmar."); setMode("login"); }
+      else { setMsg("¡Cuenta creada! Revisa tu email para confirmar. Un administrador debe aprobar tu acceso."); setMode("login"); }
     }
     setLoading(false);
   }
@@ -66,21 +66,52 @@ function AuthScreen({ onAuth }) {
   );
 }
 
-function AdminPanel({ onBack }) {
-  const [stats, setStats] = useState(null);
-  useEffect(()=>{
-    async function load() {
-      const { data: perfiles } = await supabase.from("profiles").select("*").order("created_at",{ascending:false});
-      const { data: sesiones } = await supabase.from("sesiones").select("*");
-      const ahora = new Date();
-      const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`;
-      const activosMes = [...new Set((sesiones||[]).filter(s=>s.fecha.startsWith(mesActual)).map(s=>s.user_id))].length;
-      setStats({ perfiles:perfiles||[], sesiones:sesiones||[], activosMes });
-    }
-    load();
-  },[]);
+function PendienteScreen({ user, onLogout }) {
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0a1628,#0d2035)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, fontFamily:"Georgia,serif", color:"#e8f4f8", textAlign:"center" }}>
+      <div style={{ fontSize:56, marginBottom:16 }}>⏳</div>
+      <div style={{ fontSize:20, fontWeight:"bold", color:"#fff", marginBottom:8 }}>Cuenta pendiente</div>
+      <div style={{ fontSize:14, color:"#90CAF9", marginBottom:32, lineHeight:1.6 }}>Tu cuenta está esperando aprobación.<br/>El administrador debe darte acceso.</div>
+      <div style={{ background:"rgba(79,195,247,0.08)", border:"1px solid rgba(79,195,247,0.2)", borderRadius:14, padding:16, marginBottom:24, width:"100%", maxWidth:360 }}>
+        <div style={{ fontSize:12, color:"#607d8b", marginBottom:4 }}>Registrado como</div>
+        <div style={{ fontSize:14, color:"#4FC3F7" }}>{user.email}</div>
+      </div>
+      <button onClick={onLogout} style={{ width:"100%", maxWidth:360, padding:"14px", background:"rgba(239,83,80,0.1)", border:"1px solid #ef5350", borderRadius:12, color:"#ef9a9a", fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>↩ Cerrar sesión</button>
+      <div style={{ marginTop:20, display:"flex", alignItems:"center", gap:8 }}>
+        <div style={{ width:8, height:8, borderRadius:"50%", background:"#FFB74D" }}></div>
+        <span style={{ fontSize:12, color:"#607d8b" }}>Esperando aprobación del admin</span>
+      </div>
+    </div>
+  );
+}
 
-  if (!stats) return <div style={{ minHeight:"100vh", background:"#0a1628", display:"flex", alignItems:"center", justifyContent:"center", color:"#4FC3F7", fontFamily:"Georgia,serif" }}>Cargando...</div>;
+function AdminPanel({ onBack }) {
+  const [usuarios, setUsuarios] = useState([]);
+  const [sesiones, setSesiones] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{ cargar(); },[]);
+
+  async function cargar() {
+    const { data: perfiles } = await supabase.from("profiles").select("*").order("created_at",{ascending:false});
+    const { data: ses } = await supabase.from("sesiones").select("*");
+    setUsuarios(perfiles||[]);
+    setSesiones(ses||[]);
+    setLoading(false);
+  }
+
+  async function cambiarEstado(id, aprobado) {
+    await supabase.from("profiles").update({ aprobado }).eq("id", id);
+    setUsuarios(prev => prev.map(u => u.id === id ? {...u, aprobado} : u));
+  }
+
+  if (loading) return <div style={{ minHeight:"100vh", background:"#0a1628", display:"flex", alignItems:"center", justifyContent:"center", color:"#4FC3F7", fontFamily:"Georgia,serif" }}>Cargando...</div>;
+
+  const ahora = new Date();
+  const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`;
+  const activosMes = [...new Set(sesiones.filter(s=>s.fecha.startsWith(mesActual)).map(s=>s.user_id))].length;
+  const pendientes = usuarios.filter(u => !u.aprobado && !u.is_admin).length;
+  const aprobados = usuarios.filter(u => u.aprobado).length;
 
   return (
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0a1628,#0d2035)", fontFamily:"Georgia,serif", color:"#e8f4f8" }}>
@@ -88,38 +119,72 @@ function AdminPanel({ onBack }) {
         <button onClick={onBack} style={{ background:"none", border:"none", color:"#4FC3F7", fontSize:20, cursor:"pointer" }}>←</button>
         <div>
           <div style={{ fontSize:10, letterSpacing:3, color:"#4FC3F7" }}>PANEL ADMIN</div>
-          <div style={{ fontSize:18, fontWeight:"bold" }}>Estadísticas</div>
+          <div style={{ fontSize:18, fontWeight:"bold" }}>Gestión de usuarios</div>
         </div>
       </div>
       <div style={{ padding:20 }}>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:24 }}>
           {[
-            { label:"Usuarios", value:stats.perfiles.length, emoji:"👥", color:"#4FC3F7" },
-            { label:"Sesiones", value:stats.sesiones.length, emoji:"📲", color:"#81C784" },
-            { label:"Activos mes", value:stats.activosMes, emoji:"🟢", color:"#FFB74D" },
+            { label:"Total", value:usuarios.length, color:"#4FC3F7" },
+            { label:"Aprobados", value:aprobados, color:"#81C784" },
+            { label:"Pendientes", value:pendientes, color:"#FFB74D" },
           ].map(s=>(
             <div key={s.label} style={{ background:"rgba(255,255,255,0.04)", border:`1px solid ${s.color}33`, borderRadius:14, padding:"14px 10px", textAlign:"center" }}>
-              <div style={{ fontSize:22 }}>{s.emoji}</div>
-              <div style={{ fontSize:24, fontWeight:"bold", color:s.color }}>{s.value}</div>
+              <div style={{ fontSize:22, fontWeight:"bold", color:s.color }}>{s.value}</div>
               <div style={{ fontSize:11, color:"#90CAF9" }}>{s.label}</div>
             </div>
           ))}
         </div>
-        <div style={{ fontSize:11, letterSpacing:2, color:"#4FC3F7", marginBottom:12 }}>USUARIOS REGISTRADOS</div>
-        {stats.perfiles.map(p=>(
-          <div key={p.id} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(79,195,247,0.1)", borderRadius:12, padding:"12px 14px", marginBottom:8 }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <div>
-                <div style={{ fontSize:14, color:"#e8f4f8" }}>{p.nombre||p.email}</div>
-                <div style={{ fontSize:11, color:"#607d8b" }}>{p.email}</div>
+
+        <div style={{ fontSize:11, letterSpacing:2, color:"#4FC3F7", marginBottom:12 }}>USUARIOS</div>
+
+        {usuarios.map(u=>{
+          const esAdmin = u.is_admin;
+          const aprobado = u.aprobado;
+          const borderColor = esAdmin ? "#FFB74D33" : aprobado ? "rgba(129,199,132,0.2)" : "rgba(255,183,77,0.2)";
+          const bg = esAdmin ? "rgba(255,183,77,0.05)" : aprobado ? "rgba(129,199,132,0.05)" : "rgba(255,183,77,0.05)";
+          return (
+            <div key={u.id} style={{ background:bg, border:`1px solid ${borderColor}`, borderRadius:12, padding:"12px 14px", marginBottom:10 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+                <div>
+                  <div style={{ fontSize:14, color:"#e8f4f8" }}>{u.nombre||"Sin nombre"}</div>
+                  <div style={{ fontSize:11, color:"#607d8b" }}>{u.email}</div>
+                  <div style={{ fontSize:11, color:"#607d8b", marginTop:2 }}>
+                    Registrado: {new Date(u.created_at).toLocaleDateString("es-CL")}
+                  </div>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4 }}>
+                  {esAdmin && <span style={{ fontSize:11, color:"#FFB74D", background:"rgba(255,183,77,0.1)", border:"1px solid #FFB74D44", borderRadius:6, padding:"2px 8px" }}>👑 Admin</span>}
+                  {!esAdmin && (
+                    <span style={{ fontSize:11, borderRadius:6, padding:"2px 8px",
+                      color: aprobado ? "#81C784" : "#FFB74D",
+                      background: aprobado ? "rgba(129,199,132,0.1)" : "rgba(255,183,77,0.1)",
+                      border: aprobado ? "1px solid #81C78444" : "1px solid #FFB74D44"
+                    }}>
+                      {aprobado ? "✅ Aprobado" : "⏳ Pendiente"}
+                    </span>
+                  )}
+                </div>
               </div>
-              {p.is_admin && <span style={{ fontSize:11, color:"#FFB74D", background:"rgba(255,183,77,0.1)", border:"1px solid #FFB74D44", borderRadius:6, padding:"2px 8px" }}>Admin</span>}
+              {!esAdmin && (
+                <div style={{ display:"flex", gap:8 }}>
+                  <button onClick={()=>cambiarEstado(u.id, true)} style={{
+                    flex:1, padding:"8px", borderRadius:8, fontSize:13, cursor:"pointer", fontFamily:"inherit",
+                    background: aprobado ? "rgba(129,199,132,0.2)" : "rgba(129,199,132,0.1)",
+                    border: "1px solid #81C784",
+                    color: "#81C784"
+                  }}>✅ Aprobar</button>
+                  <button onClick={()=>cambiarEstado(u.id, false)} style={{
+                    flex:1, padding:"8px", borderRadius:8, fontSize:13, cursor:"pointer", fontFamily:"inherit",
+                    background: !aprobado ? "rgba(239,83,80,0.2)" : "rgba(239,83,80,0.1)",
+                    border: "1px solid #ef5350",
+                    color: "#ef9a9a"
+                  }}>❌ Bloquear</button>
+                </div>
+              )}
             </div>
-            <div style={{ fontSize:11, color:"#607d8b", marginTop:4 }}>
-              Registrado: {new Date(p.created_at).toLocaleDateString("es-CL")} · Último acceso: {new Date(p.last_seen).toLocaleDateString("es-CL")}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -148,21 +213,18 @@ function EditarNombre({ profile, onGuardar, onCerrar }) {
   );
 }
 
-function Calendario({ clases, precios }) {
+function Calendario({ clases }) {
   const [mesOffset, setMesOffset] = useState(0);
   const [diaSeleccionado, setDiaSeleccionado] = useState(null);
-
   const hoy = new Date();
   const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + mesOffset, 1);
   const anio = fecha.getFullYear();
   const mes = fecha.getMonth();
   const mesStr = `${anio}-${String(mes+1).padStart(2,"0")}`;
   const nombreMes = fecha.toLocaleDateString("es-CL", { month:"long", year:"numeric" });
-
   const diasEnMes = new Date(anio, mes+1, 0).getDate();
   let primerDia = new Date(anio, mes, 1).getDay();
   primerDia = primerDia === 0 ? 6 : primerDia - 1;
-
   const clasesMes = clases.filter(c => c.fecha.startsWith(mesStr));
   const porDia = {};
   clasesMes.forEach(c => {
@@ -171,11 +233,9 @@ function Calendario({ clases, precios }) {
     porDia[dia].clases.push(c);
     porDia[dia].total += c.valor;
   });
-
   const diasSelDia = diaSeleccionado ? (porDia[diaSeleccionado]?.clases || []) : [];
   const totalDia = diaSeleccionado ? (porDia[diaSeleccionado]?.total || 0) : 0;
   const fechaDia = diaSeleccionado ? new Date(anio, mes, parseInt(diaSeleccionado)).toLocaleDateString("es-CL", { weekday:"long", day:"numeric", month:"long" }) : "";
-
   const celdas = [];
   for (let i=0; i<primerDia; i++) celdas.push(null);
   for (let d=1; d<=diasEnMes; d++) celdas.push(d);
@@ -187,13 +247,9 @@ function Calendario({ clases, precios }) {
         <span style={{ fontSize:15, fontWeight:"bold", color:"#fff", textTransform:"capitalize" }}>{nombreMes}</span>
         <button onClick={()=>{ setMesOffset(m=>m+1); setDiaSeleccionado(null); }} style={{ background:"rgba(79,195,247,0.15)", border:"1px solid #4FC3F7", borderRadius:8, color:"#4FC3F7", padding:"6px 14px", cursor:"pointer", fontSize:16 }}>›</button>
       </div>
-
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3, marginBottom:6 }}>
-        {DIAS_SEMANA.map((d,i)=>(
-          <div key={i} style={{ textAlign:"center", fontSize:11, color:"#607d8b", padding:"4px 0" }}>{d}</div>
-        ))}
+        {DIAS_SEMANA.map((d,i)=><div key={i} style={{ textAlign:"center", fontSize:11, color:"#607d8b", padding:"4px 0" }}>{d}</div>)}
       </div>
-
       <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3 }}>
         {celdas.map((dia, i)=>{
           if (!dia) return <div key={i} />;
@@ -210,17 +266,13 @@ function Calendario({ clases, precios }) {
               <div style={{ fontSize:13, color: seleccionado ? "#4FC3F7" : esHoy ? "#4FC3F7" : tiene ? "#fff" : "#607d8b", fontWeight: esHoy||seleccionado ? "bold" : "normal" }}>{dia}</div>
               {tiene && (
                 <div style={{ display:"flex", justifyContent:"center", gap:2, marginTop:3, flexWrap:"wrap" }}>
-                  {tiposPresentes.map(t=>{
-                    const tipo = TIPOS.find(x=>x.key===t);
-                    return <div key={t} style={{ width:6, height:6, borderRadius:"50%", background:tipo?.color||"#fff" }} />;
-                  })}
+                  {tiposPresentes.map(t=>{ const tipo=TIPOS.find(x=>x.key===t); return <div key={t} style={{ width:6, height:6, borderRadius:"50%", background:tipo?.color||"#fff" }} />; })}
                 </div>
               )}
             </div>
           );
         })}
       </div>
-
       <div style={{ display:"flex", gap:12, marginTop:14, marginBottom:16 }}>
         {TIPOS.map(t=>(
           <div key={t.key} style={{ display:"flex", alignItems:"center", gap:4 }}>
@@ -229,18 +281,15 @@ function Calendario({ clases, precios }) {
           </div>
         ))}
       </div>
-
       {diaSeleccionado && (
         <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(79,195,247,0.2)", borderRadius:14, padding:"14px 16px" }}>
           <div style={{ fontSize:13, color:"#4FC3F7", marginBottom:10, textTransform:"capitalize" }}>{fechaDia}</div>
-          {diasSelDia.length === 0 ? (
-            <div style={{ fontSize:13, color:"#607d8b" }}>Sin clases este día</div>
-          ) : (
+          {diasSelDia.length === 0 ? <div style={{ fontSize:13, color:"#607d8b" }}>Sin clases este día</div> : (
             <>
               {diasSelDia.map((c,i)=>{
-                const tipo = TIPOS.find(t=>t.key===c.tipo);
+                const tipo=TIPOS.find(t=>t.key===c.tipo);
                 return (
-                  <div key={c.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0", borderBottom: i<diasSelDia.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                  <div key={c.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0", borderBottom:i<diasSelDia.length-1?"1px solid rgba(255,255,255,0.05)":"none" }}>
                     <div>
                       <span style={{ fontSize:13, color:tipo.color }}>{tipo.emoji} {tipo.label}</span>
                       {c.tipo==="colectiva" && <span style={{ fontSize:12, color:"#90CAF9" }}> · {c.personas} pers.{c.extras>0&&<span style={{ color:"#81C784" }}> (➕{c.extras})</span>}</span>}
@@ -300,16 +349,18 @@ export default function SkiTracker() {
     await supabase.from("profiles").update({ last_seen:new Date().toISOString() }).eq("id",u.id);
     const { data:prof } = await supabase.from("profiles").select("*").eq("id",u.id).single();
     setProfile(prof);
-    const { data:prec } = await supabase.from("precios").select("*").eq("user_id",u.id).single();
-    if (prec) setPrecios({ particular:prec.particular, colectiva:prec.colectiva, colectiva_extra:prec.colectiva_extra, colectiva_base:prec.colectiva_base, requerida:prec.requerida });
-    const { data:cls } = await supabase.from("clases").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
-    if (cls) { setClases(cls); const c={}; cls.forEach(x=>{ if(x.comentario) c[x.id]=x.comentario; }); setComentarios(c); }
-    const { data:desc } = await supabase.from("descuentos").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
-    if (desc) setDescuentos(desc);
+    if (prof?.aprobado) {
+      const { data:prec } = await supabase.from("precios").select("*").eq("user_id",u.id).single();
+      if (prec) setPrecios({ particular:prec.particular, colectiva:prec.colectiva, colectiva_extra:prec.colectiva_extra, colectiva_base:prec.colectiva_base, requerida:prec.requerida });
+      const { data:cls } = await supabase.from("clases").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
+      if (cls) { setClases(cls); const c={}; cls.forEach(x=>{ if(x.comentario) c[x.id]=x.comentario; }); setComentarios(c); }
+      const { data:desc } = await supabase.from("descuentos").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
+      if (desc) setDescuentos(desc);
+    }
     setLoading(false);
   }
 
-  async function logout() { await supabase.auth.signOut(); setUser(null); setClases([]); setDescuentos([]); }
+  async function logout() { await supabase.auth.signOut(); setUser(null); setProfile(null); setClases([]); setDescuentos([]); }
 
   async function agregarClase(tipo) {
     let valor=0, extras=0;
@@ -352,6 +403,7 @@ export default function SkiTracker() {
 
   if (loading) return <div style={{ minHeight:"100vh", background:"#0a1628", display:"flex", alignItems:"center", justifyContent:"center", color:"#4FC3F7", fontFamily:"Georgia,serif", fontSize:16 }}>⛷️ Cargando...</div>;
   if (!user) return <AuthScreen onAuth={handleAuth} />;
+  if (profile && !profile.aprobado && !profile.is_admin) return <PendienteScreen user={user} onLogout={logout} />;
   if (showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)} />;
 
   const base=precios.colectiva_base||3;
@@ -425,7 +477,7 @@ export default function SkiTracker() {
           </div>
         )}
 
-        {tab==="calendario" && <Calendario clases={clases} precios={precios} />}
+        {tab==="calendario" && <Calendario clases={clases} />}
 
         {tab==="registro" && (
           <>
