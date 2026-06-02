@@ -5,7 +5,7 @@ const SUPABASE_URL = "https://eoppuoiaxnfaihpyovsy.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvcHB1b2lheG5mYWlocHlvdnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNTkwNjIsImV4cCI6MjA5NTkzNTA2Mn0.YfbzhlfNwf9wvCk0iO-8II7RIABEzyWqitHhHi7Q-eo";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000 };
+const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, extra_por_hora:true };
 const TIPOS = [
   { key:"particular", label:"Particular", emoji:"⛷️", color:"#4FC3F7", bg:"#0d2a3a" },
   { key:"colectiva",  label:"Colectiva",  emoji:"👥", color:"#81C784", bg:"#0d2a1a" },
@@ -14,6 +14,20 @@ const TIPOS = [
 const DIAS_SEMANA = ["L","M","M","J","V","S","D"];
 function fmt(n){ return "$"+Math.round(n).toLocaleString("es-CL"); }
 function diasEnMes(anio,mes){ return new Date(anio,mes+1,0).getDate(); }
+
+function Toggle({ value, onChange, label, desc, color="#81C784" }) {
+  return (
+    <div onClick={()=>onChange(!value)} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 12px", background:value?`rgba(129,199,132,0.08)`:"rgba(255,255,255,0.03)", border:value?"1px solid rgba(129,199,132,0.25)":"1px solid rgba(255,255,255,0.08)", borderRadius:10, cursor:"pointer" }}>
+      <div>
+        <div style={{ fontSize:12, color:value?color:"#607d8b", fontWeight:500 }}>{label}</div>
+        {desc&&<div style={{ fontSize:11, color:"#607d8b", marginTop:2 }}>{desc}</div>}
+      </div>
+      <div style={{ width:44, height:24, background:value?color:"rgba(255,255,255,0.1)", borderRadius:12, position:"relative", flexShrink:0, marginLeft:12 }}>
+        <div style={{ width:18, height:18, background:value?"#fff":"#607d8b", borderRadius:"50%", position:"absolute", top:3, left:value?"auto":3, right:value?3:"auto", transition:"all 0.2s" }}/>
+      </div>
+    </div>
+  );
+}
 
 function AuthScreen({ onAuth }) {
   const [mode, setMode] = useState("login");
@@ -24,6 +38,9 @@ function AuthScreen({ onAuth }) {
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
   const [showPass, setShowPass] = useState(false);
+  const [recuperar, setRecuperar] = useState(false);
+  const [emailRecuperar, setEmailRecuperar] = useState("");
+  const [enviado, setEnviado] = useState(false);
 
   async function handleSubmit() {
     setError(""); setMsg(""); setLoading(true);
@@ -38,8 +55,44 @@ function AuthScreen({ onAuth }) {
     setLoading(false);
   }
 
+  async function handleRecuperar() {
+    setError(""); setLoading(true);
+    const {error} = await supabase.auth.resetPasswordForEmail(emailRecuperar, {
+      redirectTo: "https://ski-clases.vercel.app"
+    });
+    if(error) setError(error.message);
+    else setEnviado(true);
+    setLoading(false);
+  }
+
+  if(recuperar) return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
+      {enviado ? (
+        <div style={{width:"100%",maxWidth:360,textAlign:"center"}}>
+          <div style={{fontSize:48,marginBottom:12}}>📬</div>
+          <div style={{fontSize:20,fontWeight:"bold",marginBottom:8}}>¡Email enviado!</div>
+          <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.6,marginBottom:24}}>Revisa tu bandeja de entrada.<br/>Haz clic en el enlace para crear<br/>una nueva contraseña.</div>
+          <div style={{background:"rgba(79,195,247,0.08)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:12,padding:"12px 16px",marginBottom:20,fontSize:13,color:"#4FC3F7"}}>{emailRecuperar}</div>
+          <button onClick={()=>{setRecuperar(false);setEnviado(false);setEmailRecuperar("");}} style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>← Volver al login</button>
+        </div>
+      ) : (
+        <div style={{width:"100%",maxWidth:360}}>
+          <div style={{textAlign:"center",marginBottom:28}}>
+            <div style={{fontSize:40,marginBottom:8}}>🔑</div>
+            <div style={{fontSize:18,fontWeight:"bold",marginBottom:6}}>Recuperar contraseña</div>
+            <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.5}}>Ingresa tu email y te enviaremos<br/>un enlace para restablecer tu clave.</div>
+          </div>
+          <input placeholder="Tu email" value={emailRecuperar} onChange={e=>setEmailRecuperar(e.target.value)} type="email" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"13px 16px",fontSize:14,marginBottom:16,boxSizing:"border-box",fontFamily:"inherit"}}/>
+          {error&&<div style={{color:"#ef9a9a",fontSize:13,marginBottom:12,textAlign:"center"}}>{error}</div>}
+          <button onClick={handleRecuperar} disabled={loading} style={{width:"100%",padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit",marginBottom:10}}>{loading?"...":"Enviar enlace"}</button>
+          <button onClick={()=>{setRecuperar(false);setError("");}} style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>← Volver al login</button>
+        </div>
+      )}
+    </div>
+  );
+
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"Georgia,serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       <div style={{fontSize:48,marginBottom:8}}>⛷️</div>
       <div style={{fontSize:24,fontWeight:"bold",marginBottom:4}}>Ski Instructor</div>
       <div style={{fontSize:12,color:"#4FC3F7",letterSpacing:2,marginBottom:40}}>REGISTRO DE CLASES</div>
@@ -51,10 +104,15 @@ function AuthScreen({ onAuth }) {
         </div>
         {mode==="register"&&<input placeholder="Tu nombre" value={nombre} onChange={e=>setNombre(e.target.value)} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"14px 16px",fontSize:15,marginBottom:12,boxSizing:"border-box",fontFamily:"inherit"}}/>}
         <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} type="email" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"14px 16px",fontSize:15,marginBottom:12,boxSizing:"border-box",fontFamily:"inherit"}}/>
-        <div style={{position:"relative",marginBottom:16}}>
+        <div style={{position:"relative",marginBottom:mode==="login"?6:16}}>
           <input placeholder="Contraseña" value={pass} onChange={e=>setPass(e.target.value)} type={showPass?"text":"password"} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"14px 48px 14px 16px",fontSize:15,boxSizing:"border-box",fontFamily:"inherit"}}/>
-          <button onClick={()=>setShowPass(p=>!p)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#4FC3F7",fontSize:18,cursor:"pointer",padding:0}}>{showPass?"🙈":"👁️"}</button>
+          <button onClick={()=>setShowPass(p=>!p)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:18,cursor:"pointer",padding:0}}>{showPass?"👁️":"🔒"}</button>
         </div>
+        {mode==="login"&&(
+          <div style={{textAlign:"right",marginBottom:16}}>
+            <span onClick={()=>{setRecuperar(true);setError("");}} style={{fontSize:12,color:"#4FC3F7",cursor:"pointer",textDecoration:"underline"}}>¿Olvidaste tu contraseña?</span>
+          </div>
+        )}
         {error&&<div style={{color:"#ef9a9a",fontSize:13,marginBottom:12,textAlign:"center"}}>{error}</div>}
         {msg&&<div style={{color:"#81C784",fontSize:13,marginBottom:12,textAlign:"center"}}>{msg}</div>}
         <button onClick={handleSubmit} disabled={loading} style={{width:"100%",padding:"15px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:16,fontWeight:"bold",cursor:"pointer"}}>
@@ -67,7 +125,7 @@ function AuthScreen({ onAuth }) {
 
 function PendienteScreen({user,onLogout}) {
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"Georgia,serif",color:"#e8f4f8",textAlign:"center"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",textAlign:"center"}}>
       <div style={{fontSize:56,marginBottom:16}}>⏳</div>
       <div style={{fontSize:20,fontWeight:"bold",color:"#fff",marginBottom:8}}>Cuenta pendiente</div>
       <div style={{fontSize:14,color:"#90CAF9",marginBottom:32,lineHeight:1.6}}>Tu cuenta está esperando aprobación.<br/>El administrador debe darte acceso.</div>
@@ -90,21 +148,21 @@ function AdminPanel({onBack}) {
   const [loading,setLoading] = useState(true);
   useEffect(()=>{cargar();},[]);
   async function cargar() {
-    const {data:perfiles} = await supabase.from("profiles").select("*").order("created_at",{ascending:false});
-    const {data:ses} = await supabase.from("sesiones").select("*");
+    const {data:perfiles}=await supabase.from("profiles").select("*").order("created_at",{ascending:false});
+    const {data:ses}=await supabase.from("sesiones").select("*");
     setUsuarios(perfiles||[]); setSesiones(ses||[]); setLoading(false);
   }
   async function cambiarEstado(id,aprobado) {
     await supabase.from("profiles").update({aprobado}).eq("id",id);
     setUsuarios(prev=>prev.map(u=>u.id===id?{...u,aprobado}:u));
   }
-  if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"Georgia,serif"}}>Cargando...</div>;
+  if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif"}}>Cargando...</div>;
   const ahora=new Date();
   const mesActual=`${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`;
   const pendientes=usuarios.filter(u=>!u.aprobado&&!u.is_admin).length;
   const aprobados=usuarios.filter(u=>u.aprobado).length;
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",fontFamily:"Georgia,serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       <div style={{background:"linear-gradient(90deg,#0d2a3a,#1a3a50)",borderBottom:"2px solid #4FC3F7",padding:"20px 20px 16px",display:"flex",alignItems:"center",gap:12}}>
         <button onClick={onBack} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:20,cursor:"pointer"}}>←</button>
         <div><div style={{fontSize:10,letterSpacing:3,color:"#4FC3F7"}}>PANEL ADMIN</div><div style={{fontSize:18,fontWeight:"bold"}}>Gestión de usuarios</div></div>
@@ -265,7 +323,6 @@ function PorDia({clases}) {
   const totalMes=clasesMes.reduce((s,c)=>s+c.valor,0);
   const horasMes=clasesMes.reduce((s,c)=>s+(c.horas||1),0);
   const hoyStr=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}-${String(hoy.getDate()).padStart(2,"0")}`;
-
   return (
     <div style={{paddingBottom:20}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
@@ -273,7 +330,6 @@ function PorDia({clases}) {
         <span style={{fontSize:15,fontWeight:"bold",color:"#fff",textTransform:"capitalize"}}>{nombreMes}</span>
         <button onClick={()=>setMesOffset(m=>m+1)} style={{background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:8,color:"#4FC3F7",padding:"6px 14px",cursor:"pointer",fontSize:16}}>›</button>
       </div>
-
       {diasOrdenados.length===0?(
         <div style={{textAlign:"center",color:"#607d8b",marginTop:40,fontSize:14}}>No hay clases registradas este mes</div>
       ):diasOrdenados.map(dia=>{
@@ -308,7 +364,6 @@ function PorDia({clases}) {
           </div>
         );
       })}
-
       {diasOrdenados.length>0&&(
         <div style={{borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14,marginTop:4}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
@@ -423,7 +478,6 @@ export default function SkiTracker() {
   const [subTabCal,setSubTabCal] = useState("calendario");
   const [mes,setMes] = useState(()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}`;});
   const [comentarios,setComentarios] = useState({});
-  const [comentarioAbierto,setComentarioAbierto] = useState({});
   const [comentarioPrevio,setComentarioPrevio] = useState({particular:"",colectiva:"",requerida:""});
   const [mostrarComentarioPrevio,setMostrarComentarioPrevio] = useState({particular:false,colectiva:false,requerida:false});
 
@@ -441,7 +495,7 @@ export default function SkiTracker() {
     setProfile(prof);
     if(prof?.aprobado||prof?.is_admin){
       const {data:prec}=await supabase.from("precios").select("*").eq("user_id",u.id).single();
-      if(prec) setPrecios({particular:prec.particular,colectiva:prec.colectiva,colectiva_extra:prec.colectiva_extra,colectiva_base:prec.colectiva_base,requerida:prec.requerida});
+      if(prec) setPrecios({particular:prec.particular,colectiva:prec.colectiva,colectiva_extra:prec.colectiva_extra,colectiva_base:prec.colectiva_base,requerida:prec.requerida,extra_por_hora:prec.extra_por_hora??true});
       const {data:cls}=await supabase.from("clases").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
       if(cls){setClases(cls);const c={};cls.forEach(x=>{if(x.comentario) c[x.id]=x.comentario;});setComentarios(c);}
       const {data:desc}=await supabase.from("descuentos").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
@@ -452,28 +506,35 @@ export default function SkiTracker() {
 
   async function logout(){await supabase.auth.signOut();setUser(null);setProfile(null);setClases([]);setDescuentos([]);}
 
-  async function agregarClase(tipo){
-    let valor=0,extras=0;
-    if(tipo==="particular") valor=precios.particular;
-    else if(tipo==="requerida") valor=precios.requerida;
-    else{extras=Math.max(0,personas-precios.colectiva_base);valor=precios.colectiva+extras*precios.colectiva_extra;}
-    const comentario=comentarioPrevio[tipo]||"";
-    const horas=horasNuevaClase[tipo]||1;
-    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,comentario:comentario||null,horas,fecha:new Date().toISOString()}).select().single();
+  function calcularValor(tipo, horas) {
+    const h = horas || 1;
+    if(tipo==="particular") return precios.particular * h;
+    if(tipo==="requerida") return precios.requerida * h;
+    const extras = Math.max(0, personas - precios.colectiva_base);
+    const extraValor = precios.extra_por_hora ? precios.colectiva_extra * extras * h : precios.colectiva_extra * extras;
+    return precios.colectiva * h + extraValor;
+  }
+
+  async function agregarClase(tipo) {
+    const horas = horasNuevaClase[tipo] || 1;
+    const valor = calcularValor(tipo, horas);
+    const extras = tipo==="colectiva" ? Math.max(0, personas - precios.colectiva_base) : 0;
+    const comentario = comentarioPrevio[tipo] || "";
+    const {data,error} = await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,comentario:comentario||null,horas,fecha:new Date().toISOString()}).select().single();
     if(!error&&data){setClases(prev=>[...prev,data]);if(comentario.trim()) setComentarios(p=>({...p,[data.id]:comentario}));}
     setComentarioPrevio(p=>({...p,[tipo]:""}));
     setMostrarComentarioPrevio(p=>({...p,[tipo]:false}));
     setHorasNuevaClase(p=>({...p,[tipo]:1}));
   }
 
-  async function eliminarUltima(){
-    const ultima=[...clases].reverse().find(c=>c.fecha.startsWith(mes));
+  async function eliminarUltimaDeTipo(tipo) {
+    const ultima=[...clases].filter(c=>c.tipo===tipo&&c.fecha.startsWith(mes)).pop();
     if(!ultima) return;
     await supabase.from("clases").delete().eq("id",ultima.id);
     setClases(prev=>prev.filter(c=>c.id!==ultima.id));
   }
 
-  async function agregarDescuento(){
+  async function agregarDescuento() {
     const val=parseInt(descuentoInput.replace(/\D/g,""));
     if(!val||val<=0) return;
     const {data,error}=await supabase.from("descuentos").insert({user_id:user.id,valor:val,fecha:new Date().toISOString()}).select().single();
@@ -483,17 +544,12 @@ export default function SkiTracker() {
 
   async function eliminarDescuento(id){await supabase.from("descuentos").delete().eq("id",id);setDescuentos(prev=>prev.filter(d=>d.id!==id));}
 
-  async function guardarPrecios(){
-    await supabase.from("precios").update({particular:tempPrecios.particular,colectiva:tempPrecios.colectiva,colectiva_extra:tempPrecios.colectiva_extra,colectiva_base:tempPrecios.colectiva_base,requerida:tempPrecios.requerida}).eq("user_id",user.id);
-    setPrecios({...tempPrecios});setShowConfig(false);
+  async function guardarPrecios() {
+    await supabase.from("precios").update({particular:tempPrecios.particular,colectiva:tempPrecios.colectiva,colectiva_extra:tempPrecios.colectiva_extra,colectiva_base:tempPrecios.colectiva_base,requerida:tempPrecios.requerida,extra_por_hora:tempPrecios.extra_por_hora}).eq("user_id",user.id);
+    setPrecios({...tempPrecios}); setShowConfig(false);
   }
 
-  async function guardarComentario(claseId,texto){
-    await supabase.from("clases").update({comentario:texto||null}).eq("id",claseId);
-    setComentarios(p=>({...p,[claseId]:texto}));
-  }
-
-  if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"Georgia,serif",fontSize:16}}>⛷️ Cargando...</div>;
+  if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif",fontSize:16}}>⛷️ Cargando...</div>;
   if(!user) return <AuthScreen onAuth={handleAuth}/>;
   if(profile&&!profile.aprobado&&!profile.is_admin) return <PendienteScreen user={user} onLogout={logout}/>;
   if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)}/>;
@@ -504,19 +560,18 @@ export default function SkiTracker() {
   const totalBruto=clasesMes.reduce((s,c)=>s+c.valor,0);
   const totalDescuentos=descuentosMes.reduce((s,d)=>s+d.valor,0);
   const total=totalBruto-totalDescuentos;
-  const conteo={particular:0,colectiva:0,requerida:0};
   const horasPorTipo={particular:0,colectiva:0,requerida:0};
   let totalExtras=0;
-  clasesMes.forEach(c=>{conteo[c.tipo]++;horasPorTipo[c.tipo]+=(c.horas||1);if(c.tipo==="colectiva") totalExtras+=(c.extras||0);});
+  clasesMes.forEach(c=>{horasPorTipo[c.tipo]+=(c.horas||1);if(c.tipo==="colectiva") totalExtras+=(c.extras||0);});
   const totalHorasMes=Object.values(horasPorTipo).reduce((s,h)=>s+h,0);
   const mesesDisponibles=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort().reverse();
   const extrasActuales=Math.max(0,personas-base);
-  const colectivaTotal=precios.colectiva+extrasActuales*precios.colectiva_extra;
+  const colectivaPreview=calcularValor("colectiva",horasNuevaClase.colectiva);
   const porDia={};
   clasesMes.forEach(c=>{const dia=c.fecha.slice(0,10);if(!porDia[dia]) porDia[dia]={clases:[],total:0};porDia[dia].clases.push(c);porDia[dia].total+=c.valor;});
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628 0%,#0d2035 50%,#0a1628 100%)",fontFamily:"Georgia,serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628 0%,#0d2035 50%,#0a1628 100%)",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       <div style={{background:"linear-gradient(90deg,#0d2a3a,#1a3a50)",borderBottom:"2px solid #4FC3F7",padding:"20px 20px 0",position:"sticky",top:0,zIndex:10}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div style={{cursor:"pointer"}} onClick={()=>setShowEditarNombre(true)}>
@@ -582,11 +637,13 @@ export default function SkiTracker() {
         {tab==="registro"&&(
           <>
             <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",textTransform:"uppercase",marginBottom:12}}>Registrar clase</div>
+
+            {/* COLECTIVA */}
             <div style={{background:"#0d2a1a",border:"1px solid rgba(129,199,132,0.3)",borderRadius:14,padding:"16px",marginBottom:12}}>
               <div style={{fontSize:13,color:"#81C784",marginBottom:10,fontWeight:"bold"}}>👥 Colectiva</div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Precio base (incluye {base} pers.)</span>
-                <span style={{fontSize:13,color:"#81C784",fontWeight:"bold"}}>{fmt(precios.colectiva)}</span>
+                <span style={{fontSize:12,color:"#81C784",fontWeight:"bold"}}>{fmt(precios.colectiva)}/h</span>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Personas en clase</span>
@@ -597,37 +654,41 @@ export default function SkiTracker() {
                 </div>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
-                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`${extrasActuales} extra${extrasActuales>1?"s":""} × ${fmt(precios.colectiva_extra)}`:`Sin extras (base = ${base} pers.)`}</span>
-                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`+ ${fmt(extrasActuales*precios.colectiva_extra)}`:"+$0"}</span>
+                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`${extrasActuales} extra${extrasActuales>1?"s":""} × ${fmt(precios.colectiva_extra)}${precios.extra_por_hora?"/h":""}`:`Sin extras (base = ${base} pers.)`}</span>
+                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`+ ${fmt(precios.extra_por_hora?precios.colectiva_extra*extrasActuales*horasNuevaClase.colectiva:precios.colectiva_extra*extrasActuales)}`:"+$0"}</span>
               </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:"rgba(129,199,132,0.05)",border:"1px solid rgba(129,199,132,0.15)",borderRadius:10}}>
-                <span style={{fontSize:12,color:"#90CAF9"}}>⏱ Duración de la clase</span>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"8px 10px",background:"rgba(129,199,132,0.05)",border:"1px solid rgba(129,199,132,0.15)",borderRadius:10}}>
+                <span style={{fontSize:12,color:"#90CAF9"}}>⏱ Duración</span>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
                   <button onClick={()=>setHorasNuevaClase(p=>({...p,colectiva:Math.max(1,p.colectiva-1)}))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
                   <span style={{fontSize:16,fontWeight:"bold",color:"#81C784",minWidth:28,textAlign:"center"}}>{horasNuevaClase.colectiva}h</span>
                   <button onClick={()=>setHorasNuevaClase(p=>({...p,colectiva:p.colectiva+1}))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
                 </div>
               </div>
-              <div style={{borderTop:"1px solid rgba(129,199,132,0.2)",paddingTop:8,display:"flex",justifyContent:"space-between",marginBottom:12}}>
-                <span style={{fontSize:13,color:"#81C784"}}>Total clase</span>
-                <span style={{fontSize:16,fontWeight:"bold",color:"#fff"}}>{fmt(colectivaTotal)}</span>
+              <div style={{borderTop:"1px solid rgba(129,199,132,0.2)",paddingTop:8,marginBottom:12}}>
+                <div style={{display:"flex",justifyContent:"space-between"}}>
+                  <span style={{fontSize:11,color:"#607d8b"}}>{fmt(precios.colectiva)} × {horasNuevaClase.colectiva}h{extrasActuales>0?` + extras`:""}</span>
+                  <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{fmt(colectivaPreview)}</span>
+                </div>
               </div>
               <div style={{marginBottom:10}}>
                 <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,colectiva:!p.colectiva}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio.colectiva?"#81C784":"#607d8b",fontSize:12,cursor:"pointer",padding:0}}>{mostrarComentarioPrevio.colectiva?"✏️ Ocultar comentario":"✏️ Agregar comentario"}</button>
                 {mostrarComentarioPrevio.colectiva&&<textarea placeholder="Escribe un comentario..." value={comentarioPrevio.colectiva} onChange={e=>setComentarioPrevio(p=>({...p,colectiva:e.target.value}))} rows={2} style={{width:"100%",marginTop:6,background:"#0a1e0a",border:"1px solid #81C78455",borderRadius:8,color:"#e8f4f8",padding:"8px",fontSize:13,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
               </div>
-              <button onClick={()=>agregarClase("colectiva")} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#2e7d32,#388e3c)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer"}}>+ Agregar Clase Colectiva</button>
+              <button onClick={()=>agregarClase("colectiva")} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#2e7d32,#388e3c)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",marginBottom:8}}>+ Agregar Clase Colectiva</button>
+              <button onClick={()=>eliminarUltimaDeTipo("colectiva")} style={{width:"100%",padding:"9px",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535066",borderRadius:10,color:"#ef9a9a",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>↩ Deshacer última colectiva</button>
             </div>
 
+            {/* PARTICULAR Y REQUERIDA */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
               {TIPOS.filter(t=>t.key!=="colectiva").map(t=>(
                 <div key={t.key} style={{background:`linear-gradient(135deg,${t.bg},#1a2a35)`,border:`1px solid ${t.color}55`,borderRadius:14,padding:"16px 12px"}}>
                   <div style={{textAlign:"center",marginBottom:10}}>
                     <div style={{fontSize:26,marginBottom:4}}>{t.emoji}</div>
                     <div style={{fontSize:14,fontWeight:"bold",color:t.color}}>{t.label}</div>
-                    <div style={{fontSize:12,color:"#90CAF9",marginTop:2}}>{fmt(precios[t.key])}</div>
+                    <div style={{fontSize:11,color:"#90CAF9",marginTop:2}}>{fmt(precios[t.key])}/h</div>
                   </div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,padding:"6px 8px",background:`rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.05)`,border:`1px solid rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.15)`,borderRadius:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 8px",background:`rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.05)`,border:`1px solid rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.15)`,borderRadius:8}}>
                     <span style={{fontSize:11,color:"#607d8b"}}>⏱</span>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
                       <button onClick={()=>setHorasNuevaClase(p=>({...p,[t.key]:Math.max(1,p[t.key]-1)}))} style={{background:"none",border:"none",color:t.color,fontSize:16,cursor:"pointer",padding:"0 4px"}}>−</button>
@@ -635,17 +696,18 @@ export default function SkiTracker() {
                       <button onClick={()=>setHorasNuevaClase(p=>({...p,[t.key]:p[t.key]+1}))} style={{background:"none",border:"none",color:t.color,fontSize:16,cursor:"pointer",padding:"0 4px"}}>+</button>
                     </div>
                   </div>
-                  <div style={{marginBottom:8}}>
+                  <div style={{fontSize:11,color:"#607d8b",textAlign:"center",marginBottom:8}}>{fmt(precios[t.key])} × {horasNuevaClase[t.key]}h = <strong style={{color:t.color}}>{fmt(precios[t.key]*horasNuevaClase[t.key])}</strong></div>
+                  <div style={{marginBottom:6}}>
                     <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,[t.key]:!p[t.key]}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio[t.key]?t.color:"#607d8b",fontSize:11,cursor:"pointer",padding:0,width:"100%"}}>{mostrarComentarioPrevio[t.key]?"✏️ Ocultar":"✏️ Comentario"}</button>
                     {mostrarComentarioPrevio[t.key]&&<textarea placeholder="Comentario..." value={comentarioPrevio[t.key]} onChange={e=>setComentarioPrevio(p=>({...p,[t.key]:e.target.value}))} rows={2} style={{width:"100%",marginTop:4,background:"rgba(0,0,0,0.3)",border:`1px solid ${t.color}44`,borderRadius:8,color:"#e8f4f8",padding:"6px 8px",fontSize:12,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
                   </div>
-                  <button onClick={()=>agregarClase(t.key)} style={{width:"100%",padding:"10px",background:t.bg,border:`1px solid ${t.color}88`,borderRadius:10,color:t.color,fontSize:13,fontWeight:"bold",cursor:"pointer"}}>+ Agregar</button>
+                  <button onClick={()=>agregarClase(t.key)} style={{width:"100%",padding:"10px",background:t.bg,border:`1px solid ${t.color}88`,borderRadius:10,color:t.color,fontSize:13,fontWeight:"bold",cursor:"pointer",marginBottom:6}}>+ Agregar</button>
+                  <button onClick={()=>eliminarUltimaDeTipo(t.key)} style={{width:"100%",padding:"7px",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535066",borderRadius:8,color:"#ef9a9a",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↩ Deshacer</button>
                 </div>
               ))}
             </div>
 
-            {clasesMes.length>0&&<button onClick={eliminarUltima} style={{width:"100%",padding:"12px",background:"rgba(239,83,80,0.1)",border:"1px solid #ef5350",borderRadius:12,color:"#ef5350",fontSize:14,cursor:"pointer",marginBottom:16}}>↩ Deshacer última clase</button>}
-
+            {/* DESCUENTOS */}
             <div style={{background:"linear-gradient(135deg,#2a0d0d,#1a1020)",border:"1px solid rgba(239,83,80,0.3)",borderRadius:18,padding:"16px"}}>
               <div style={{fontSize:11,color:"#ef9a9a",letterSpacing:1,marginBottom:10}}>🍽️ DESCUENTOS COMIDA</div>
               <div style={{display:"flex",gap:10,marginBottom:12}}>
@@ -671,19 +733,42 @@ export default function SkiTracker() {
         )}
       </div>
 
+      {/* MODAL PRECIOS */}
       {showConfig&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:100}}>
           <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
             <div style={{fontSize:18,fontWeight:"bold",marginBottom:20,color:"#4FC3F7"}}>⚙️ Configurar Precios</div>
-            {[{key:"particular",label:"Clase Particular",emoji:"⛷️"},{key:"colectiva",label:"Clase Colectiva (precio base)",emoji:"👥"},{key:"colectiva_base",label:"Personas incluidas sin extra",emoji:"👤",desc:"A partir de esta cantidad se cobra adicional",unit:"pers."},{key:"colectiva_extra",label:"Adicional por persona extra",emoji:"➕"},{key:"requerida",label:"Clase Requerida",emoji:"📋"}].map(({key,label,emoji,desc,unit})=>(
+            {[
+              {key:"particular",label:"Clase Particular",emoji:"⛷️",unit:"/h"},
+              {key:"colectiva",label:"Clase Colectiva (precio base)",emoji:"👥",unit:"/h"},
+              {key:"colectiva_base",label:"Personas incluidas sin extra",emoji:"👤",desc:"A partir de esta cantidad se cobra adicional",unit2:"pers."},
+              {key:"colectiva_extra",label:"Adicional por persona extra",emoji:"➕"},
+              {key:"requerida",label:"Clase Requerida",emoji:"📋",unit:"/h"},
+            ].map(({key,label,emoji,desc,unit,unit2})=>(
               <div key={key} style={{marginBottom:18}}>
                 <label style={{fontSize:12,color:"#90CAF9",display:"block",marginBottom:2}}>{emoji} {label}</label>
                 {desc&&<div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>{desc}</div>}
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  {!unit&&<span style={{color:"#4FC3F7"}}>$</span>}
+                  {!unit2&&<span style={{color:"#4FC3F7"}}>$</span>}
                   <input type="number" value={tempPrecios[key]??0} onChange={e=>setTempPrecios(p=>({...p,[key]:Number(e.target.value)}))} style={{flex:1,background:"#0d2a3a",border:"1px solid #4FC3F7",borderRadius:10,color:"#fff",padding:"10px 14px",fontSize:16}}/>
-                  {unit&&<span style={{color:"#90CAF9",fontSize:13}}>{unit}</span>}
+                  {unit&&<span style={{color:"#607d8b",fontSize:12}}>{unit}</span>}
+                  {unit2&&<span style={{color:"#90CAF9",fontSize:13}}>{unit2}</span>}
                 </div>
+                {key==="colectiva_extra"&&(
+                  <div style={{marginTop:10}}>
+                    <Toggle
+                      value={tempPrecios.extra_por_hora??true}
+                      onChange={v=>setTempPrecios(p=>({...p,extra_por_hora:v}))}
+                      label="⏱ Multiplicar por horas"
+                      desc="El extra se cobra por cada hora de clase"
+                    />
+                    <div style={{fontSize:11,color:tempPrecios.extra_por_hora?"#81C784":"#607d8b",textAlign:"center",marginTop:6}}>
+                      {tempPrecios.extra_por_hora
+                        ?`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} × 2h = ${fmt(tempPrecios.colectiva_extra*2*2)}`
+                        :`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} = ${fmt(tempPrecios.colectiva_extra*2)} (fijo)`}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
             <div style={{display:"flex",gap:12,marginTop:10}}>
