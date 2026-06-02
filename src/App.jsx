@@ -109,7 +109,6 @@ function AdminPanel({ onBack }) {
 
   const ahora = new Date();
   const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`;
-  const activosMes = [...new Set(sesiones.filter(s=>s.fecha.startsWith(mesActual)).map(s=>s.user_id))].length;
   const pendientes = usuarios.filter(u => !u.aprobado && !u.is_admin).length;
   const aprobados = usuarios.filter(u => u.aprobado).length;
 
@@ -141,6 +140,8 @@ function AdminPanel({ onBack }) {
         {usuarios.map(u=>{
           const esAdmin = u.is_admin;
           const aprobado = u.aprobado;
+          const totalAccesos = sesiones.filter(s => s.user_id === u.id).length;
+          const accesesMes = sesiones.filter(s => s.user_id === u.id && s.fecha.startsWith(mesActual)).length;
           const borderColor = esAdmin ? "#FFB74D33" : aprobado ? "rgba(129,199,132,0.2)" : "rgba(255,183,77,0.2)";
           const bg = esAdmin ? "rgba(255,183,77,0.05)" : aprobado ? "rgba(129,199,132,0.05)" : "rgba(255,183,77,0.05)";
           return (
@@ -151,6 +152,13 @@ function AdminPanel({ onBack }) {
                   <div style={{ fontSize:11, color:"#607d8b" }}>{u.email}</div>
                   <div style={{ fontSize:11, color:"#607d8b", marginTop:2 }}>
                     Registrado: {new Date(u.created_at).toLocaleDateString("es-CL")}
+                  </div>
+                  <div style={{ fontSize:11, color:"#4FC3F7", marginTop:4, display:"flex", alignItems:"center", gap:4 }}>
+                    <span>📲</span>
+                    <span><strong style={{ color:"#fff" }}>{totalAccesos}</strong> accesos en total</span>
+                    <span style={{ color:"#607d8b" }}>·</span>
+                    <strong style={{ color:"#81C784" }}>{accesesMes}</strong>
+                    <span style={{ color:"#607d8b" }}>este mes</span>
                   </div>
                 </div>
                 <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:4 }}>
@@ -171,14 +179,12 @@ function AdminPanel({ onBack }) {
                   <button onClick={()=>cambiarEstado(u.id, true)} style={{
                     flex:1, padding:"8px", borderRadius:8, fontSize:13, cursor:"pointer", fontFamily:"inherit",
                     background: aprobado ? "rgba(129,199,132,0.2)" : "rgba(129,199,132,0.1)",
-                    border: "1px solid #81C784",
-                    color: "#81C784"
+                    border: "1px solid #81C784", color: "#81C784"
                   }}>✅ Aprobar</button>
                   <button onClick={()=>cambiarEstado(u.id, false)} style={{
                     flex:1, padding:"8px", borderRadius:8, fontSize:13, cursor:"pointer", fontFamily:"inherit",
                     background: !aprobado ? "rgba(239,83,80,0.2)" : "rgba(239,83,80,0.1)",
-                    border: "1px solid #ef5350",
-                    color: "#ef9a9a"
+                    border: "1px solid #ef5350", color: "#ef9a9a"
                   }}>❌ Bloquear</button>
                 </div>
               )}
@@ -349,7 +355,7 @@ export default function SkiTracker() {
     await supabase.from("profiles").update({ last_seen:new Date().toISOString() }).eq("id",u.id);
     const { data:prof } = await supabase.from("profiles").select("*").eq("id",u.id).single();
     setProfile(prof);
-    if (prof?.aprobado) {
+    if (prof?.aprobado || prof?.is_admin) {
       const { data:prec } = await supabase.from("precios").select("*").eq("user_id",u.id).single();
       if (prec) setPrecios({ particular:prec.particular, colectiva:prec.colectiva, colectiva_extra:prec.colectiva_extra, colectiva_base:prec.colectiva_base, requerida:prec.requerida });
       const { data:cls } = await supabase.from("clases").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
