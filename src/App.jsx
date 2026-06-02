@@ -1,0 +1,431 @@
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const SUPABASE_URL = "https://eoppuoiaxnfaihpyovsy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvcHB1b2lheG5mYWlocHlvdnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNTkwNjIsImV4cCI6MjA5NTkzNTA2Mn0.YfbzhlfNwf9wvCk0iO-8II7RIABEzyWqitHhHi7Q-eo";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000 };
+const TIPOS = [
+  { key:"particular", label:"Particular", emoji:"🎿", color:"#4FC3F7", bg:"#0d2a3a" },
+  { key:"colectiva",  label:"Colectiva",  emoji:"👥", color:"#81C784", bg:"#0d2a1a" },
+  { key:"requerida",  label:"Requerida",  emoji:"📋", color:"#FFB74D", bg:"#2a1d0d" },
+];
+function fmt(n){ return "$"+Math.round(n).toLocaleString("es-CL"); }
+function fechaCorta(iso){ return new Date(iso).toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"}); }
+
+function AuthScreen({ onAuth }) {
+  const [mode, setMode] = useState("login");
+  const [email, setEmail] = useState("");
+  const [pass, setPass] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+
+  async function handleSubmit() {
+    setError(""); setMsg(""); setLoading(true);
+    if (mode === "login") {
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password: pass });
+      if (error) setError(error.message);
+      else onAuth(data.user);
+    } else {
+      const { error } = await supabase.auth.signUp({ email, password: pass, options:{ data:{ nombre } } });
+      if (error) setError(error.message);
+      else { setMsg("¡Cuenta creada! Revisa tu email para confirmar."); setMode("login"); }
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0a1628,#0d2035)", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:24, fontFamily:"Georgia,serif", color:"#e8f4f8" }}>
+      <div style={{ fontSize:48, marginBottom:8 }}>⛷️</div>
+      <div style={{ fontSize:24, fontWeight:"bold", marginBottom:4 }}>Ski Instructor</div>
+      <div style={{ fontSize:12, color:"#4FC3F7", letterSpacing:2, marginBottom:40 }}>REGISTRO DE CLASES</div>
+      <div style={{ width:"100%", maxWidth:360 }}>
+        <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:12, padding:4, marginBottom:24 }}>
+          {[["login","Iniciar sesión"],["register","Crear cuenta"]].map(([k,l])=>(
+            <button key={k} onClick={()=>setMode(k)} style={{ flex:1, padding:"10px", border:"none", borderRadius:10, background:mode===k?"rgba(79,195,247,0.2)":"transparent", color:mode===k?"#4FC3F7":"#607d8b", fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>{l}</button>
+          ))}
+        </div>
+        {mode==="register" && <input placeholder="Tu nombre" value={nombre} onChange={e=>setNombre(e.target.value)} style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F744", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:15, marginBottom:12, boxSizing:"border-box", fontFamily:"inherit" }} />}
+        <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} type="email" style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F744", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:15, marginBottom:12, boxSizing:"border-box", fontFamily:"inherit" }} />
+        <input placeholder="Contraseña" value={pass} onChange={e=>setPass(e.target.value)} type="password" onKeyDown={e=>e.key==="Enter"&&handleSubmit()} style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F744", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:15, marginBottom:16, boxSizing:"border-box", fontFamily:"inherit" }} />
+        {error && <div style={{ color:"#ef9a9a", fontSize:13, marginBottom:12, textAlign:"center" }}>{error}</div>}
+        {msg   && <div style={{ color:"#81C784", fontSize:13, marginBottom:12, textAlign:"center" }}>{msg}</div>}
+        <button onClick={handleSubmit} disabled={loading} style={{ width:"100%", padding:"15px", background:"linear-gradient(90deg,#0277bd,#0288d1)", border:"none", borderRadius:12, color:"#fff", fontSize:16, fontWeight:"bold", cursor:"pointer" }}>
+          {loading ? "..." : mode==="login" ? "Entrar" : "Crear cuenta"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AdminPanel({ onBack }) {
+  const [stats, setStats] = useState(null);
+  useEffect(()=>{
+    async function load() {
+      const { data: perfiles } = await supabase.from("profiles").select("*").order("created_at",{ascending:false});
+      const { data: sesiones } = await supabase.from("sesiones").select("*");
+      const ahora = new Date();
+      const mesActual = `${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`;
+      const activosMes = [...new Set((sesiones||[]).filter(s=>s.fecha.startsWith(mesActual)).map(s=>s.user_id))].length;
+      setStats({ perfiles:perfiles||[], sesiones:sesiones||[], activosMes });
+    }
+    load();
+  },[]);
+
+  if (!stats) return <div style={{ minHeight:"100vh", background:"#0a1628", display:"flex", alignItems:"center", justifyContent:"center", color:"#4FC3F7", fontFamily:"Georgia,serif" }}>Cargando...</div>;
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0a1628,#0d2035)", fontFamily:"Georgia,serif", color:"#e8f4f8" }}>
+      <div style={{ background:"linear-gradient(90deg,#0d2a3a,#1a3a50)", borderBottom:"2px solid #4FC3F7", padding:"20px 20px 16px", display:"flex", alignItems:"center", gap:12 }}>
+        <button onClick={onBack} style={{ background:"none", border:"none", color:"#4FC3F7", fontSize:20, cursor:"pointer" }}>←</button>
+        <div>
+          <div style={{ fontSize:10, letterSpacing:3, color:"#4FC3F7" }}>PANEL ADMIN</div>
+          <div style={{ fontSize:18, fontWeight:"bold" }}>Estadísticas</div>
+        </div>
+      </div>
+      <div style={{ padding:20 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:24 }}>
+          {[
+            { label:"Usuarios", value:stats.perfiles.length, emoji:"👥", color:"#4FC3F7" },
+            { label:"Sesiones", value:stats.sesiones.length, emoji:"📲", color:"#81C784" },
+            { label:"Activos mes", value:stats.activosMes, emoji:"🟢", color:"#FFB74D" },
+          ].map(s=>(
+            <div key={s.label} style={{ background:"rgba(255,255,255,0.04)", border:`1px solid ${s.color}33`, borderRadius:14, padding:"14px 10px", textAlign:"center" }}>
+              <div style={{ fontSize:22 }}>{s.emoji}</div>
+              <div style={{ fontSize:24, fontWeight:"bold", color:s.color }}>{s.value}</div>
+              <div style={{ fontSize:11, color:"#90CAF9" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize:11, letterSpacing:2, color:"#4FC3F7", marginBottom:12 }}>USUARIOS REGISTRADOS</div>
+        {stats.perfiles.map(p=>(
+          <div key={p.id} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(79,195,247,0.1)", borderRadius:12, padding:"12px 14px", marginBottom:8 }}>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <div>
+                <div style={{ fontSize:14, color:"#e8f4f8" }}>{p.nombre||p.email}</div>
+                <div style={{ fontSize:11, color:"#607d8b" }}>{p.email}</div>
+              </div>
+              {p.is_admin && <span style={{ fontSize:11, color:"#FFB74D", background:"rgba(255,183,77,0.1)", border:"1px solid #FFB74D44", borderRadius:6, padding:"2px 8px" }}>Admin</span>}
+            </div>
+            <div style={{ fontSize:11, color:"#607d8b", marginTop:4 }}>
+              Registrado: {new Date(p.created_at).toLocaleDateString("es-CL")} · Último acceso: {new Date(p.last_seen).toLocaleDateString("es-CL")}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function SkiTracker() {
+  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [showAdmin, setShowAdmin] = useState(false);
+  const [precios, setPrecios] = useState(DEFAULT_PRECIOS);
+  const [clases, setClases] = useState([]);
+  const [descuentos, setDescuentos] = useState([]);
+  const [personas, setPersonas] = useState(3);
+  const [showConfig, setShowConfig] = useState(false);
+  const [tempPrecios, setTempPrecios] = useState(precios);
+  const [descuentoInput, setDescuentoInput] = useState("");
+  const [tab, setTab] = useState("registro");
+  const [mes, setMes] = useState(()=>{ const n=new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}`; });
+  const [comentarios, setComentarios] = useState({});
+  const [comentarioAbierto, setComentarioAbierto] = useState({});
+  const [comentarioPrevio, setComentarioPrevio] = useState({particular:"",colectiva:"",requerida:""});
+  const [mostrarComentarioPrevio, setMostrarComentarioPrevio] = useState({particular:false,colectiva:false,requerida:false});
+
+  useEffect(()=>{
+    supabase.auth.getSession().then(({data:{session}})=>{
+      if (session) handleAuth(session.user);
+      else setLoading(false);
+    });
+    const {data:{subscription}} = supabase.auth.onAuthStateChange((_,session)=>{
+      if (session) handleAuth(session.user);
+      else { setUser(null); setProfile(null); setLoading(false); }
+    });
+    return ()=>subscription.unsubscribe();
+  },[]);
+
+  async function handleAuth(u) {
+    setUser(u);
+    await supabase.from("sesiones").insert({ user_id:u.id });
+    await supabase.from("profiles").update({ last_seen:new Date().toISOString() }).eq("id",u.id);
+    const { data:prof } = await supabase.from("profiles").select("*").eq("id",u.id).single();
+    setProfile(prof);
+    const { data:prec } = await supabase.from("precios").select("*").eq("user_id",u.id).single();
+    if (prec) setPrecios({ particular:prec.particular, colectiva:prec.colectiva, colectiva_extra:prec.colectiva_extra, colectiva_base:prec.colectiva_base, requerida:prec.requerida });
+    const { data:cls } = await supabase.from("clases").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
+    if (cls) { setClases(cls); const c={}; cls.forEach(x=>{ if(x.comentario) c[x.id]=x.comentario; }); setComentarios(c); }
+    const { data:desc } = await supabase.from("descuentos").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
+    if (desc) setDescuentos(desc);
+    setLoading(false);
+  }
+
+  async function logout() { await supabase.auth.signOut(); setUser(null); setClases([]); setDescuentos([]); }
+
+  async function agregarClase(tipo) {
+    let valor=0, extras=0;
+    if (tipo==="particular") valor=precios.particular;
+    else if (tipo==="requerida") valor=precios.requerida;
+    else { extras=Math.max(0,personas-precios.colectiva_base); valor=precios.colectiva+extras*precios.colectiva_extra; }
+    const comentario=comentarioPrevio[tipo]||"";
+    const { data,error } = await supabase.from("clases").insert({ user_id:user.id, tipo, valor, personas:tipo==="colectiva"?personas:0, extras, comentario:comentario||null, fecha:new Date().toISOString() }).select().single();
+    if (!error&&data) { setClases(prev=>[...prev,data]); if(comentario.trim()) setComentarios(p=>({...p,[data.id]:comentario})); }
+    setComentarioPrevio(p=>({...p,[tipo]:""}));
+    setMostrarComentarioPrevio(p=>({...p,[tipo]:false}));
+  }
+
+  async function eliminarUltima() {
+    const ultima=[...clases].reverse().find(c=>c.fecha.startsWith(mes));
+    if (!ultima) return;
+    await supabase.from("clases").delete().eq("id",ultima.id);
+    setClases(prev=>prev.filter(c=>c.id!==ultima.id));
+  }
+
+  async function agregarDescuento() {
+    const val=parseInt(descuentoInput.replace(/\D/g,""));
+    if (!val||val<=0) return;
+    const { data,error } = await supabase.from("descuentos").insert({ user_id:user.id, valor:val, fecha:new Date().toISOString() }).select().single();
+    if (!error&&data) setDescuentos(prev=>[...prev,data]);
+    setDescuentoInput("");
+  }
+
+  async function eliminarDescuento(id) { await supabase.from("descuentos").delete().eq("id",id); setDescuentos(prev=>prev.filter(d=>d.id!==id)); }
+
+  async function guardarPrecios() {
+    await supabase.from("precios").update({ particular:tempPrecios.particular, colectiva:tempPrecios.colectiva, colectiva_extra:tempPrecios.colectiva_extra, colectiva_base:tempPrecios.colectiva_base, requerida:tempPrecios.requerida }).eq("user_id",user.id);
+    setPrecios({...tempPrecios}); setShowConfig(false);
+  }
+
+  async function guardarComentario(claseId, texto) {
+    await supabase.from("clases").update({ comentario:texto||null }).eq("id",claseId);
+    setComentarios(p=>({...p,[claseId]:texto}));
+  }
+
+  if (loading) return <div style={{ minHeight:"100vh", background:"#0a1628", display:"flex", alignItems:"center", justifyContent:"center", color:"#4FC3F7", fontFamily:"Georgia,serif", fontSize:16 }}>⛷️ Cargando...</div>;
+  if (!user) return <AuthScreen onAuth={handleAuth} />;
+  if (showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)} />;
+
+  const base=precios.colectiva_base||3;
+  const clasesMes=clases.filter(c=>c.fecha.startsWith(mes));
+  const descuentosMes=descuentos.filter(d=>d.fecha.startsWith(mes));
+  const totalBruto=clasesMes.reduce((s,c)=>s+c.valor,0);
+  const totalDescuentos=descuentosMes.reduce((s,d)=>s+d.valor,0);
+  const total=totalBruto-totalDescuentos;
+  const conteo={particular:0,colectiva:0,requerida:0};
+  let totalExtras=0;
+  clasesMes.forEach(c=>{ conteo[c.tipo]++; if(c.tipo==="colectiva") totalExtras+=(c.extras||0); });
+  const mesesDisponibles=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort().reverse();
+  const extrasActuales=Math.max(0,personas-base);
+  const colectivaTotal=precios.colectiva+extrasActuales*precios.colectiva_extra;
+  const porDia={};
+  clasesMes.forEach(c=>{ const dia=c.fecha.slice(0,10); if(!porDia[dia]) porDia[dia]={clases:[],total:0}; porDia[dia].clases.push(c); porDia[dia].total+=c.valor; });
+  const diasOrdenados=Object.keys(porDia).sort().reverse();
+
+  return (
+    <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0a1628 0%,#0d2035 50%,#0a1628 100%)", fontFamily:"Georgia,serif", color:"#e8f4f8" }}>
+      <div style={{ background:"linear-gradient(90deg,#0d2a3a,#1a3a50)", borderBottom:"2px solid #4FC3F7", padding:"20px 20px 0", position:"sticky", top:0, zIndex:10 }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+          <div>
+            <div style={{ fontSize:10, letterSpacing:3, color:"#4FC3F7", textTransform:"uppercase" }}>⛷️ Ski Instructor</div>
+            <div style={{ fontSize:18, fontWeight:"bold", color:"#fff" }}>{profile?.nombre||profile?.email?.split("@")[0]||"Mi cuenta"}</div>
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            {profile?.is_admin && <button onClick={()=>setShowAdmin(true)} style={{ background:"rgba(255,183,77,0.15)", border:"1px solid #FFB74D", borderRadius:10, color:"#FFB74D", padding:"8px 10px", fontSize:12, cursor:"pointer" }}>👑</button>}
+            <button onClick={()=>{ setTempPrecios(precios); setShowConfig(true); }} style={{ background:"rgba(79,195,247,0.15)", border:"1px solid #4FC3F7", borderRadius:10, color:"#4FC3F7", padding:"8px 10px", fontSize:12, cursor:"pointer" }}>⚙️</button>
+            <button onClick={logout} style={{ background:"rgba(239,83,80,0.1)", border:"1px solid #ef535055", borderRadius:10, color:"#ef9a9a", padding:"8px 10px", fontSize:12, cursor:"pointer" }}>↩</button>
+          </div>
+        </div>
+        <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:12 }}>
+          <span style={{ fontSize:12, color:"#90CAF9" }}>Mes:</span>
+          <select value={mes} onChange={e=>setMes(e.target.value)} style={{ background:"#0d2a3a", color:"#e8f4f8", border:"1px solid #4FC3F7", borderRadius:8, padding:"4px 10px", fontSize:13 }}>
+            {[...new Set([mes,...mesesDisponibles])].map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+        </div>
+        <div style={{ display:"flex" }}>
+          {[["registro","📝 Registro"],["desglose","📅 Por Día"]].map(([key,label])=>(
+            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px 0", background:tab===key?"rgba(79,195,247,0.15)":"transparent", border:"none", borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent", color:tab===key?"#4FC3F7":"#607d8b", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding:"20px 20px 100px" }}>
+        <div style={{ background:"linear-gradient(135deg,#0d2a3a,#1a3a50)", border:"1px solid rgba(79,195,247,0.3)", borderRadius:18, padding:"18px 20px", marginBottom:20, textAlign:"center" }}>
+          <div style={{ fontSize:10, letterSpacing:2, color:"#4FC3F7", textTransform:"uppercase", marginBottom:4 }}>Total estimado del mes</div>
+          <div style={{ fontSize:36, fontWeight:"bold", color:"#fff", letterSpacing:-1 }}>{fmt(total)}</div>
+          {totalDescuentos>0 && <div style={{ fontSize:12, color:"#ef9a9a", marginTop:2 }}>{fmt(totalBruto)} − descuentos {fmt(totalDescuentos)}</div>}
+          <div style={{ display:"flex", justifyContent:"center", gap:16, marginTop:12 }}>
+            {TIPOS.map(t=>(
+              <div key={t.key} style={{ textAlign:"center" }}>
+                <div style={{ fontSize:16 }}>{t.emoji}</div>
+                <div style={{ fontSize:18, fontWeight:"bold", color:t.color }}>{conteo[t.key]}</div>
+                {t.key==="colectiva"&&totalExtras>0&&(
+                  <div style={{ display:"inline-flex", alignItems:"center", gap:3, background:"rgba(129,199,132,0.15)", border:"1px solid #81C78455", borderRadius:10, padding:"2px 7px", marginTop:3 }}>
+                    <span style={{ fontSize:11 }}>➕</span><span style={{ fontSize:12, fontWeight:"bold", color:"#81C784" }}>{totalExtras}</span>
+                  </div>
+                )}
+                <div style={{ fontSize:10, color:"#90CAF9" }}>{t.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {tab==="registro" && (
+          <>
+            <div style={{ fontSize:11, letterSpacing:2, color:"#4FC3F7", textTransform:"uppercase", marginBottom:12 }}>Registrar clase</div>
+            <div style={{ background:"#0d2a1a", border:"1px solid rgba(129,199,132,0.3)", borderRadius:14, padding:"16px", marginBottom:12 }}>
+              <div style={{ fontSize:13, color:"#81C784", marginBottom:10, fontWeight:"bold" }}>👥 Colectiva</div>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:6 }}>
+                <span style={{ fontSize:12, color:"#90CAF9" }}>Precio base (incluye {base} pers.)</span>
+                <span style={{ fontSize:13, color:"#81C784", fontWeight:"bold" }}>{fmt(precios.colectiva)}</span>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+                <span style={{ fontSize:12, color:"#90CAF9" }}>Personas en clase</span>
+                <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                  <button onClick={()=>setPersonas(p=>Math.max(base,p-1))} style={{ width:32, height:32, borderRadius:"50%", background:"rgba(129,199,132,0.2)", border:"1px solid #81C784", color:"#81C784", fontSize:18, cursor:"pointer" }}>−</button>
+                  <span style={{ fontSize:22, fontWeight:"bold", color:"#fff", minWidth:24, textAlign:"center" }}>{personas}</span>
+                  <button onClick={()=>setPersonas(p=>p+1)} style={{ width:32, height:32, borderRadius:"50%", background:"rgba(129,199,132,0.2)", border:"1px solid #81C784", color:"#81C784", fontSize:18, cursor:"pointer" }}>+</button>
+                </div>
+              </div>
+              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10 }}>
+                <span style={{ fontSize:12, color:extrasActuales>0?"#81C784":"#607d8b" }}>{extrasActuales>0?`${extrasActuales} extra${extrasActuales>1?"s":""} × ${fmt(precios.colectiva_extra)}`:`Sin extras (base = ${base} pers.)`}</span>
+                <span style={{ fontSize:12, color:extrasActuales>0?"#81C784":"#607d8b" }}>{extrasActuales>0?`+ ${fmt(extrasActuales*precios.colectiva_extra)}`:"+$0"}</span>
+              </div>
+              <div style={{ borderTop:"1px solid rgba(129,199,132,0.2)", paddingTop:8, display:"flex", justifyContent:"space-between", marginBottom:12 }}>
+                <span style={{ fontSize:13, color:"#81C784" }}>Total clase</span>
+                <span style={{ fontSize:16, fontWeight:"bold", color:"#fff" }}>{fmt(colectivaTotal)}</span>
+              </div>
+              <div style={{ marginBottom:10 }}>
+                <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,colectiva:!p.colectiva}))} style={{ background:"none", border:"none", color:mostrarComentarioPrevio.colectiva?"#81C784":"#607d8b", fontSize:12, cursor:"pointer", padding:0 }}>
+                  {mostrarComentarioPrevio.colectiva?"✏️ Ocultar comentario":"✏️ Agregar comentario"}
+                </button>
+                {mostrarComentarioPrevio.colectiva && <textarea placeholder="Escribe un comentario..." value={comentarioPrevio.colectiva} onChange={e=>setComentarioPrevio(p=>({...p,colectiva:e.target.value}))} rows={2} style={{ width:"100%", marginTop:6, background:"#0a1e0a", border:"1px solid #81C78455", borderRadius:8, color:"#e8f4f8", padding:"8px", fontSize:13, resize:"none", boxSizing:"border-box", fontFamily:"inherit" }} />}
+              </div>
+              <button onClick={()=>agregarClase("colectiva")} style={{ width:"100%", padding:"13px", background:"linear-gradient(90deg,#2e7d32,#388e3c)", border:"none", borderRadius:12, color:"#fff", fontSize:15, fontWeight:"bold", cursor:"pointer" }}>+ Agregar Clase Colectiva</button>
+            </div>
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, marginBottom:12 }}>
+              {TIPOS.filter(t=>t.key!=="colectiva").map(t=>(
+                <div key={t.key} style={{ background:`linear-gradient(135deg,${t.bg},#1a2a35)`, border:`1px solid ${t.color}55`, borderRadius:14, padding:"16px 12px" }}>
+                  <div style={{ textAlign:"center", marginBottom:10 }}>
+                    <div style={{ fontSize:26, marginBottom:4 }}>{t.emoji}</div>
+                    <div style={{ fontSize:14, fontWeight:"bold", color:t.color }}>{t.label}</div>
+                    <div style={{ fontSize:12, color:"#90CAF9", marginTop:2 }}>{fmt(precios[t.key])}</div>
+                  </div>
+                  <div style={{ marginBottom:8 }}>
+                    <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,[t.key]:!p[t.key]}))} style={{ background:"none", border:"none", color:mostrarComentarioPrevio[t.key]?t.color:"#607d8b", fontSize:11, cursor:"pointer", padding:0, width:"100%" }}>
+                      {mostrarComentarioPrevio[t.key]?"✏️ Ocultar":"✏️ Comentario"}
+                    </button>
+                    {mostrarComentarioPrevio[t.key] && <textarea placeholder="Comentario..." value={comentarioPrevio[t.key]} onChange={e=>setComentarioPrevio(p=>({...p,[t.key]:e.target.value}))} rows={2} style={{ width:"100%", marginTop:4, background:"rgba(0,0,0,0.3)", border:`1px solid ${t.color}44`, borderRadius:8, color:"#e8f4f8", padding:"6px 8px", fontSize:12, resize:"none", boxSizing:"border-box", fontFamily:"inherit" }} />}
+                  </div>
+                  <button onClick={()=>agregarClase(t.key)} style={{ width:"100%", padding:"10px", background:t.bg, border:`1px solid ${t.color}88`, borderRadius:10, color:t.color, fontSize:13, fontWeight:"bold", cursor:"pointer" }}>+ Agregar</button>
+                </div>
+              ))}
+            </div>
+            {clasesMes.length>0 && <button onClick={eliminarUltima} style={{ width:"100%", padding:"12px", background:"rgba(239,83,80,0.1)", border:"1px solid #ef5350", borderRadius:12, color:"#ef5350", fontSize:14, cursor:"pointer", marginBottom:16 }}>↩ Deshacer última clase</button>}
+            <div style={{ background:"linear-gradient(135deg,#2a0d0d,#1a1020)", border:"1px solid rgba(239,83,80,0.3)", borderRadius:18, padding:"16px" }}>
+              <div style={{ fontSize:11, color:"#ef9a9a", letterSpacing:1, marginBottom:10 }}>🍽️ DESCUENTOS COMIDA</div>
+              <div style={{ display:"flex", gap:10, marginBottom:12 }}>
+                <div style={{ flex:1, display:"flex", alignItems:"center", gap:6, background:"#1a0a0a", border:"1px solid #ef535055", borderRadius:10, padding:"8px 12px" }}>
+                  <span style={{ color:"#ef9a9a" }}>$</span>
+                  <input type="number" placeholder="Monto a descontar" value={descuentoInput} onChange={e=>setDescuentoInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&agregarDescuento()} style={{ flex:1, background:"none", border:"none", color:"#fff", fontSize:15, outline:"none" }} />
+                </div>
+                <button onClick={agregarDescuento} style={{ background:"rgba(239,83,80,0.2)", border:"1px solid #ef5350", borderRadius:10, color:"#ef9a9a", fontSize:22, padding:"0 16px", cursor:"pointer" }}>−</button>
+              </div>
+              {descuentosMes.length===0 ? <div style={{ fontSize:12, color:"#607d8b", textAlign:"center", padding:"6px 0" }}>Sin descuentos este mes</div> : (
+                <div>
+                  {descuentosMes.map(d=>(
+                    <div key={d.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"8px 4px", borderBottom:"1px solid rgba(255,255,255,0.05)" }}>
+                      <div>
+                        <div style={{ fontSize:14, color:"#ef9a9a", fontWeight:"bold" }}>− {fmt(d.valor)}</div>
+                        <div style={{ fontSize:11, color:"#607d8b" }}>{new Date(d.fecha).toLocaleDateString("es-CL")}</div>
+                      </div>
+                      <button onClick={()=>eliminarDescuento(d.id)} style={{ background:"none", border:"none", color:"#607d8b", fontSize:18, cursor:"pointer" }}>✕</button>
+                    </div>
+                  ))}
+                  <div style={{ marginTop:8, textAlign:"right", fontSize:13, color:"#ef9a9a" }}>Total: {fmt(totalDescuentos)}</div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {tab==="desglose" && (
+          <>
+            {diasOrdenados.length===0 ? <div style={{ textAlign:"center", color:"#607d8b", marginTop:40, fontSize:14 }}>No hay clases registradas este mes</div> : diasOrdenados.map(dia=>{
+              const {clases:clasesDelDia,total:totalDia}=porDia[dia];
+              const cDia={particular:0,colectiva:0,requerida:0};
+              let extrasDelDia=0;
+              clasesDelDia.forEach(c=>{ cDia[c.tipo]++; if(c.tipo==="colectiva") extrasDelDia+=(c.extras||0); });
+              return (
+                <div key={dia} style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(79,195,247,0.15)", borderRadius:14, padding:"14px 16px", marginBottom:12 }}>
+                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                    <div style={{ fontSize:14, fontWeight:"bold", color:"#4FC3F7", textTransform:"capitalize" }}>{fechaCorta(dia+"T12:00:00")}</div>
+                    <div style={{ fontSize:15, fontWeight:"bold", color:"#fff" }}>{fmt(totalDia)}</div>
+                  </div>
+                  <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+                    {TIPOS.map(t=>cDia[t.key]>0&&(
+                      <div key={t.key} style={{ background:t.bg, border:`1px solid ${t.color}44`, borderRadius:8, padding:"4px 10px", fontSize:12, display:"flex", alignItems:"center", gap:4 }}>
+                        <span style={{ color:t.color }}>{t.emoji} {t.label} ×{cDia[t.key]}</span>
+                        {t.key==="colectiva"&&extrasDelDia>0&&<span style={{ background:"rgba(129,199,132,0.2)", border:"1px solid #81C78455", borderRadius:8, padding:"1px 6px", fontSize:11, color:"#81C784", marginLeft:2 }}>➕{extrasDelDia}</span>}
+                      </div>
+                    ))}
+                  </div>
+                  {clasesDelDia.map((c,i)=>{
+                    const tipo=TIPOS.find(t=>t.key===c.tipo);
+                    const tieneComentario=!!comentarios[c.id];
+                    return (
+                      <div key={c.id} style={{ borderTop:i>0?"1px solid rgba(255,255,255,0.04)":"none", paddingTop:i>0?6:0, marginTop:i>0?6:0 }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                            <span style={{ fontSize:13, color:tipo.color }}>{tipo.emoji} {tipo.label}{c.tipo==="colectiva"&&<span style={{ color:"#90CAF9" }}> · {c.personas} pers.{c.extras>0&&<span style={{ color:"#81C784" }}> (➕{c.extras})</span>}</span>}</span>
+                            <button onClick={()=>setComentarioAbierto(p=>({...p,[c.id]:!p[c.id]}))} style={{ background:tieneComentario?"rgba(79,195,247,0.15)":"none", border:tieneComentario?"1px solid #4FC3F744":"none", borderRadius:6, color:tieneComentario?"#4FC3F7":"#607d8b", fontSize:11, cursor:"pointer", padding:"2px 6px" }}>{tieneComentario?"💬":"✏️"}</button>
+                          </div>
+                          <span style={{ fontSize:12, color:"#e8f4f8" }}>{fmt(c.valor)}</span>
+                        </div>
+                        {comentarioAbierto[c.id] && <textarea placeholder="Comentario..." value={comentarios[c.id]||""} onChange={e=>guardarComentario(c.id,e.target.value)} rows={2} style={{ width:"100%", marginTop:6, background:"rgba(0,0,0,0.3)", border:"1px solid #4FC3F744", borderRadius:8, color:"#e8f4f8", padding:"7px", fontSize:12, resize:"none", boxSizing:"border-box", fontFamily:"inherit" }} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
+
+      {showConfig && (
+        <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"flex-end", zIndex:100 }}>
+          <div style={{ width:"100%", background:"linear-gradient(160deg,#0a1628,#0d2035)", borderTop:"2px solid #4FC3F7", borderRadius:"20px 20px 0 0", padding:"24px 24px 44px", maxHeight:"85vh", overflowY:"auto" }}>
+            <div style={{ fontSize:18, fontWeight:"bold", marginBottom:20, color:"#4FC3F7" }}>⚙️ Configurar Precios</div>
+            {[
+              {key:"particular",     label:"Clase Particular",             emoji:"🎿"},
+              {key:"colectiva",      label:"Clase Colectiva (precio base)", emoji:"👥"},
+              {key:"colectiva_base", label:"Personas incluidas sin extra",  emoji:"👤", desc:"A partir de esta cantidad se cobra adicional", unit:"pers."},
+              {key:"colectiva_extra",label:"Adicional por persona extra",   emoji:"➕"},
+              {key:"requerida",      label:"Clase Requerida",               emoji:"📋"},
+            ].map(({key,label,emoji,desc,unit})=>(
+              <div key={key} style={{ marginBottom:18 }}>
+                <label style={{ fontSize:12, color:"#90CAF9", display:"block", marginBottom:2 }}>{emoji} {label}</label>
+                {desc && <div style={{ fontSize:11, color:"#607d8b", marginBottom:4 }}>{desc}</div>}
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  {!unit && <span style={{ color:"#4FC3F7" }}>$</span>}
+                  <input type="number" value={tempPrecios[key]??0} onChange={e=>setTempPrecios(p=>({...p,[key]:Number(e.target.value)}))} style={{ flex:1, background:"#0d2a3a", border:"1px solid #4FC3F7", borderRadius:10, color:"#fff", padding:"10px 14px", fontSize:16 }} />
+                  {unit && <span style={{ color:"#90CAF9", fontSize:13 }}>{unit}</span>}
+                </div>
+              </div>
+            ))}
+            <div style={{ display:"flex", gap:12, marginTop:10 }}>
+              <button onClick={()=>setShowConfig(false)} style={{ flex:1, padding:"14px", background:"rgba(255,255,255,0.05)", border:"1px solid #555", borderRadius:12, color:"#90CAF9", fontSize:15, cursor:"pointer" }}>Cancelar</button>
+              <button onClick={guardarPrecios} style={{ flex:2, padding:"14px", background:"linear-gradient(90deg,#0277bd,#0288d1)", border:"none", borderRadius:12, color:"#fff", fontSize:15, fontWeight:"bold", cursor:"pointer" }}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
