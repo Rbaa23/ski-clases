@@ -22,6 +22,7 @@ function AuthScreen({ onAuth }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
+  const [showPass, setShowPass] = useState(false);
 
   async function handleSubmit() {
     setError(""); setMsg(""); setLoading(true);
@@ -45,12 +46,15 @@ function AuthScreen({ onAuth }) {
       <div style={{ width:"100%", maxWidth:360 }}>
         <div style={{ display:"flex", background:"rgba(255,255,255,0.05)", borderRadius:12, padding:4, marginBottom:24 }}>
           {[["login","Iniciar sesión"],["register","Crear cuenta"]].map(([k,l])=>(
-            <button key={k} onClick={()=>setMode(k)} style={{ flex:1, padding:"10px", border:"none", borderRadius:10, background:mode===k?"rgba(79,195,247,0.2)":"transparent", color:mode===k?"#4FC3F7":"#607d8b", fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>{l}</button>
+            <button key={k} onClick={()=>{ setMode(k); setShowPass(false); }} style={{ flex:1, padding:"10px", border:"none", borderRadius:10, background:mode===k?"rgba(79,195,247,0.2)":"transparent", color:mode===k?"#4FC3F7":"#607d8b", fontSize:14, cursor:"pointer", fontFamily:"inherit" }}>{l}</button>
           ))}
         </div>
         {mode==="register" && <input placeholder="Tu nombre" value={nombre} onChange={e=>setNombre(e.target.value)} style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F744", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:15, marginBottom:12, boxSizing:"border-box", fontFamily:"inherit" }} />}
         <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} type="email" style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F744", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:15, marginBottom:12, boxSizing:"border-box", fontFamily:"inherit" }} />
-        <input placeholder="Contraseña" value={pass} onChange={e=>setPass(e.target.value)} type="password" onKeyDown={e=>e.key==="Enter"&&handleSubmit()} style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F744", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:15, marginBottom:16, boxSizing:"border-box", fontFamily:"inherit" }} />
+        <div style={{ position:"relative", marginBottom:16 }}>
+          <input placeholder="Contraseña" value={pass} onChange={e=>setPass(e.target.value)} type={showPass?"text":"password"} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F744", borderRadius:12, color:"#fff", padding:"14px 48px 14px 16px", fontSize:15, boxSizing:"border-box", fontFamily:"inherit" }} />
+          <button onClick={()=>setShowPass(p=>!p)} style={{ position:"absolute", right:14, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", color:"#4FC3F7", fontSize:18, cursor:"pointer", padding:0 }}>{showPass?"🙈":"👁️"}</button>
+        </div>
         {error && <div style={{ color:"#ef9a9a", fontSize:13, marginBottom:12, textAlign:"center" }}>{error}</div>}
         {msg   && <div style={{ color:"#81C784", fontSize:13, marginBottom:12, textAlign:"center" }}>{msg}</div>}
         <button onClick={handleSubmit} disabled={loading} style={{ width:"100%", padding:"15px", background:"linear-gradient(90deg,#0277bd,#0288d1)", border:"none", borderRadius:12, color:"#fff", fontSize:16, fontWeight:"bold", cursor:"pointer" }}>
