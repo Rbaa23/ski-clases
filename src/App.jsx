@@ -15,18 +15,23 @@ const DIAS_SEMANA = ["L","M","M","J","V","S","D"];
 function fmt(n){ return "$"+Math.round(n).toLocaleString("es-CL"); }
 function diasEnMes(anio,mes){ return new Date(anio,mes+1,0).getDate(); }
 
-function Toggle({ value, onChange, label, desc, color="#81C784" }) {
+function Toggle({ value, onChange, label, desc }) {
   return (
-    <div onClick={()=>onChange(!value)} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"10px 12px", background:value?`rgba(129,199,132,0.08)`:"rgba(255,255,255,0.03)", border:value?"1px solid rgba(129,199,132,0.25)":"1px solid rgba(255,255,255,0.08)", borderRadius:10, cursor:"pointer" }}>
+    <div onClick={()=>onChange(!value)} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",background:value?"rgba(129,199,132,0.08)":"rgba(255,255,255,0.03)",border:value?"1px solid rgba(129,199,132,0.25)":"1px solid rgba(255,255,255,0.08)",borderRadius:10,cursor:"pointer"}}>
       <div>
-        <div style={{ fontSize:12, color:value?color:"#607d8b", fontWeight:500 }}>{label}</div>
-        {desc&&<div style={{ fontSize:11, color:"#607d8b", marginTop:2 }}>{desc}</div>}
+        <div style={{fontSize:12,color:value?"#81C784":"#607d8b",fontWeight:500}}>{label}</div>
+        {desc&&<div style={{fontSize:11,color:"#607d8b",marginTop:2}}>{desc}</div>}
       </div>
-      <div style={{ width:44, height:24, background:value?color:"rgba(255,255,255,0.1)", borderRadius:12, position:"relative", flexShrink:0, marginLeft:12 }}>
-        <div style={{ width:18, height:18, background:value?"#fff":"#607d8b", borderRadius:"50%", position:"absolute", top:3, left:value?"auto":3, right:value?3:"auto", transition:"all 0.2s" }}/>
+      <div style={{width:44,height:24,background:value?"#81C784":"rgba(255,255,255,0.1)",borderRadius:12,position:"relative",flexShrink:0,marginLeft:12}}>
+        <div style={{width:18,height:18,background:value?"#fff":"#607d8b",borderRadius:"50%",position:"absolute",top:3,left:value?"auto":3,right:value?3:"auto"}}/>
       </div>
     </div>
   );
+}
+
+function Initials({ nombre, email, color="#4FC3F7", bg="rgba(79,195,247,0.15)", size=36 }) {
+  const text = (nombre||email||"?").slice(0,2).toUpperCase();
+  return <div style={{width:size,height:size,borderRadius:"50%",background:bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:size*0.36,fontWeight:500,color,flexShrink:0}}>{text}</div>;
 }
 
 function AuthScreen({ onAuth }) {
@@ -44,11 +49,11 @@ function AuthScreen({ onAuth }) {
 
   async function handleSubmit() {
     setError(""); setMsg(""); setLoading(true);
-    if (mode==="login") {
-      const {data,error} = await supabase.auth.signInWithPassword({email,password:pass});
+    if(mode==="login") {
+      const {data,error}=await supabase.auth.signInWithPassword({email,password:pass});
       if(error) setError(error.message); else onAuth(data.user);
     } else {
-      const {error} = await supabase.auth.signUp({email,password:pass,options:{data:{nombre}}});
+      const {error}=await supabase.auth.signUp({email,password:pass,options:{data:{nombre}}});
       if(error) setError(error.message);
       else { setMsg("¡Cuenta creada! Revisa tu email para confirmar. Un administrador debe aprobar tu acceso."); setMode("login"); }
     }
@@ -57,11 +62,8 @@ function AuthScreen({ onAuth }) {
 
   async function handleRecuperar() {
     setError(""); setLoading(true);
-    const {error} = await supabase.auth.resetPasswordForEmail(emailRecuperar, {
-      redirectTo: "https://ski-clases.vercel.app"
-    });
-    if(error) setError(error.message);
-    else setEnviado(true);
+    const {error}=await supabase.auth.resetPasswordForEmail(emailRecuperar,{redirectTo:"https://ski-clases.vercel.app"});
+    if(error) setError(error.message); else setEnviado(true);
     setLoading(false);
   }
 
@@ -71,16 +73,16 @@ function AuthScreen({ onAuth }) {
         <div style={{width:"100%",maxWidth:360,textAlign:"center"}}>
           <div style={{fontSize:48,marginBottom:12}}>📬</div>
           <div style={{fontSize:20,fontWeight:"bold",marginBottom:8}}>¡Email enviado!</div>
-          <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.6,marginBottom:24}}>Revisa tu bandeja de entrada.<br/>Haz clic en el enlace para crear<br/>una nueva contraseña.</div>
+          <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.6,marginBottom:24}}>Revisa tu bandeja de entrada.<br/>Haz clic en el enlace para crear una nueva contraseña.</div>
           <div style={{background:"rgba(79,195,247,0.08)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:12,padding:"12px 16px",marginBottom:20,fontSize:13,color:"#4FC3F7"}}>{emailRecuperar}</div>
           <button onClick={()=>{setRecuperar(false);setEnviado(false);setEmailRecuperar("");}} style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>← Volver al login</button>
         </div>
-      ) : (
+      ):(
         <div style={{width:"100%",maxWidth:360}}>
           <div style={{textAlign:"center",marginBottom:28}}>
             <div style={{fontSize:40,marginBottom:8}}>🔑</div>
             <div style={{fontSize:18,fontWeight:"bold",marginBottom:6}}>Recuperar contraseña</div>
-            <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.5}}>Ingresa tu email y te enviaremos<br/>un enlace para restablecer tu clave.</div>
+            <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.5}}>Ingresa tu email y te enviaremos un enlace para restablecer tu clave.</div>
           </div>
           <input placeholder="Tu email" value={emailRecuperar} onChange={e=>setEmailRecuperar(e.target.value)} type="email" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"13px 16px",fontSize:14,marginBottom:16,boxSizing:"border-box",fontFamily:"inherit"}}/>
           {error&&<div style={{color:"#ef9a9a",fontSize:13,marginBottom:12,textAlign:"center"}}>{error}</div>}
@@ -108,16 +110,10 @@ function AuthScreen({ onAuth }) {
           <input placeholder="Contraseña" value={pass} onChange={e=>setPass(e.target.value)} type={showPass?"text":"password"} onKeyDown={e=>e.key==="Enter"&&handleSubmit()} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"14px 48px 14px 16px",fontSize:15,boxSizing:"border-box",fontFamily:"inherit"}}/>
           <button onClick={()=>setShowPass(p=>!p)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",fontSize:18,cursor:"pointer",padding:0}}>{showPass?"👁️":"🔒"}</button>
         </div>
-        {mode==="login"&&(
-          <div style={{textAlign:"right",marginBottom:16}}>
-            <span onClick={()=>{setRecuperar(true);setError("");}} style={{fontSize:12,color:"#4FC3F7",cursor:"pointer",textDecoration:"underline"}}>¿Olvidaste tu contraseña?</span>
-          </div>
-        )}
+        {mode==="login"&&<div style={{textAlign:"right",marginBottom:16}}><span onClick={()=>{setRecuperar(true);setError("");}} style={{fontSize:12,color:"#4FC3F7",cursor:"pointer",textDecoration:"underline"}}>¿Olvidaste tu contraseña?</span></div>}
         {error&&<div style={{color:"#ef9a9a",fontSize:13,marginBottom:12,textAlign:"center"}}>{error}</div>}
         {msg&&<div style={{color:"#81C784",fontSize:13,marginBottom:12,textAlign:"center"}}>{msg}</div>}
-        <button onClick={handleSubmit} disabled={loading} style={{width:"100%",padding:"15px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:16,fontWeight:"bold",cursor:"pointer"}}>
-          {loading?"...":mode==="login"?"Entrar":"Crear cuenta"}
-        </button>
+        <button onClick={handleSubmit} disabled={loading} style={{width:"100%",padding:"15px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:16,fontWeight:"bold",cursor:"pointer"}}>{loading?"...":mode==="login"?"Entrar":"Crear cuenta"}</button>
       </div>
     </div>
   );
@@ -134,91 +130,326 @@ function PendienteScreen({user,onLogout}) {
         <div style={{fontSize:14,color:"#4FC3F7"}}>{user.email}</div>
       </div>
       <button onClick={onLogout} style={{width:"100%",maxWidth:360,padding:"14px",background:"rgba(239,83,80,0.1)",border:"1px solid #ef5350",borderRadius:12,color:"#ef9a9a",fontSize:14,cursor:"pointer",fontFamily:"inherit"}}>↩ Cerrar sesión</button>
-      <div style={{marginTop:20,display:"flex",alignItems:"center",gap:8}}>
-        <div style={{width:8,height:8,borderRadius:"50%",background:"#FFB74D"}}></div>
-        <span style={{fontSize:12,color:"#607d8b"}}>Esperando aprobación del admin</span>
-      </div>
     </div>
   );
 }
 
-function AdminPanel({onBack}) {
-  const [usuarios,setUsuarios] = useState([]);
-  const [sesiones,setSesiones] = useState([]);
-  const [loading,setLoading] = useState(true);
-  useEffect(()=>{cargar();},[]);
+function AdminPanel({onBack, allClases}) {
+  const [subTab, setSubTab] = useState("usuarios");
+  const [catTab, setCatTab] = useState("pendientes");
+  const [usuarios, setUsuarios] = useState([]);
+  const [sesiones, setSesiones] = useState([]);
+  const [clases, setClases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [selUsuario, setSelUsuario] = useState("todos");
+  const [selMes, setSelMes] = useState("");
+  const [statsUsuario, setStatsUsuario] = useState("todos");
+
+  useEffect(()=>{ cargar(); },[]);
+
   async function cargar() {
     const {data:perfiles}=await supabase.from("profiles").select("*").order("created_at",{ascending:false});
     const {data:ses}=await supabase.from("sesiones").select("*");
-    setUsuarios(perfiles||[]); setSesiones(ses||[]); setLoading(false);
+    const {data:cls}=await supabase.from("clases").select("*").order("fecha",{ascending:false});
+    setUsuarios(perfiles||[]);
+    setSesiones(ses||[]);
+    setClases(cls||[]);
+    const ahora=new Date();
+    setSelMes(`${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`);
+    if(perfiles&&perfiles.length>0) setSelUsuario(perfiles.find(u=>!u.is_admin)?.id||perfiles[0].id);
+    setLoading(false);
   }
-  async function cambiarEstado(id,aprobado) {
+
+  async function cambiarEstado(id, aprobado) {
     await supabase.from("profiles").update({aprobado}).eq("id",id);
     setUsuarios(prev=>prev.map(u=>u.id===id?{...u,aprobado}:u));
   }
+
   if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif"}}>Cargando...</div>;
+
   const ahora=new Date();
   const mesActual=`${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`;
-  const pendientes=usuarios.filter(u=>!u.aprobado&&!u.is_admin).length;
-  const aprobados=usuarios.filter(u=>u.aprobado).length;
+  const pendientes=usuarios.filter(u=>!u.aprobado&&!u.is_admin);
+  const aprobados=usuarios.filter(u=>u.aprobado);
+  const bloqueados=usuarios.filter(u=>!u.aprobado&&!u.is_admin&&u.blocked);
+
+  // Historial
+  const usuarioHist=usuarios.find(u=>u.id===selUsuario);
+  const clasesFiltradas=clases.filter(c=>c.user_id===selUsuario&&c.fecha.startsWith(selMes));
+  const totalHist=clasesFiltradas.reduce((s,c)=>s+c.valor,0);
+  const horasHist=clasesFiltradas.reduce((s,c)=>s+(c.horas||1),0);
+  const porDiaHist={};
+  clasesFiltradas.forEach(c=>{const d=c.fecha.slice(0,10);if(!porDiaHist[d]) porDiaHist[d]={clases:[],total:0,horas:0};porDiaHist[d].clases.push(c);porDiaHist[d].total+=c.valor;porDiaHist[d].horas+=(c.horas||1);});
+  const diasHist=Object.keys(porDiaHist).sort().reverse();
+  const mesesDisp=[...new Set(clases.filter(c=>c.user_id===selUsuario).map(c=>c.fecha.slice(0,7)))].sort().reverse();
+  const hoyStr=`${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}-${String(ahora.getDate()).padStart(2,"0")}`;
+
+  // Estadísticas
+  const clasesStats = statsUsuario==="todos" ? clases : clases.filter(c=>c.user_id===statsUsuario);
+  const totalClases=clasesStats.length;
+  const totalHorasStats=clasesStats.reduce((s,c)=>s+(c.horas||1),0);
+  const totalGanado=clasesStats.reduce((s,c)=>s+c.valor,0);
+  const accesosStat=statsUsuario==="todos"?sesiones.length:sesiones.filter(s=>s.user_id===statsUsuario).length;
+  const conteoTipos={particular:0,colectiva:0,requerida:0};
+  clasesStats.forEach(c=>conteoTipos[c.tipo]++);
+  const mesesStats=[...new Set(clasesStats.map(c=>c.fecha.slice(0,7)))];
+  const mejorMesStats=mesesStats.map(m=>{
+    const t=clasesStats.filter(c=>c.fecha.startsWith(m)).reduce((s,c)=>s+c.valor,0);
+    const nom=new Date(m+"-01").toLocaleDateString("es-CL",{month:"long",year:"numeric"});
+    return {m,t,nom};
+  }).sort((a,b)=>b.t-a.t)[0];
+
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
-      <div style={{background:"linear-gradient(90deg,#0d2a3a,#1a3a50)",borderBottom:"2px solid #4FC3F7",padding:"20px 20px 16px",display:"flex",alignItems:"center",gap:12}}>
-        <button onClick={onBack} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:20,cursor:"pointer"}}>←</button>
-        <div><div style={{fontSize:10,letterSpacing:3,color:"#4FC3F7"}}>PANEL ADMIN</div><div style={{fontSize:18,fontWeight:"bold"}}>Gestión de usuarios</div></div>
-      </div>
-      <div style={{padding:20}}>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12,marginBottom:24}}>
-          {[{label:"Total",value:usuarios.length,color:"#4FC3F7"},{label:"Aprobados",value:aprobados,color:"#81C784"},{label:"Pendientes",value:pendientes,color:"#FFB74D"}].map(s=>(
-            <div key={s.label} style={{background:"rgba(255,255,255,0.04)",border:`1px solid ${s.color}33`,borderRadius:14,padding:"14px 10px",textAlign:"center"}}>
-              <div style={{fontSize:22,fontWeight:"bold",color:s.color}}>{s.value}</div>
-              <div style={{fontSize:11,color:"#90CAF9"}}>{s.label}</div>
-            </div>
+      <div style={{background:"linear-gradient(90deg,#0d2a3a,#1a3a50)",borderBottom:"2px solid #4FC3F7",padding:"20px 20px 0"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+          <button onClick={onBack} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:20,cursor:"pointer"}}>←</button>
+          <div>
+            <div style={{fontSize:10,letterSpacing:3,color:"#4FC3F7"}}>PANEL ADMIN</div>
+            <div style={{fontSize:18,fontWeight:"bold"}}>Gestión de usuarios</div>
+          </div>
+        </div>
+        <div style={{display:"flex"}}>
+          {[["usuarios","👥 Usuarios"],["historial","📋 Historial"],["stats","📊 Estadísticas"]].map(([key,label])=>(
+            <button key={key} onClick={()=>setSubTab(key)} style={{flex:1,padding:"10px 0",border:"none",borderBottom:subTab===key?"2px solid #4FC3F7":"2px solid transparent",background:subTab===key?"rgba(79,195,247,0.1)":"transparent",color:subTab===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
           ))}
         </div>
-        <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",marginBottom:12}}>USUARIOS</div>
-        {usuarios.map(u=>{
-          const esAdmin=u.is_admin,aprobado=u.aprobado;
-          const totalAccesos=sesiones.filter(s=>s.user_id===u.id).length;
-          const accesosMes=sesiones.filter(s=>s.user_id===u.id&&s.fecha.startsWith(mesActual)).length;
-          const borderColor=esAdmin?"#FFB74D33":aprobado?"rgba(129,199,132,0.2)":"rgba(255,183,77,0.2)";
-          const bg=esAdmin?"rgba(255,183,77,0.05)":aprobado?"rgba(129,199,132,0.05)":"rgba(255,183,77,0.05)";
-          return (
-            <div key={u.id} style={{background:bg,border:`1px solid ${borderColor}`,borderRadius:12,padding:"12px 14px",marginBottom:10}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
-                <div>
-                  <div style={{fontSize:14,color:"#e8f4f8"}}>{u.nombre||"Sin nombre"}</div>
-                  <div style={{fontSize:11,color:"#607d8b"}}>{u.email}</div>
-                  <div style={{fontSize:11,color:"#607d8b",marginTop:2}}>Registrado: {new Date(u.created_at).toLocaleDateString("es-CL")}</div>
-                  <div style={{fontSize:11,color:"#4FC3F7",marginTop:4}}>📲 <strong style={{color:"#fff"}}>{totalAccesos}</strong> accesos · <strong style={{color:"#81C784"}}>{accesosMes}</strong> este mes</div>
+      </div>
+
+      <div style={{padding:"16px 16px 80px"}}>
+
+        {/* ===== USUARIOS ===== */}
+        {subTab==="usuarios"&&(
+          <>
+            <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:10,padding:3,marginBottom:16,gap:3}}>
+              {[
+                ["pendientes",`⏳ Pendientes${pendientes.length>0?` (${pendientes.length})`:""}`,pendientes.length>0?"#FFB74D":"#607d8b"],
+                ["aprobados","✅ Aprobados","#81C784"],
+                ["bloqueados","❌ Bloqueados","#ef9a9a"],
+              ].map(([key,label,col])=>(
+                <button key={key} onClick={()=>setCatTab(key)} style={{flex:1,padding:"8px 4px",border:"none",borderRadius:8,background:catTab===key?"rgba(79,195,247,0.15)":"transparent",color:catTab===key?"#4FC3F7":col,fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:catTab===key?500:400}}>{label}</button>
+              ))}
+            </div>
+
+            {/* Pendientes */}
+            {catTab==="pendientes"&&(
+              pendientes.length===0?(
+                <div style={{textAlign:"center",padding:"40px 20px",color:"#607d8b"}}>
+                  <div style={{fontSize:36,marginBottom:8}}>🎉</div>
+                  <div style={{fontSize:14}}>Sin solicitudes pendientes</div>
                 </div>
-                <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4}}>
-                  {esAdmin&&<span style={{fontSize:11,color:"#FFB74D",background:"rgba(255,183,77,0.1)",border:"1px solid #FFB74D44",borderRadius:6,padding:"2px 8px"}}>👑 Admin</span>}
-                  {!esAdmin&&<span style={{fontSize:11,borderRadius:6,padding:"2px 8px",color:aprobado?"#81C784":"#FFB74D",background:aprobado?"rgba(129,199,132,0.1)":"rgba(255,183,77,0.1)",border:aprobado?"1px solid #81C78444":"1px solid #FFB74D44"}}>{aprobado?"✅ Aprobado":"⏳ Pendiente"}</span>}
+              ):pendientes.map(u=>(
+                <div key={u.id} style={{background:"rgba(255,183,77,0.05)",border:"1px solid rgba(255,183,77,0.2)",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+                    <div style={{position:"relative"}}>
+                      <Initials nombre={u.nombre} email={u.email} color="#FFB74D" bg="rgba(255,183,77,0.15)"/>
+                      <div style={{width:10,height:10,borderRadius:"50%",background:"#607d8b",border:"2px solid #0d2035",position:"absolute",bottom:0,right:0}}/>
+                    </div>
+                    <div>
+                      <div style={{fontSize:14,fontWeight:500}}>{u.nombre||"Sin nombre"}</div>
+                      <div style={{fontSize:11,color:"#607d8b"}}>{u.email}</div>
+                      <div style={{fontSize:11,color:"#607d8b"}}>Registrado: {new Date(u.created_at).toLocaleDateString("es-CL")}</div>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>cambiarEstado(u.id,true)} style={{flex:1,padding:"9px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",background:"rgba(129,199,132,0.15)",border:"1px solid #81C784",color:"#81C784"}}>✅ Aprobar</button>
+                    <button onClick={()=>cambiarEstado(u.id,false)} style={{flex:1,padding:"9px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",background:"rgba(239,83,80,0.1)",border:"1px solid #ef5350",color:"#ef9a9a"}}>❌ Rechazar</button>
+                  </div>
+                </div>
+              ))
+            )}
+
+            {/* Aprobados */}
+            {catTab==="aprobados"&&(
+              aprobados.length===0?(
+                <div style={{textAlign:"center",padding:"40px 20px",color:"#607d8b"}}>
+                  <div style={{fontSize:14}}>Sin usuarios aprobados</div>
+                </div>
+              ):(
+                <div style={{background:"rgba(129,199,132,0.03)",border:"1px solid rgba(129,199,132,0.15)",borderRadius:12,overflow:"hidden"}}>
+                  {aprobados.map((u,i)=>{
+                    const accesosMes=sesiones.filter(s=>s.user_id===u.id&&s.fecha.startsWith(mesActual)).length;
+                    const totalAccesos=sesiones.filter(s=>s.user_id===u.id).length;
+                    const ultimaSesion=sesiones.filter(s=>s.user_id===u.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+                    const activo=ultimaSesion&&(new Date()-new Date(ultimaSesion.fecha))<300000;
+                    return (
+                      <div key={u.id} style={{padding:"12px 14px",borderBottom:i<aprobados.length-1?"1px solid rgba(255,255,255,0.05)":"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          <div style={{position:"relative"}}>
+                            <Initials nombre={u.nombre} email={u.email} color={u.is_admin?"#FFB74D":"#4FC3F7"} bg={u.is_admin?"rgba(255,183,77,0.15)":"rgba(79,195,247,0.15)"}/>
+                            <div style={{width:10,height:10,borderRadius:"50%",background:activo?"#4CAF50":"#ef5350",border:"2px solid #0d2035",position:"absolute",bottom:0,right:0}}/>
+                          </div>
+                          <div>
+                            <div style={{fontSize:13,fontWeight:500}}>{u.nombre||"Sin nombre"}</div>
+                            <div style={{fontSize:11,color:"#607d8b"}}>📲 {totalAccesos} accesos · <span style={{color:activo?"#4CAF50":"#ef9a9a"}}>{activo?"activo ahora":"desconectado"}</span></div>
+                            <div style={{fontSize:11,color:"#607d8b"}}>{accesosMes} accesos este mes</div>
+                          </div>
+                        </div>
+                        <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+                          {u.is_admin&&<span style={{fontSize:10,color:"#FFB74D",background:"rgba(255,183,77,0.1)",border:"1px solid #FFB74D44",borderRadius:6,padding:"2px 7px"}}>👑 Admin</span>}
+                          {!u.is_admin&&<button onClick={()=>cambiarEstado(u.id,false)} style={{padding:"5px 9px",borderRadius:7,fontSize:11,cursor:"pointer",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535055",color:"#ef9a9a",fontFamily:"inherit"}}>❌ Bloquear</button>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            )}
+
+            {/* Bloqueados */}
+            {catTab==="bloqueados"&&(
+              usuarios.filter(u=>!u.aprobado&&!u.is_admin&&u.id!==usuarios.find(x=>x.is_admin)?.id).filter(u=>u.created_at).length===0||pendientes.length>0&&catTab==="bloqueados"?(
+                <div style={{textAlign:"center",padding:"40px 20px",color:"#607d8b"}}>
+                  <div style={{fontSize:36,marginBottom:8}}>✅</div>
+                  <div style={{fontSize:14}}>Sin usuarios bloqueados</div>
+                </div>
+              ):usuarios.filter(u=>!u.aprobado&&!u.is_admin).map(u=>(
+                <div key={u.id} style={{background:"rgba(239,83,80,0.05)",border:"1px solid rgba(239,83,80,0.2)",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <Initials nombre={u.nombre} email={u.email} color="#ef9a9a" bg="rgba(239,83,80,0.1)"/>
+                      <div>
+                        <div style={{fontSize:13,fontWeight:500}}>{u.nombre||"Sin nombre"}</div>
+                        <div style={{fontSize:11,color:"#607d8b"}}>{u.email}</div>
+                      </div>
+                    </div>
+                    <button onClick={()=>cambiarEstado(u.id,true)} style={{padding:"7px 12px",borderRadius:8,fontSize:12,cursor:"pointer",background:"rgba(129,199,132,0.1)",border:"1px solid #81C784",color:"#81C784",fontFamily:"inherit"}}>✅ Aprobar</button>
+                  </div>
+                </div>
+              ))
+            )}
+          </>
+        )}
+
+        {/* ===== HISTORIAL ===== */}
+        {subTab==="historial"&&(
+          <>
+            <div style={{display:"flex",gap:8,marginBottom:16}}>
+              <select value={selUsuario} onChange={e=>setSelUsuario(e.target.value)} style={{flex:1,fontSize:13,padding:"8px 10px",borderRadius:8,background:"#0d2a3a",border:"1px solid #4FC3F744",color:"#e8f4f8"}}>
+                {usuarios.filter(u=>u.aprobado||u.is_admin).map(u=><option key={u.id} value={u.id}>{u.nombre||u.email}</option>)}
+              </select>
+              <select value={selMes} onChange={e=>setSelMes(e.target.value)} style={{fontSize:13,padding:"8px 10px",borderRadius:8,background:"#0d2a3a",border:"1px solid #4FC3F744",color:"#e8f4f8"}}>
+                {[...new Set([selMes,...mesesDisp])].map(m=><option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+
+            <div style={{background:"linear-gradient(135deg,#0d2a3a,#1a3a50)",border:"1px solid rgba(79,195,247,0.3)",borderRadius:16,padding:"16px",marginBottom:14,textAlign:"center"}}>
+              <div style={{fontSize:10,letterSpacing:2,color:"#4FC3F7",marginBottom:4}}>TOTAL {selMes}</div>
+              <div style={{fontSize:32,fontWeight:"bold",marginBottom:12}}>{fmt(totalHist)}</div>
+              <div style={{display:"flex",justifyContent:"center",gap:20}}>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontSize:20,fontWeight:"bold",color:"#4FC3F7"}}>{clasesFiltradas.length}</div>
+                  <div style={{fontSize:11,color:"#607d8b"}}>Clases</div>
+                </div>
+                <div style={{width:1,background:"rgba(255,255,255,0.1)"}}/>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontSize:20,fontWeight:"bold",color:"#81C784"}}>{horasHist}h</div>
+                  <div style={{fontSize:11,color:"#607d8b"}}>Horas</div>
+                </div>
+                <div style={{width:1,background:"rgba(255,255,255,0.1)"}}/>
+                <div style={{textAlign:"center"}}>
+                  <div style={{fontSize:20,fontWeight:"bold",color:"#FFB74D"}}>{diasHist.length}</div>
+                  <div style={{fontSize:11,color:"#607d8b"}}>Días</div>
                 </div>
               </div>
-              {!esAdmin&&(
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>cambiarEstado(u.id,true)} style={{flex:1,padding:"8px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",background:aprobado?"rgba(129,199,132,0.2)":"rgba(129,199,132,0.1)",border:"1px solid #81C784",color:"#81C784"}}>✅ Aprobar</button>
-                  <button onClick={()=>cambiarEstado(u.id,false)} style={{flex:1,padding:"8px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",background:!aprobado?"rgba(239,83,80,0.2)":"rgba(239,83,80,0.1)",border:"1px solid #ef5350",color:"#ef9a9a"}}>❌ Bloquear</button>
-                </div>
-              )}
             </div>
-          );
-        })}
+
+            <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",marginBottom:10}}>DÍAS TRABAJADOS</div>
+
+            {diasHist.length===0?(
+              <div style={{textAlign:"center",padding:"30px",color:"#607d8b",fontSize:13}}>Sin clases este mes</div>
+            ):diasHist.map(dia=>{
+              const {clases:cd,total:td,horas:hd}=porDiaHist[dia];
+              const esHoy=dia===hoyStr;
+              const cDia={particular:0,colectiva:0,requerida:0};
+              let extras=0;
+              cd.forEach(c=>{cDia[c.tipo]++;if(c.tipo==="colectiva") extras+=(c.extras||0);});
+              const fechaLabel=new Date(dia+"T12:00:00").toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"});
+              return (
+                <div key={dia} style={{background:esHoy?"rgba(255,140,0,0.08)":"rgba(255,255,255,0.03)",border:esHoy?"1px solid rgba(255,140,0,0.4)":"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:"12px 14px",marginBottom:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <div style={{fontSize:13,fontWeight:"bold",color:esHoy?"#FF8C00":"#4FC3F7",textTransform:"capitalize"}}>{fechaLabel}</div>
+                      {esHoy&&<div style={{fontSize:10,color:"#FF8C00",background:"rgba(255,140,0,0.15)",border:"1px solid rgba(255,140,0,0.4)",borderRadius:5,padding:"1px 6px"}}>hoy</div>}
+                    </div>
+                    <div style={{fontSize:13,fontWeight:"bold"}}>{fmt(td)}</div>
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:4}}>
+                    {TIPOS.map(t=>cDia[t.key]>0&&(
+                      <span key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:6,padding:"2px 8px",fontSize:11,color:t.color}}>{t.emoji} ×{cDia[t.key]}{t.key==="colectiva"&&extras>0&&<span style={{color:"#81C784"}}> ➕{extras}</span>}</span>
+                    ))}
+                  </div>
+                  <div style={{fontSize:11,color:esHoy?"#FF8C00":"#607d8b"}}>⏱ {hd}h</div>
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* ===== ESTADÍSTICAS ===== */}
+        {subTab==="stats"&&(
+          <>
+            <select value={statsUsuario} onChange={e=>setStatsUsuario(e.target.value)} style={{width:"100%",fontSize:13,padding:"9px 12px",borderRadius:8,background:"#0d2a3a",border:"1px solid #4FC3F744",color:"#e8f4f8",marginBottom:16}}>
+              <option value="todos">Todos los usuarios</option>
+              {usuarios.filter(u=>u.aprobado||u.is_admin).map(u=><option key={u.id} value={u.id}>{u.nombre||u.email}</option>)}
+            </select>
+
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+              {[
+                {label:"Clases totales",value:totalClases,color:"#fff"},
+                {label:"Horas de clases",value:`${totalHorasStats}h`,color:"#4FC3F7"},
+                {label:"Total ganado",value:fmt(totalGanado),color:"#81C784"},
+                {label:"Horas en la app",value:`${accesosStat}`,color:"#FFB74D"},
+              ].map(s=>(
+                <div key={s.label} style={{background:"rgba(255,255,255,0.04)",borderRadius:12,padding:"14px",textAlign:"center"}}>
+                  <div style={{fontSize:20,fontWeight:"bold",color:s.color}}>{s.value}</div>
+                  <div style={{fontSize:11,color:"#607d8b",marginTop:4}}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",marginBottom:10}}>DISTRIBUCIÓN DE CLASES</div>
+            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:"14px",marginBottom:16}}>
+              {TIPOS.map(t=>{
+                const pct=totalClases>0?Math.round(conteoTipos[t.key]/totalClases*100):0;
+                return (
+                  <div key={t.key} style={{marginBottom:12}}>
+                    <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4}}>
+                      <span style={{color:t.color}}>{t.emoji} {t.label}</span>
+                      <span style={{fontWeight:500}}>{conteoTipos[t.key]} · {pct}%</span>
+                    </div>
+                    <div style={{height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${pct}%`,background:t.color,borderRadius:99}}/>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {mejorMesStats&&(
+              <>
+                <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",marginBottom:10}}>MEJOR MES</div>
+                <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:"14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div>
+                    <div style={{fontSize:14,fontWeight:500,textTransform:"capitalize"}}>{mejorMesStats.nom}</div>
+                    <div style={{fontSize:11,color:"#607d8b"}}>{clasesStats.filter(c=>c.fecha.startsWith(mejorMesStats.m)).length} clases</div>
+                  </div>
+                  <div style={{fontSize:16,fontWeight:"bold",color:"#FFB74D"}}>{fmt(mejorMesStats.t)} ★</div>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
       </div>
     </div>
   );
 }
 
 function EditarNombre({profile,onGuardar,onCerrar}) {
-  const [nombre,setNombre] = useState(profile?.nombre||"");
-  const [loading,setLoading] = useState(false);
-  async function guardar() {
-    setLoading(true);
-    await supabase.from("profiles").update({nombre}).eq("id",profile.id);
-    onGuardar(nombre); setLoading(false); onCerrar();
-  }
+  const [nombre,setNombre]=useState(profile?.nombre||"");
+  const [loading,setLoading]=useState(false);
+  async function guardar(){setLoading(true);await supabase.from("profiles").update({nombre}).eq("id",profile.id);onGuardar(nombre);setLoading(false);onCerrar();}
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
       <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px"}}>
@@ -233,9 +464,9 @@ function EditarNombre({profile,onGuardar,onCerrar}) {
   );
 }
 
-function Calendario({clases}) {
-  const [mesOffset,setMesOffset] = useState(0);
-  const [diaSeleccionado,setDiaSeleccionado] = useState(null);
+function Calendario({clases}){
+  const [mesOffset,setMesOffset]=useState(0);
+  const [diaSeleccionado,setDiaSeleccionado]=useState(null);
   const hoy=new Date();
   const fecha=new Date(hoy.getFullYear(),hoy.getMonth()+mesOffset,1);
   const anio=fecha.getFullYear(),mes=fecha.getMonth();
@@ -260,9 +491,7 @@ function Calendario({clases}) {
         <span style={{fontSize:15,fontWeight:"bold",color:"#fff",textTransform:"capitalize"}}>{nombreMes}</span>
         <button onClick={()=>{setMesOffset(m=>m+1);setDiaSeleccionado(null);}} style={{background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:8,color:"#4FC3F7",padding:"6px 14px",cursor:"pointer",fontSize:16}}>›</button>
       </div>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:6}}>
-        {DIAS_SEMANA.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:11,color:"#607d8b",padding:"4px 0"}}>{d}</div>)}
-      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:6}}>{DIAS_SEMANA.map((d,i)=><div key={i} style={{textAlign:"center",fontSize:11,color:"#607d8b",padding:"4px 0"}}>{d}</div>)}</div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
         {celdas.map((dia,i)=>{
           if(!dia) return <div key={i}/>;
@@ -278,30 +507,21 @@ function Calendario({clases}) {
           );
         })}
       </div>
-      <div style={{display:"flex",gap:12,marginTop:14,marginBottom:16}}>
-        {TIPOS.map(t=>(<div key={t.key} style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:8,height:8,borderRadius:"50%",background:t.color}}/><span style={{fontSize:11,color:"#90CAF9"}}>{t.label}</span></div>))}
-      </div>
+      <div style={{display:"flex",gap:12,marginTop:14,marginBottom:16}}>{TIPOS.map(t=>(<div key={t.key} style={{display:"flex",alignItems:"center",gap:4}}><div style={{width:8,height:8,borderRadius:"50%",background:t.color}}/><span style={{fontSize:11,color:"#90CAF9"}}>{t.label}</span></div>))}</div>
       {diaSeleccionado&&(
         <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px"}}>
           <div style={{fontSize:13,color:"#4FC3F7",marginBottom:10,textTransform:"capitalize"}}>{fechaDia}</div>
           {diasSelDia.length===0?<div style={{fontSize:13,color:"#607d8b"}}>Sin clases este día</div>:(
-            <>
-              {diasSelDia.map((c,i)=>{const tipo=TIPOS.find(t=>t.key===c.tipo);return(
-                <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<diasSelDia.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
-                  <div>
-                    <span style={{fontSize:13,color:tipo.color}}>{tipo.emoji} {tipo.label}</span>
-                    {c.tipo==="colectiva"&&<span style={{fontSize:12,color:"#90CAF9"}}> · {c.personas} pers.{c.extras>0&&<span style={{color:"#81C784"}}> (➕{c.extras})</span>}</span>}
-                    {c.horas>0&&<span style={{fontSize:11,color:"#4FC3F7"}}> · ⏱{c.horas}h</span>}
-                    {c.comentario&&<div style={{fontSize:11,color:"#607d8b",marginTop:2}}>💬 {c.comentario}</div>}
-                  </div>
-                  <span style={{fontSize:13,color:"#fff"}}>{fmt(c.valor)}</span>
-                </div>
-              );})}
-              <div style={{display:"flex",justifyContent:"space-between",marginTop:10,paddingTop:8,borderTop:"1px solid rgba(255,255,255,0.08)"}}>
-                <span style={{fontSize:13,color:"#90CAF9"}}>Total del día</span>
-                <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{fmt(totalDia)}</span>
+            <>{diasSelDia.map((c,i)=>{const tipo=TIPOS.find(t=>t.key===c.tipo);return(
+              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<diasSelDia.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
+                <div><span style={{fontSize:13,color:tipo.color}}>{tipo.emoji} {tipo.label}</span>{c.tipo==="colectiva"&&<span style={{fontSize:12,color:"#90CAF9"}}> · {c.personas} pers.</span>}{c.horas>0&&<span style={{fontSize:11,color:"#4FC3F7"}}> · ⏱{c.horas}h</span>}</div>
+                <span style={{fontSize:13,color:"#fff"}}>{fmt(c.valor)}</span>
               </div>
-            </>
+            );})}
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:10,paddingTop:8,borderTop:"1px solid rgba(255,255,255,0.08)"}}>
+              <span style={{fontSize:13,color:"#90CAF9"}}>Total del día</span>
+              <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{fmt(totalDia)}</span>
+            </div></>
           )}
         </div>
       )}
@@ -309,9 +529,9 @@ function Calendario({clases}) {
   );
 }
 
-function PorDia({clases}) {
+function PorDia({clases}){
   const hoy=new Date();
-  const [mesOffset,setMesOffset] = useState(0);
+  const [mesOffset,setMesOffset]=useState(0);
   const fecha=new Date(hoy.getFullYear(),hoy.getMonth()+mesOffset,1);
   const anio=fecha.getFullYear(),mes=fecha.getMonth();
   const mesStr=`${anio}-${String(mes+1).padStart(2,"0")}`;
@@ -330,16 +550,14 @@ function PorDia({clases}) {
         <span style={{fontSize:15,fontWeight:"bold",color:"#fff",textTransform:"capitalize"}}>{nombreMes}</span>
         <button onClick={()=>setMesOffset(m=>m+1)} style={{background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:8,color:"#4FC3F7",padding:"6px 14px",cursor:"pointer",fontSize:16}}>›</button>
       </div>
-      {diasOrdenados.length===0?(
-        <div style={{textAlign:"center",color:"#607d8b",marginTop:40,fontSize:14}}>No hay clases registradas este mes</div>
-      ):diasOrdenados.map(dia=>{
-        const {clases:clasesDelDia,total:totalDia,horas:horasDia}=porDia[dia];
+      {diasOrdenados.length===0?<div style={{textAlign:"center",color:"#607d8b",marginTop:40,fontSize:14}}>No hay clases este mes</div>:diasOrdenados.map(dia=>{
+        const {clases:cd,total:td,horas:hd}=porDia[dia];
         const esHoy=dia===hoyStr;
         const cDia={particular:0,colectiva:0,requerida:0};
         let extrasDelDia=0;
-        clasesDelDia.forEach(c=>{cDia[c.tipo]++;if(c.tipo==="colectiva") extrasDelDia+=(c.extras||0);});
+        cd.forEach(c=>{cDia[c.tipo]++;if(c.tipo==="colectiva") extrasDelDia+=(c.extras||0);});
         const fechaLabel=new Date(dia+"T12:00:00").toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"});
-        const tieneComentarios=clasesDelDia.some(c=>c.comentario);
+        const tieneComentarios=cd.some(c=>c.comentario);
         return (
           <div key={dia} style={{background:esHoy?"rgba(255,140,0,0.08)":"rgba(255,255,255,0.03)",border:esHoy?"1px solid rgba(255,140,0,0.4)":"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:"12px 14px",marginBottom:10}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
@@ -347,18 +565,13 @@ function PorDia({clases}) {
                 <div style={{fontSize:13,fontWeight:"bold",color:esHoy?"#FF8C00":"#4FC3F7",textTransform:"capitalize"}}>{fechaLabel}</div>
                 {esHoy&&<div style={{fontSize:10,color:"#FF8C00",background:"rgba(255,140,0,0.15)",border:"1px solid rgba(255,140,0,0.4)",borderRadius:5,padding:"1px 6px"}}>hoy</div>}
               </div>
-              <div style={{fontSize:14,fontWeight:"bold",color:"#fff"}}>{fmt(totalDia)}</div>
+              <div style={{fontSize:14,fontWeight:"bold",color:"#fff"}}>{fmt(td)}</div>
             </div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
-              {TIPOS.map(t=>cDia[t.key]>0&&(
-                <div key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:7,padding:"3px 8px",fontSize:11,display:"flex",alignItems:"center",gap:4}}>
-                  <span style={{color:t.color}}>{t.emoji} {t.label} ×{cDia[t.key]}</span>
-                  {t.key==="colectiva"&&extrasDelDia>0&&<span style={{background:"rgba(129,199,132,0.2)",border:"1px solid #81C78455",borderRadius:5,padding:"0px 5px",fontSize:10,color:"#81C784"}}>➕{extrasDelDia}</span>}
-                </div>
-              ))}
+              {TIPOS.map(t=>cDia[t.key]>0&&(<div key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:7,padding:"3px 8px",fontSize:11,display:"flex",alignItems:"center",gap:4}}><span style={{color:t.color}}>{t.emoji} {t.label} ×{cDia[t.key]}</span>{t.key==="colectiva"&&extrasDelDia>0&&<span style={{background:"rgba(129,199,132,0.2)",border:"1px solid #81C78455",borderRadius:5,padding:"0px 5px",fontSize:10,color:"#81C784"}}>➕{extrasDelDia}</span>}</div>))}
             </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-              <div style={{fontSize:11,color:esHoy?"#FF8C00":"#607d8b"}}>⏱ {horasDia}h · {clasesDelDia.length} clase{clasesDelDia.length>1?"s":""}</div>
+              <div style={{fontSize:11,color:esHoy?"#FF8C00":"#607d8b"}}>⏱ {hd}h · {cd.length} clase{cd.length>1?"s":""}</div>
               {tieneComentarios&&<div style={{fontSize:11,color:"#4FC3F7",background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:6,padding:"1px 6px"}}>💬 comentario</div>}
             </div>
           </div>
@@ -380,7 +593,7 @@ function PorDia({clases}) {
   );
 }
 
-function PorMes({clases}) {
+function PorMes({clases}){
   const hoy=new Date();
   const mesesConDatos=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort();
   const mesActualStr=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}`;
@@ -410,7 +623,6 @@ function PorMes({clases}) {
           const anterior=i>0?datosPorMes[i-1]:null;
           const diff=anterior?d.total-anterior.total:null;
           const esMejor=d.m===mejorMes?.m;
-          const barColor=d.esActual?"#81C784":"rgba(79,195,247,0.4)";
           return (
             <div key={d.m}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
@@ -425,14 +637,10 @@ function PorMes({clases}) {
                 </div>
               </div>
               <div style={{height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginBottom:4}}>
-                <div style={{height:"100%",width:`${d.pctDias}%`,background:barColor,borderRadius:99}}/>
+                <div style={{height:"100%",width:`${d.pctDias}%`,background:d.esActual?"#81C784":"rgba(79,195,247,0.4)",borderRadius:99}}/>
               </div>
               <div style={{display:"flex",justifyContent:"space-between"}}>
-                <span style={{fontSize:11,color:"#607d8b"}}>
-                  {d.conteo.particular>0&&`⛷️ ${d.conteo.particular} · `}
-                  {d.conteo.colectiva>0&&`👥 ${d.conteo.colectiva} · `}
-                  {d.conteo.requerida>0&&`📋 ${d.conteo.requerida}`}
-                </span>
+                <span style={{fontSize:11,color:"#607d8b"}}>{d.conteo.particular>0&&`⛷️ ${d.conteo.particular} · `}{d.conteo.colectiva>0&&`👥 ${d.conteo.colectiva} · `}{d.conteo.requerida>0&&`📋 ${d.conteo.requerida}`}</span>
                 <div style={{display:"flex",alignItems:"center",gap:4}}>
                   <span style={{fontSize:11,color:d.esActual?"#81C784":"#607d8b"}}>{d.diaActual}/{d.totalDiasMes} días ·</span>
                   <span style={{fontSize:11,color:"#4FC3F7",background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:6,padding:"1px 6px"}}>⏱ {d.horas}h</span>
@@ -461,25 +669,25 @@ function PorMes({clases}) {
 }
 
 export default function SkiTracker() {
-  const [user,setUser] = useState(null);
-  const [profile,setProfile] = useState(null);
-  const [loading,setLoading] = useState(true);
-  const [showAdmin,setShowAdmin] = useState(false);
-  const [showEditarNombre,setShowEditarNombre] = useState(false);
-  const [precios,setPrecios] = useState(DEFAULT_PRECIOS);
-  const [clases,setClases] = useState([]);
-  const [descuentos,setDescuentos] = useState([]);
-  const [personas,setPersonas] = useState(3);
-  const [horasNuevaClase,setHorasNuevaClase] = useState({particular:1,colectiva:1,requerida:1});
-  const [showConfig,setShowConfig] = useState(false);
-  const [tempPrecios,setTempPrecios] = useState(precios);
-  const [descuentoInput,setDescuentoInput] = useState("");
-  const [tab,setTab] = useState("registro");
-  const [subTabCal,setSubTabCal] = useState("calendario");
-  const [mes,setMes] = useState(()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}`;});
-  const [comentarios,setComentarios] = useState({});
-  const [comentarioPrevio,setComentarioPrevio] = useState({particular:"",colectiva:"",requerida:""});
-  const [mostrarComentarioPrevio,setMostrarComentarioPrevio] = useState({particular:false,colectiva:false,requerida:false});
+  const [user,setUser]=useState(null);
+  const [profile,setProfile]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [showAdmin,setShowAdmin]=useState(false);
+  const [showEditarNombre,setShowEditarNombre]=useState(false);
+  const [precios,setPrecios]=useState(DEFAULT_PRECIOS);
+  const [clases,setClases]=useState([]);
+  const [descuentos,setDescuentos]=useState([]);
+  const [personas,setPersonas]=useState(3);
+  const [horasNuevaClase,setHorasNuevaClase]=useState({particular:1,colectiva:1,requerida:1});
+  const [showConfig,setShowConfig]=useState(false);
+  const [tempPrecios,setTempPrecios]=useState(precios);
+  const [descuentoInput,setDescuentoInput]=useState("");
+  const [tab,setTab]=useState("registro");
+  const [subTabCal,setSubTabCal]=useState("calendario");
+  const [mes,setMes]=useState(()=>{const n=new Date();return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,"0")}`;});
+  const [comentarios,setComentarios]=useState({});
+  const [comentarioPrevio,setComentarioPrevio]=useState({particular:"",colectiva:"",requerida:""});
+  const [mostrarComentarioPrevio,setMostrarComentarioPrevio]=useState({particular:false,colectiva:false,requerida:false});
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
@@ -487,7 +695,7 @@ export default function SkiTracker() {
     return ()=>subscription.unsubscribe();
   },[]);
 
-  async function handleAuth(u) {
+  async function handleAuth(u){
     setUser(u);
     await supabase.from("sesiones").insert({user_id:u.id});
     await supabase.from("profiles").update({last_seen:new Date().toISOString()}).eq("id",u.id);
@@ -506,35 +714,35 @@ export default function SkiTracker() {
 
   async function logout(){await supabase.auth.signOut();setUser(null);setProfile(null);setClases([]);setDescuentos([]);}
 
-  function calcularValor(tipo, horas) {
-    const h = horas || 1;
-    if(tipo==="particular") return precios.particular * h;
-    if(tipo==="requerida") return precios.requerida * h;
-    const extras = Math.max(0, personas - precios.colectiva_base);
-    const extraValor = precios.extra_por_hora ? precios.colectiva_extra * extras * h : precios.colectiva_extra * extras;
-    return precios.colectiva * h + extraValor;
+  function calcularValor(tipo,horas){
+    const h=horas||1;
+    if(tipo==="particular") return precios.particular*h;
+    if(tipo==="requerida") return precios.requerida*h;
+    const extras=Math.max(0,personas-precios.colectiva_base);
+    const extraValor=precios.extra_por_hora?precios.colectiva_extra*extras*h:precios.colectiva_extra*extras;
+    return precios.colectiva*h+extraValor;
   }
 
-  async function agregarClase(tipo) {
-    const horas = horasNuevaClase[tipo] || 1;
-    const valor = calcularValor(tipo, horas);
-    const extras = tipo==="colectiva" ? Math.max(0, personas - precios.colectiva_base) : 0;
-    const comentario = comentarioPrevio[tipo] || "";
-    const {data,error} = await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,comentario:comentario||null,horas,fecha:new Date().toISOString()}).select().single();
+  async function agregarClase(tipo){
+    const horas=horasNuevaClase[tipo]||1;
+    const valor=calcularValor(tipo,horas);
+    const extras=tipo==="colectiva"?Math.max(0,personas-precios.colectiva_base):0;
+    const comentario=comentarioPrevio[tipo]||"";
+    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,comentario:comentario||null,horas,fecha:new Date().toISOString()}).select().single();
     if(!error&&data){setClases(prev=>[...prev,data]);if(comentario.trim()) setComentarios(p=>({...p,[data.id]:comentario}));}
     setComentarioPrevio(p=>({...p,[tipo]:""}));
     setMostrarComentarioPrevio(p=>({...p,[tipo]:false}));
     setHorasNuevaClase(p=>({...p,[tipo]:1}));
   }
 
-  async function eliminarUltimaDeTipo(tipo) {
+  async function eliminarUltimaDeTipo(tipo){
     const ultima=[...clases].filter(c=>c.tipo===tipo&&c.fecha.startsWith(mes)).pop();
     if(!ultima) return;
     await supabase.from("clases").delete().eq("id",ultima.id);
     setClases(prev=>prev.filter(c=>c.id!==ultima.id));
   }
 
-  async function agregarDescuento() {
+  async function agregarDescuento(){
     const val=parseInt(descuentoInput.replace(/\D/g,""));
     if(!val||val<=0) return;
     const {data,error}=await supabase.from("descuentos").insert({user_id:user.id,valor:val,fecha:new Date().toISOString()}).select().single();
@@ -544,15 +752,20 @@ export default function SkiTracker() {
 
   async function eliminarDescuento(id){await supabase.from("descuentos").delete().eq("id",id);setDescuentos(prev=>prev.filter(d=>d.id!==id));}
 
-  async function guardarPrecios() {
+  async function guardarPrecios(){
     await supabase.from("precios").update({particular:tempPrecios.particular,colectiva:tempPrecios.colectiva,colectiva_extra:tempPrecios.colectiva_extra,colectiva_base:tempPrecios.colectiva_base,requerida:tempPrecios.requerida,extra_por_hora:tempPrecios.extra_por_hora}).eq("user_id",user.id);
-    setPrecios({...tempPrecios}); setShowConfig(false);
+    setPrecios({...tempPrecios});setShowConfig(false);
+  }
+
+  async function guardarComentario(claseId,texto){
+    await supabase.from("clases").update({comentario:texto||null}).eq("id",claseId);
+    setComentarios(p=>({...p,[claseId]:texto}));
   }
 
   if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif",fontSize:16}}>⛷️ Cargando...</div>;
   if(!user) return <AuthScreen onAuth={handleAuth}/>;
   if(profile&&!profile.aprobado&&!profile.is_admin) return <PendienteScreen user={user} onLogout={logout}/>;
-  if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)}/>;
+  if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)} allClases={clases}/>;
 
   const base=precios.colectiva_base||3;
   const clasesMes=clases.filter(c=>c.fecha.startsWith(mes));
@@ -637,8 +850,6 @@ export default function SkiTracker() {
         {tab==="registro"&&(
           <>
             <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",textTransform:"uppercase",marginBottom:12}}>Registrar clase</div>
-
-            {/* COLECTIVA */}
             <div style={{background:"#0d2a1a",border:"1px solid rgba(129,199,132,0.3)",borderRadius:14,padding:"16px",marginBottom:12}}>
               <div style={{fontSize:13,color:"#81C784",marginBottom:10,fontWeight:"bold"}}>👥 Colectiva</div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
@@ -667,7 +878,7 @@ export default function SkiTracker() {
               </div>
               <div style={{borderTop:"1px solid rgba(129,199,132,0.2)",paddingTop:8,marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between"}}>
-                  <span style={{fontSize:11,color:"#607d8b"}}>{fmt(precios.colectiva)} × {horasNuevaClase.colectiva}h{extrasActuales>0?` + extras`:""}</span>
+                  <span style={{fontSize:11,color:"#607d8b"}}>{fmt(precios.colectiva)} × {horasNuevaClase.colectiva}h{extrasActuales>0?" + extras":""}</span>
                   <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{fmt(colectivaPreview)}</span>
                 </div>
               </div>
@@ -679,7 +890,6 @@ export default function SkiTracker() {
               <button onClick={()=>eliminarUltimaDeTipo("colectiva")} style={{width:"100%",padding:"9px",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535066",borderRadius:10,color:"#ef9a9a",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>↩ Deshacer última colectiva</button>
             </div>
 
-            {/* PARTICULAR Y REQUERIDA */}
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
               {TIPOS.filter(t=>t.key!=="colectiva").map(t=>(
                 <div key={t.key} style={{background:`linear-gradient(135deg,${t.bg},#1a2a35)`,border:`1px solid ${t.color}55`,borderRadius:14,padding:"16px 12px"}}>
@@ -707,7 +917,6 @@ export default function SkiTracker() {
               ))}
             </div>
 
-            {/* DESCUENTOS */}
             <div style={{background:"linear-gradient(135deg,#2a0d0d,#1a1020)",border:"1px solid rgba(239,83,80,0.3)",borderRadius:18,padding:"16px"}}>
               <div style={{fontSize:11,color:"#ef9a9a",letterSpacing:1,marginBottom:10}}>🍽️ DESCUENTOS COMIDA</div>
               <div style={{display:"flex",gap:10,marginBottom:12}}>
@@ -733,7 +942,6 @@ export default function SkiTracker() {
         )}
       </div>
 
-      {/* MODAL PRECIOS */}
       {showConfig&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:100}}>
           <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
@@ -756,17 +964,8 @@ export default function SkiTracker() {
                 </div>
                 {key==="colectiva_extra"&&(
                   <div style={{marginTop:10}}>
-                    <Toggle
-                      value={tempPrecios.extra_por_hora??true}
-                      onChange={v=>setTempPrecios(p=>({...p,extra_por_hora:v}))}
-                      label="⏱ Multiplicar por horas"
-                      desc="El extra se cobra por cada hora de clase"
-                    />
-                    <div style={{fontSize:11,color:tempPrecios.extra_por_hora?"#81C784":"#607d8b",textAlign:"center",marginTop:6}}>
-                      {tempPrecios.extra_por_hora
-                        ?`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} × 2h = ${fmt(tempPrecios.colectiva_extra*2*2)}`
-                        :`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} = ${fmt(tempPrecios.colectiva_extra*2)} (fijo)`}
-                    </div>
+                    <Toggle value={tempPrecios.extra_por_hora??true} onChange={v=>setTempPrecios(p=>({...p,extra_por_hora:v}))} label="⏱ Multiplicar por horas" desc="El extra se cobra por cada hora de clase"/>
+                    <div style={{fontSize:11,color:tempPrecios.extra_por_hora?"#81C784":"#607d8b",textAlign:"center",marginTop:6}}>{tempPrecios.extra_por_hora?`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} × 2h = ${fmt(tempPrecios.colectiva_extra*2*2)}`:`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} = ${fmt(tempPrecios.colectiva_extra*2)} (fijo)`}</div>
                   </div>
                 )}
               </div>
