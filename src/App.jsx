@@ -124,11 +124,45 @@ function AdminPanel({ onBack }) {
   );
 }
 
+function EditarNombre({ profile, onGuardar, onCerrar }) {
+  const [nombre, setNombre] = useState(profile?.nombre || "");
+  const [loading, setLoading] = useState(false);
+
+  async function guardar() {
+    setLoading(true);
+    await supabase.from("profiles").update({ nombre }).eq("id", profile.id);
+    onGuardar(nombre);
+    setLoading(false);
+    onCerrar();
+  }
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"flex-end", zIndex:200 }}>
+      <div style={{ width:"100%", background:"linear-gradient(160deg,#0a1628,#0d2035)", borderTop:"2px solid #4FC3F7", borderRadius:"20px 20px 0 0", padding:"24px 24px 44px" }}>
+        <div style={{ fontSize:18, fontWeight:"bold", marginBottom:20, color:"#4FC3F7" }}>✏️ Editar nombre</div>
+        <input
+          placeholder="Tu nombre"
+          value={nombre}
+          onChange={e=>setNombre(e.target.value)}
+          style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F7", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:16, boxSizing:"border-box", fontFamily:"inherit", marginBottom:16 }}
+        />
+        <div style={{ display:"flex", gap:12 }}>
+          <button onClick={onCerrar} style={{ flex:1, padding:"14px", background:"rgba(255,255,255,0.05)", border:"1px solid #555", borderRadius:12, color:"#90CAF9", fontSize:15, cursor:"pointer" }}>Cancelar</button>
+          <button onClick={guardar} disabled={loading} style={{ flex:2, padding:"14px", background:"linear-gradient(90deg,#0277bd,#0288d1)", border:"none", borderRadius:12, color:"#fff", fontSize:15, fontWeight:"bold", cursor:"pointer" }}>
+            {loading ? "..." : "Guardar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SkiTracker() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showEditarNombre, setShowEditarNombre] = useState(false);
   const [precios, setPrecios] = useState(DEFAULT_PRECIOS);
   const [clases, setClases] = useState([]);
   const [descuentos, setDescuentos] = useState([]);
@@ -235,9 +269,12 @@ export default function SkiTracker() {
     <div style={{ minHeight:"100vh", background:"linear-gradient(160deg,#0a1628 0%,#0d2035 50%,#0a1628 100%)", fontFamily:"Georgia,serif", color:"#e8f4f8" }}>
       <div style={{ background:"linear-gradient(90deg,#0d2a3a,#1a3a50)", borderBottom:"2px solid #4FC3F7", padding:"20px 20px 0", position:"sticky", top:0, zIndex:10 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div>
+          <div style={{ cursor:"pointer" }} onClick={()=>setShowEditarNombre(true)}>
             <div style={{ fontSize:10, letterSpacing:3, color:"#4FC3F7", textTransform:"uppercase" }}>⛷️ Ski Instructor</div>
-            <div style={{ fontSize:18, fontWeight:"bold", color:"#fff" }}>{profile?.nombre||profile?.email?.split("@")[0]||"Mi cuenta"}</div>
+            <div style={{ fontSize:18, fontWeight:"bold", color:"#fff", display:"flex", alignItems:"center", gap:6 }}>
+              {profile?.nombre || profile?.email?.split("@")[0] || "Mi cuenta"}
+              <span style={{ fontSize:12, color:"#4FC3F7" }}>✏️</span>
+            </div>
           </div>
           <div style={{ display:"flex", gap:8 }}>
             {profile?.is_admin && <button onClick={()=>setShowAdmin(true)} style={{ background:"rgba(255,183,77,0.15)", border:"1px solid #FFB74D", borderRadius:10, color:"#FFB74D", padding:"8px 10px", fontSize:12, cursor:"pointer" }}>👑</button>}
@@ -429,6 +466,14 @@ export default function SkiTracker() {
             </div>
           </div>
         </div>
+      )}
+
+      {showEditarNombre && (
+        <EditarNombre
+          profile={profile}
+          onGuardar={(nuevoNombre)=>setProfile(p=>({...p, nombre:nuevoNombre}))}
+          onCerrar={()=>setShowEditarNombre(false)}
+        />
       )}
     </div>
   );
