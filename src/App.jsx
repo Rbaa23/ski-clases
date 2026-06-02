@@ -11,6 +11,7 @@ const TIPOS = [
   { key:"colectiva",  label:"Colectiva",  emoji:"👥", color:"#81C784", bg:"#0d2a1a" },
   { key:"requerida",  label:"Requerida",  emoji:"📋", color:"#FFB74D", bg:"#2a1d0d" },
 ];
+const DIAS_SEMANA = ["L","M","M","J","V","S","D"];
 function fmt(n){ return "$"+Math.round(n).toLocaleString("es-CL"); }
 function fechaCorta(iso){ return new Date(iso).toLocaleDateString("es-CL",{weekday:"short",day:"numeric",month:"short"}); }
 
@@ -127,32 +128,136 @@ function AdminPanel({ onBack }) {
 function EditarNombre({ profile, onGuardar, onCerrar }) {
   const [nombre, setNombre] = useState(profile?.nombre || "");
   const [loading, setLoading] = useState(false);
-
   async function guardar() {
     setLoading(true);
     await supabase.from("profiles").update({ nombre }).eq("id", profile.id);
-    onGuardar(nombre);
-    setLoading(false);
-    onCerrar();
+    onGuardar(nombre); setLoading(false); onCerrar();
   }
-
   return (
     <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.85)", display:"flex", alignItems:"flex-end", zIndex:200 }}>
       <div style={{ width:"100%", background:"linear-gradient(160deg,#0a1628,#0d2035)", borderTop:"2px solid #4FC3F7", borderRadius:"20px 20px 0 0", padding:"24px 24px 44px" }}>
         <div style={{ fontSize:18, fontWeight:"bold", marginBottom:20, color:"#4FC3F7" }}>✏️ Editar nombre</div>
-        <input
-          placeholder="Tu nombre"
-          value={nombre}
-          onChange={e=>setNombre(e.target.value)}
-          style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F7", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:16, boxSizing:"border-box", fontFamily:"inherit", marginBottom:16 }}
-        />
+        <input placeholder="Tu nombre" value={nombre} onChange={e=>setNombre(e.target.value)}
+          style={{ width:"100%", background:"#0d2a3a", border:"1px solid #4FC3F7", borderRadius:12, color:"#fff", padding:"14px 16px", fontSize:16, boxSizing:"border-box", fontFamily:"inherit", marginBottom:16 }} />
         <div style={{ display:"flex", gap:12 }}>
           <button onClick={onCerrar} style={{ flex:1, padding:"14px", background:"rgba(255,255,255,0.05)", border:"1px solid #555", borderRadius:12, color:"#90CAF9", fontSize:15, cursor:"pointer" }}>Cancelar</button>
-          <button onClick={guardar} disabled={loading} style={{ flex:2, padding:"14px", background:"linear-gradient(90deg,#0277bd,#0288d1)", border:"none", borderRadius:12, color:"#fff", fontSize:15, fontWeight:"bold", cursor:"pointer" }}>
-            {loading ? "..." : "Guardar"}
-          </button>
+          <button onClick={guardar} disabled={loading} style={{ flex:2, padding:"14px", background:"linear-gradient(90deg,#0277bd,#0288d1)", border:"none", borderRadius:12, color:"#fff", fontSize:15, fontWeight:"bold", cursor:"pointer" }}>{loading?"...":"Guardar"}</button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function Calendario({ clases, precios }) {
+  const [mesOffset, setMesOffset] = useState(0);
+  const [diaSeleccionado, setDiaSeleccionado] = useState(null);
+
+  const hoy = new Date();
+  const fecha = new Date(hoy.getFullYear(), hoy.getMonth() + mesOffset, 1);
+  const anio = fecha.getFullYear();
+  const mes = fecha.getMonth();
+  const mesStr = `${anio}-${String(mes+1).padStart(2,"0")}`;
+  const nombreMes = fecha.toLocaleDateString("es-CL", { month:"long", year:"numeric" });
+
+  const diasEnMes = new Date(anio, mes+1, 0).getDate();
+  let primerDia = new Date(anio, mes, 1).getDay();
+  primerDia = primerDia === 0 ? 6 : primerDia - 1;
+
+  const clasesMes = clases.filter(c => c.fecha.startsWith(mesStr));
+  const porDia = {};
+  clasesMes.forEach(c => {
+    const dia = c.fecha.slice(8,10).replace(/^0/,"");
+    if (!porDia[dia]) porDia[dia] = { clases:[], total:0 };
+    porDia[dia].clases.push(c);
+    porDia[dia].total += c.valor;
+  });
+
+  const diasSelDia = diaSeleccionado ? (porDia[diaSeleccionado]?.clases || []) : [];
+  const totalDia = diaSeleccionado ? (porDia[diaSeleccionado]?.total || 0) : 0;
+  const fechaDia = diaSeleccionado ? new Date(anio, mes, parseInt(diaSeleccionado)).toLocaleDateString("es-CL", { weekday:"long", day:"numeric", month:"long" }) : "";
+
+  const celdas = [];
+  for (let i=0; i<primerDia; i++) celdas.push(null);
+  for (let d=1; d<=diasEnMes; d++) celdas.push(d);
+
+  return (
+    <div style={{ paddingBottom:20 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+        <button onClick={()=>{ setMesOffset(m=>m-1); setDiaSeleccionado(null); }} style={{ background:"rgba(79,195,247,0.15)", border:"1px solid #4FC3F7", borderRadius:8, color:"#4FC3F7", padding:"6px 14px", cursor:"pointer", fontSize:16 }}>‹</button>
+        <span style={{ fontSize:15, fontWeight:"bold", color:"#fff", textTransform:"capitalize" }}>{nombreMes}</span>
+        <button onClick={()=>{ setMesOffset(m=>m+1); setDiaSeleccionado(null); }} style={{ background:"rgba(79,195,247,0.15)", border:"1px solid #4FC3F7", borderRadius:8, color:"#4FC3F7", padding:"6px 14px", cursor:"pointer", fontSize:16 }}>›</button>
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3, marginBottom:6 }}>
+        {DIAS_SEMANA.map((d,i)=>(
+          <div key={i} style={{ textAlign:"center", fontSize:11, color:"#607d8b", padding:"4px 0" }}>{d}</div>
+        ))}
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:3 }}>
+        {celdas.map((dia, i)=>{
+          if (!dia) return <div key={i} />;
+          const dStr = String(dia);
+          const tiene = porDia[dStr];
+          const esHoy = anio===hoy.getFullYear() && mes===hoy.getMonth() && dia===hoy.getDate();
+          const seleccionado = diaSeleccionado === dStr;
+          const tiposPresentes = tiene ? [...new Set(tiene.clases.map(c=>c.tipo))] : [];
+          return (
+            <div key={i} onClick={()=>setDiaSeleccionado(seleccionado ? null : dStr)}
+              style={{ borderRadius:10, padding:"6px 2px", textAlign:"center", cursor:tiene?"pointer":"default",
+                background: seleccionado ? "rgba(79,195,247,0.2)" : tiene ? "rgba(255,255,255,0.05)" : "transparent",
+                border: seleccionado ? "1px solid #4FC3F7" : esHoy ? "1px solid #4FC3F744" : "1px solid transparent" }}>
+              <div style={{ fontSize:13, color: seleccionado ? "#4FC3F7" : esHoy ? "#4FC3F7" : tiene ? "#fff" : "#607d8b", fontWeight: esHoy||seleccionado ? "bold" : "normal" }}>{dia}</div>
+              {tiene && (
+                <div style={{ display:"flex", justifyContent:"center", gap:2, marginTop:3, flexWrap:"wrap" }}>
+                  {tiposPresentes.map(t=>{
+                    const tipo = TIPOS.find(x=>x.key===t);
+                    return <div key={t} style={{ width:6, height:6, borderRadius:"50%", background:tipo?.color||"#fff" }} />;
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ display:"flex", gap:12, marginTop:14, marginBottom:16 }}>
+        {TIPOS.map(t=>(
+          <div key={t.key} style={{ display:"flex", alignItems:"center", gap:4 }}>
+            <div style={{ width:8, height:8, borderRadius:"50%", background:t.color }} />
+            <span style={{ fontSize:11, color:"#90CAF9" }}>{t.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {diaSeleccionado && (
+        <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(79,195,247,0.2)", borderRadius:14, padding:"14px 16px" }}>
+          <div style={{ fontSize:13, color:"#4FC3F7", marginBottom:10, textTransform:"capitalize" }}>{fechaDia}</div>
+          {diasSelDia.length === 0 ? (
+            <div style={{ fontSize:13, color:"#607d8b" }}>Sin clases este día</div>
+          ) : (
+            <>
+              {diasSelDia.map((c,i)=>{
+                const tipo = TIPOS.find(t=>t.key===c.tipo);
+                return (
+                  <div key={c.id} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0", borderBottom: i<diasSelDia.length-1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                    <div>
+                      <span style={{ fontSize:13, color:tipo.color }}>{tipo.emoji} {tipo.label}</span>
+                      {c.tipo==="colectiva" && <span style={{ fontSize:12, color:"#90CAF9" }}> · {c.personas} pers.{c.extras>0&&<span style={{ color:"#81C784" }}> (➕{c.extras})</span>}</span>}
+                      {c.comentario && <div style={{ fontSize:11, color:"#607d8b", marginTop:2 }}>💬 {c.comentario}</div>}
+                    </div>
+                    <span style={{ fontSize:13, color:"#fff" }}>{fmt(c.valor)}</span>
+                  </div>
+                );
+              })}
+              <div style={{ display:"flex", justifyContent:"space-between", marginTop:10, paddingTop:8, borderTop:"1px solid rgba(255,255,255,0.08)" }}>
+                <span style={{ fontSize:13, color:"#90CAF9" }}>Total del día</span>
+                <span style={{ fontSize:15, fontWeight:"bold", color:"#fff" }}>{fmt(totalDia)}</span>
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -272,7 +377,7 @@ export default function SkiTracker() {
           <div style={{ cursor:"pointer" }} onClick={()=>setShowEditarNombre(true)}>
             <div style={{ fontSize:10, letterSpacing:3, color:"#4FC3F7", textTransform:"uppercase" }}>⛷️ Ski Instructor</div>
             <div style={{ fontSize:18, fontWeight:"bold", color:"#fff", display:"flex", alignItems:"center", gap:6 }}>
-              {profile?.nombre || profile?.email?.split("@")[0] || "Mi cuenta"}
+              {profile?.nombre||profile?.email?.split("@")[0]||"Mi cuenta"}
               <span style={{ fontSize:12, color:"#4FC3F7" }}>✏️</span>
             </div>
           </div>
@@ -282,39 +387,45 @@ export default function SkiTracker() {
             <button onClick={logout} style={{ background:"rgba(239,83,80,0.1)", border:"1px solid #ef535055", borderRadius:10, color:"#ef9a9a", padding:"8px 10px", fontSize:12, cursor:"pointer" }}>↩</button>
           </div>
         </div>
-        <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:12 }}>
-          <span style={{ fontSize:12, color:"#90CAF9" }}>Mes:</span>
-          <select value={mes} onChange={e=>setMes(e.target.value)} style={{ background:"#0d2a3a", color:"#e8f4f8", border:"1px solid #4FC3F7", borderRadius:8, padding:"4px 10px", fontSize:13 }}>
-            {[...new Set([mes,...mesesDisponibles])].map(m=><option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
+        {tab !== "calendario" && (
+          <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:12 }}>
+            <span style={{ fontSize:12, color:"#90CAF9" }}>Mes:</span>
+            <select value={mes} onChange={e=>setMes(e.target.value)} style={{ background:"#0d2a3a", color:"#e8f4f8", border:"1px solid #4FC3F7", borderRadius:8, padding:"4px 10px", fontSize:13 }}>
+              {[...new Set([mes,...mesesDisponibles])].map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+        )}
         <div style={{ display:"flex" }}>
-          {[["registro","📝 Registro"],["desglose","📅 Por Día"]].map(([key,label])=>(
-            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px 0", background:tab===key?"rgba(79,195,247,0.15)":"transparent", border:"none", borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent", color:tab===key?"#4FC3F7":"#607d8b", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>{label}</button>
+          {[["registro","📝 Registro"],["desglose","📅 Por Día"],["calendario","🗓️ Calendario"]].map(([key,label])=>(
+            <button key={key} onClick={()=>setTab(key)} style={{ flex:1, padding:"10px 0", background:tab===key?"rgba(79,195,247,0.15)":"transparent", border:"none", borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent", color:tab===key?"#4FC3F7":"#607d8b", fontSize:12, cursor:"pointer", fontFamily:"inherit" }}>{label}</button>
           ))}
         </div>
       </div>
 
       <div style={{ padding:"20px 20px 100px" }}>
-        <div style={{ background:"linear-gradient(135deg,#0d2a3a,#1a3a50)", border:"1px solid rgba(79,195,247,0.3)", borderRadius:18, padding:"18px 20px", marginBottom:20, textAlign:"center" }}>
-          <div style={{ fontSize:10, letterSpacing:2, color:"#4FC3F7", textTransform:"uppercase", marginBottom:4 }}>Total estimado del mes</div>
-          <div style={{ fontSize:36, fontWeight:"bold", color:"#fff", letterSpacing:-1 }}>{fmt(total)}</div>
-          {totalDescuentos>0 && <div style={{ fontSize:12, color:"#ef9a9a", marginTop:2 }}>{fmt(totalBruto)} − descuentos {fmt(totalDescuentos)}</div>}
-          <div style={{ display:"flex", justifyContent:"center", gap:16, marginTop:12 }}>
-            {TIPOS.map(t=>(
-              <div key={t.key} style={{ textAlign:"center" }}>
-                <div style={{ fontSize:16 }}>{t.emoji}</div>
-                <div style={{ fontSize:18, fontWeight:"bold", color:t.color }}>{conteo[t.key]}</div>
-                {t.key==="colectiva"&&totalExtras>0&&(
-                  <div style={{ display:"inline-flex", alignItems:"center", gap:3, background:"rgba(129,199,132,0.15)", border:"1px solid #81C78455", borderRadius:10, padding:"2px 7px", marginTop:3 }}>
-                    <span style={{ fontSize:11 }}>➕</span><span style={{ fontSize:12, fontWeight:"bold", color:"#81C784" }}>{totalExtras}</span>
-                  </div>
-                )}
-                <div style={{ fontSize:10, color:"#90CAF9" }}>{t.label}</div>
-              </div>
-            ))}
+        {tab !== "calendario" && (
+          <div style={{ background:"linear-gradient(135deg,#0d2a3a,#1a3a50)", border:"1px solid rgba(79,195,247,0.3)", borderRadius:18, padding:"18px 20px", marginBottom:20, textAlign:"center" }}>
+            <div style={{ fontSize:10, letterSpacing:2, color:"#4FC3F7", textTransform:"uppercase", marginBottom:4 }}>Total estimado del mes</div>
+            <div style={{ fontSize:36, fontWeight:"bold", color:"#fff", letterSpacing:-1 }}>{fmt(total)}</div>
+            {totalDescuentos>0 && <div style={{ fontSize:12, color:"#ef9a9a", marginTop:2 }}>{fmt(totalBruto)} − descuentos {fmt(totalDescuentos)}</div>}
+            <div style={{ display:"flex", justifyContent:"center", gap:16, marginTop:12 }}>
+              {TIPOS.map(t=>(
+                <div key={t.key} style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:16 }}>{t.emoji}</div>
+                  <div style={{ fontSize:18, fontWeight:"bold", color:t.color }}>{conteo[t.key]}</div>
+                  {t.key==="colectiva"&&totalExtras>0&&(
+                    <div style={{ display:"inline-flex", alignItems:"center", gap:3, background:"rgba(129,199,132,0.15)", border:"1px solid #81C78455", borderRadius:10, padding:"2px 7px", marginTop:3 }}>
+                      <span style={{ fontSize:11 }}>➕</span><span style={{ fontSize:12, fontWeight:"bold", color:"#81C784" }}>{totalExtras}</span>
+                    </div>
+                  )}
+                  <div style={{ fontSize:10, color:"#90CAF9" }}>{t.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {tab==="calendario" && <Calendario clases={clases} precios={precios} />}
 
         {tab==="registro" && (
           <>
@@ -469,11 +580,7 @@ export default function SkiTracker() {
       )}
 
       {showEditarNombre && (
-        <EditarNombre
-          profile={profile}
-          onGuardar={(nuevoNombre)=>setProfile(p=>({...p, nombre:nuevoNombre}))}
-          onCerrar={()=>setShowEditarNombre(false)}
-        />
+        <EditarNombre profile={profile} onGuardar={(n)=>setProfile(p=>({...p,nombre:n}))} onCerrar={()=>setShowEditarNombre(false)} />
       )}
     </div>
   );
