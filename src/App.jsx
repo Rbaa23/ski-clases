@@ -58,6 +58,7 @@ function AuthScreen({ onAuth }) {
   const [recuperar, setRecuperar] = useState(false);
   const [emailRecuperar, setEmailRecuperar] = useState("");
   const [enviado, setEnviado] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   async function handleSubmit() {
     setError(""); setMsg(""); setLoading(true);
@@ -106,7 +107,10 @@ function AuthScreen({ onAuth }) {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",position:"relative"}}>
+      <div style={{position:"absolute",top:40,right:24}}>
+        <button onClick={()=>setShowInfo(true)} style={{background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:"50%",width:36,height:36,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,color:"#4FC3F7",cursor:"pointer",fontWeight:"bold"}}>?</button>
+      </div>
       <div style={{fontSize:48,marginBottom:8}}>⛷️</div>
       <div style={{fontSize:24,fontWeight:"bold",marginBottom:4}}>StatClass</div>
       <div style={{fontSize:12,color:"#4FC3F7",letterSpacing:2,marginBottom:40}}>REGISTRO DE CLASES</div>
@@ -127,6 +131,27 @@ function AuthScreen({ onAuth }) {
         {msg&&<div style={{color:"#81C784",fontSize:13,marginBottom:12,textAlign:"center"}}>{msg}</div>}
         <button onClick={handleSubmit} disabled={loading} style={{width:"100%",padding:"15px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:16,fontWeight:"bold",cursor:"pointer"}}>{loading?"...":mode==="login"?"Entrar":"Crear cuenta"}</button>
       </div>
+
+      {showInfo&&(
+        <div onClick={()=>setShowInfo(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+            <div style={{fontSize:18,fontWeight:"bold",marginBottom:16,color:"#4FC3F7"}}>❓ ¿Qué es StatClass?</div>
+            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:16}}>
+              StatClass es una herramienta de registro y estadísticas para instructores de ski y snowboard.
+            </div>
+            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Registro de clases</strong> — Agrega clases particulares, colectivas y requeridas</div>
+            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Modo polivalente</strong> — Clasifica tus clases entre Ski y Snowboard</div>
+            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Estadísticas</strong> — Calendario, resumen por día, mes y disciplina</div>
+            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Control de ingresos</strong> — Lleva la cuenta de tus ganancias, descuentos y gastos</div>
+            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:16}}>✅ <strong style={{color:"#4FC3F7"}}>Multiusuario</strong> — Cada instructor tiene su propio registro y configuración de precios</div>
+            <div style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:12,padding:"12px 14px",marginBottom:16}}>
+              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>💡 Creado para instructores, por instructores.</div>
+              <div style={{fontSize:11,color:"#607d8b"}}>StatClass v1.0</div>
+            </div>
+            <button onClick={()=>setShowInfo(false)} style={{width:"100%",padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer"}}>Entendido</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
