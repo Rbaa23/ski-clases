@@ -1055,6 +1055,7 @@ export default function SkiTracker() {
   const [horasNuevaClase,setHorasNuevaClase]=useState({particular:1,colectiva:1,requerida:1});
   const [showConfig,setShowConfig]=useState(false);
   const [tempPrecios,setTempPrecios]=useState(DEFAULT_PRECIOS);
+  const [recordar,setRecordar]=useState(false);
   const [descuentoInput,setDescuentoInput]=useState("");
   const [tab,setTab]=useState("registro");
   const [subTabCal,setSubTabCal]=useState("calendario");
@@ -1079,6 +1080,7 @@ export default function SkiTracker() {
     await supabase.from("profiles").update({last_seen:new Date().toISOString()}).eq("id",u.id);
     const {data:prof}=await supabase.from("profiles").select("*").eq("id",u.id).single();
     setProfile(prof);
+    if(prof) setRecordar(prof.recordar??false);
     if(prof?.aprobado||prof?.is_admin){
       const {data:prec}=await supabase.from("precios").select("*").eq("user_id",u.id).single();
       if(prec) setPrecios({
@@ -1171,6 +1173,7 @@ export default function SkiTracker() {
   }
 
   async function guardarPrecios() {
+    await supabase.from("profiles").update({recordar}).eq("id",user.id);
     await supabase.from("precios").update({
       particular:tempPrecios.particular,
       colectiva:tempPrecios.colectiva,
@@ -1540,6 +1543,14 @@ export default function SkiTracker() {
               onChange={v=>setTempPrecios(p=>({...p,mostrar_monto:v}))}
               label="Mostrar total ganado"
               desc="Oculta el monto en la pantalla principal"
+            />
+            <div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"16px 0"}}/>
+            <div style={{fontSize:11,color:"#607d8b",letterSpacing:1,marginBottom:10}}>RECORDATORIO</div>
+            <Toggle
+              value={recordar}
+              onChange={setRecordar}
+              label="🔔 Recordatorio diario"
+              desc="Te envía un correo a las 9 PM si no registraste clases"
             />
             <div style={{display:"flex",gap:12,marginTop:20}}>
               <button onClick={()=>setShowConfig(false)} style={{flex:1,padding:"14px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:15,cursor:"pointer"}}>Cancelar</button>
