@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/recordatorio?secret=sc_statclass_2026_secure",
+      "schedule": "0 21 * * *"
+    }
+  ]
+}
