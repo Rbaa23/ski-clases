@@ -1050,6 +1050,7 @@ export default function SkiTracker() {
   const [showConfig,setShowConfig]=useState(false);
   const [tempPrecios,setTempPrecios]=useState(DEFAULT_PRECIOS);
   const [recordar,setRecordar]=useState(false);
+  const [resumenMensual,setResumenMensual]=useState(false);
   const [descuentoInput,setDescuentoInput]=useState("");
   const [tab,setTab]=useState("registro");
   const [subTabCal,setSubTabCal]=useState("calendario");
@@ -1079,7 +1080,7 @@ export default function SkiTracker() {
       prof=newProf;
     }
     setProfile(prof);
-    if(prof) setRecordar(prof.recordar??false);
+    if(prof) {setRecordar(prof.recordar??false);setResumenMensual(prof.resumen_mensual??false);}
     if(prof?.aprobado||prof?.is_admin){
       const {data:prec}=await supabase.from("precios").select("*").eq("user_id",u.id).single();
       if(prec) setPrecios({
@@ -1172,7 +1173,7 @@ export default function SkiTracker() {
   }
 
   async function guardarPrecios() {
-    await supabase.from("profiles").update({recordar}).eq("id",user.id);
+    await supabase.from("profiles").update({recordar,resumen_mensual:resumenMensual}).eq("id",user.id);
     await supabase.from("precios").update({
       particular:tempPrecios.particular,
       colectiva:tempPrecios.colectiva,
@@ -1550,6 +1551,12 @@ export default function SkiTracker() {
               onChange={setRecordar}
               label="🔔 Recordatorio diario"
               desc="Te envía un correo a las 9 PM si no registraste clases"
+            />
+            <Toggle
+              value={resumenMensual}
+              onChange={setResumenMensual}
+              label="📊 Resumen mensual"
+              desc="Te envía un correo el día 1 con el resumen del mes anterior"
             />
             <div style={{display:"flex",gap:12,marginTop:20}}>
               <button onClick={()=>setShowConfig(false)} style={{flex:1,padding:"14px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:15,cursor:"pointer"}}>Cancelar</button>
