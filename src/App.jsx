@@ -783,102 +783,233 @@ function PorMes({clases}) {
 
 function PorDisciplina({clases, disc, mostrarMonto, fmt}) {
   const [subTab,setSubTab]=useState("mes");
+  const [subTemp,setSubTemp]=useState("meses");
+  const [mesSel,setMesSel]=useState(()=>{
+    const m=new Date().getMonth();
+    return ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"][m];
+  });
   const hoy=new Date();
-  const mesesDisp=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort();
-  const skiClases=clases.filter(c=>(c.disciplina_clase||"ski")==="ski");
-  const snowClases=clases.filter(c=>(c.disciplina_clase||"snow")==="snow");
-  const totalSki=skiClases.reduce((s,c)=>s+c.valor,0);
-  const totalSnow=snowClases.reduce((s,c)=>s+c.valor,0);
-  const horasSki=skiClases.reduce((s,c)=>s+(c.horas||1),0);
-  const horasSnow=snowClases.reduce((s,c)=>s+(c.horas||1),0);
+  const mesesNombre=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const aniosDisp=[...new Set(clases.map(c=>c.fecha.slice(0,4)))].sort();
+  const mesesConDatos=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort();
+  const mesActualStr=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}`;
+  if(!mesesConDatos.includes(mesActualStr)) mesesConDatos.push(mesActualStr);
+
+  const datosPorMes=mesesConDatos.map(m=>{
+    const [anio,mes]=m.split("-").map(Number);
+    const cm=clases.filter(c=>c.fecha.startsWith(m));
+    const skiM=cm.filter(c=>(c.disciplina_clase||"ski")==="ski");
+    const snowM=cm.filter(c=>(c.disciplina_clase||"snow")==="snow");
+    const totalSki=skiM.reduce((s,c)=>s+c.valor,0);
+    const totalSnow=snowM.reduce((s,c)=>s+c.valor,0);
+    const horasSki=skiM.reduce((s,c)=>s+(c.horas||1),0);
+    const horasSnow=snowM.reduce((s,c)=>s+(c.horas||1),0);
+    const total=totalSki+totalSnow;
+    const horas=horasSki+horasSnow;
+    const totalDiasMes=diasEnMes(anio,mes-1);
+    const esActual=m===mesActualStr;
+    const diaActual=esActual?hoy.getDate():totalDiasMes;
+    const pctDias=Math.round((diaActual/totalDiasMes)*100);
+    const nombreMes=new Date(anio,mes-1,1).toLocaleDateString("es-CL",{month:"long"});
+    return {m,total,horas,totalSki,totalSnow,horasSki,horasSnow,totalDiasMes,diaActual,pctDias,esActual,nombreMes};
+  });
+  const totalAcumulado=datosPorMes.reduce((s,d)=>s+d.total,0);
+  const totalAcumuladoSki=datosPorMes.reduce((s,d)=>s+d.totalSki,0);
+  const totalAcumuladoSnow=datosPorMes.reduce((s,d)=>s+d.totalSnow,0);
+  const mejorMes=datosPorMes.reduce((best,d)=>d.total>best.total?d:best,datosPorMes[0]);
+  const skiClasesTotal=clases.filter(c=>(c.disciplina_clase||"ski")==="ski");
+  const snowClasesTotal=clases.filter(c=>(c.disciplina_clase||"snow")==="snow");
 
   return (
     <div>
       <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:8,padding:2,marginBottom:14,gap:2}}>
-        <button onClick={()=>setSubTab("mes")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTab==="mes"?"rgba(156,39,176,0.15)":"transparent",color:subTab==="mes"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>📅 Por mes</button>
-        <button onClick={()=>setSubTab("temp")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTab==="temp"?"rgba(156,39,176,0.15)":"transparent",color:subTab==="temp"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>📆 Por temporada</button>
+        <button onClick={()=>setSubTab("mes")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTab==="mes"?"rgba(156,39,176,0.15)":"transparent",color:subTab==="mes"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>📈 Por mes</button>
+        <button onClick={()=>setSubTab("temp")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTab==="temp"?"rgba(156,39,176,0.15)":"transparent",color:subTab==="temp"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>🏆 Temporadas</button>
       </div>
+
       {subTab==="mes"&&(
         <>
-          <div style={{fontSize:11,letterSpacing:2,color:"#CE93D8",marginBottom:12}}>🎿 POR MES</div>
-          {mesesDisp.length===0?<div style={{textAlign:"center",color:"#607d8b",padding:20,fontSize:13}}>Sin datos</div>:mesesDisp.map(m=>{
-            const skiM=skiClases.filter(c=>c.fecha.startsWith(m));
-            const snowM=snowClases.filter(c=>c.fecha.startsWith(m));
-            const tSki=skiM.reduce((s,c)=>s+c.valor,0);
-            const tSnow=snowM.reduce((s,c)=>s+c.valor,0);
-            const hSki=skiM.reduce((s,c)=>s+(c.horas||1),0);
-            const hSnow=snowM.reduce((s,c)=>s+(c.horas||1),0);
-            const maxT=Math.max(tSki,tSnow,1);
-            const esActual=m===`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}`;
-            return (
-              <div key={m} style={{marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-                  <span style={{fontSize:12,color:esActual?"#81C784":"#90CAF9",textTransform:"capitalize",fontWeight:esActual?"bold":"normal"}}>{new Date(m+"-01").toLocaleDateString("es-CL",{month:"long",year:"numeric"})} {esActual&&<span style={{fontSize:10,color:"#607d8b",fontWeight:"normal"}}>en curso</span>}</span>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
-                  <div style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:10,padding:10,textAlign:"center"}}>
-                    <div style={{fontSize:18}}>⛷️</div>
-                    <div style={{fontSize:15,fontWeight:"bold",color:"#4FC3F7",marginTop:2}}>{mostrarMonto?fmt(tSki):"••••••"}</div>
-                    <div style={{fontSize:10,color:"#607d8b"}}>Ski · {hSki}h</div>
+          <div style={{fontSize:11,letterSpacing:2,color:"#CE93D8",marginBottom:16}}>COMPARATIVA {hoy.getFullYear()}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:18,marginBottom:20}}>
+            {datosPorMes.map((d,i)=>{
+              const anterior=i>0?datosPorMes[i-1]:null;
+              const diff=anterior?d.total-anterior.total:null;
+              return (
+                <div key={d.m}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:13,color:d.esActual?"#81C784":"#90CAF9",fontWeight:d.esActual?"bold":"normal",textTransform:"capitalize"}}>{d.nombreMes}</span>
+                      {d.esActual&&<span style={{fontSize:10,color:"#607d8b"}}>en curso</span>}
+                    </div>
+                    <span style={{fontSize:13,fontWeight:"bold",color:"#fff"}}>{mostrarMonto?fmt(d.total):"••••••"}</span>
                   </div>
-                  <div style={{background:"rgba(255,152,0,0.06)",border:"1px solid rgba(255,152,0,0.2)",borderRadius:10,padding:10,textAlign:"center"}}>
-                    <div style={{fontSize:18}}>🏂</div>
-                    <div style={{fontSize:15,fontWeight:"bold",color:"#FF9800",marginTop:2}}>{mostrarMonto?fmt(tSnow):"••••••"}</div>
-                    <div style={{fontSize:10,color:"#607d8b"}}>Snow · {hSnow}h</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:6}}>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <span style={{fontSize:12}}>⛷️</span>
+                      <span style={{fontSize:12,color:"#4FC3F7",fontWeight:"bold"}}>{mostrarMonto?fmt(d.totalSki):"••••••"}</span>
+                      <span style={{fontSize:11,color:"#607d8b"}}>· ⏱{d.horasSki}h</span>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:6,justifyContent:"flex-end"}}>
+                      <span style={{fontSize:11,color:"#607d8b"}}>⏱{d.horasSnow}h ·</span>
+                      <span style={{fontSize:12,color:"#FF9800",fontWeight:"bold"}}>{mostrarMonto?fmt(d.totalSnow):"••••••"}</span>
+                      <span style={{fontSize:12}}>🏂</span>
+                    </div>
+                  </div>
+                  {anterior&&(
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                      <span style={{fontSize:10,color:d.totalSki>=anterior.totalSki?"#81C784":"#ef9a9a"}}>{d.totalSki!==anterior.totalSki?(d.totalSki>anterior.totalSki?`↑ ${mostrarMonto?fmt(d.totalSki-anterior.totalSki):""}`:`↓ ${mostrarMonto?fmt(anterior.totalSki-d.totalSki):""}`):""}</span>
+                      <span style={{fontSize:10,color:d.totalSnow>=anterior.totalSnow?"#81C784":"#ef9a9a"}}>{d.totalSnow!==anterior.totalSnow?(d.totalSnow>anterior.totalSnow?`↑ ${mostrarMonto?fmt(d.totalSnow-anterior.totalSnow):""}`:`↓ ${mostrarMonto?fmt(anterior.totalSnow-d.totalSnow):""}`):""}</span>
+                    </div>
+                  )}
+                  <div style={{height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginBottom:4}}>
+                    <div style={{height:"100%",width:`${d.pctDias}%`,background:d.esActual?"#81C784":"rgba(79,195,247,0.4)",borderRadius:99}}/>
+                  </div>
+                  <div style={{display:"flex",justifyContent:"space-between"}}>
+                    <div style={{display:"flex",gap:6}}>
+                      <div style={{width:8,height:8,borderRadius:"50%",background:"#4FC3F7",marginTop:3}}/>
+                      <div style={{width:8,height:8,borderRadius:"50%",background:"#FF9800",marginTop:3}}/>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:4}}>
+                      <span style={{fontSize:11,color:d.esActual?"#81C784":"#607d8b"}}>{d.diaActual}/{d.totalDiasMes} días ·</span>
+                      <span style={{fontSize:11,color:"#CE93D8",background:"rgba(156,39,176,0.1)",border:"1px solid #CE93D844",borderRadius:6,padding:"1px 6px"}}>⏱ {d.horas}h</span>
+                    </div>
                   </div>
                 </div>
-                <div style={{display:"flex",gap:8,marginTop:6}}>
-                  <div style={{flex:1,height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(tSki/maxT*100)}%`,background:"#4FC3F7",borderRadius:99}}/></div>
-                  <div style={{flex:1,height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(tSnow/maxT*100)}%`,background:"#FF9800",borderRadius:99}}/></div>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
           <div style={{borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-              <span style={{fontSize:12,color:"#607d8b"}}>Total acumulado</span>
-              <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{mostrarMonto?fmt(totalSki+totalSnow):"••••••"}</span>
+              <span style={{fontSize:12,color:"#607d8b"}}>Total acumulado {hoy.getFullYear()}</span>
+              <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{mostrarMonto?fmt(totalAcumulado):"••••••"}</span>
             </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8,marginBottom:10}}>
               <div style={{textAlign:"center",padding:8,background:"rgba(79,195,247,0.06)",borderRadius:8}}>
-                <div style={{fontSize:18,fontWeight:"bold",color:"#4FC3F7"}}>{mostrarMonto?fmt(totalSki):"••••••"}</div>
-                <div style={{fontSize:10,color:"#607d8b"}}>⛷️ Ski · {horasSki}h</div>
+                <div style={{fontSize:18,fontWeight:"bold",color:"#4FC3F7"}}>{mostrarMonto?fmt(totalAcumuladoSki):"••••••"}</div>
+                <div style={{fontSize:10,color:"#607d8b"}}>⛷️ Ski</div>
               </div>
               <div style={{textAlign:"center",padding:8,background:"rgba(255,152,0,0.06)",borderRadius:8}}>
-                <div style={{fontSize:18,fontWeight:"bold",color:"#FF9800"}}>{mostrarMonto?fmt(totalSnow):"••••••"}</div>
-                <div style={{fontSize:10,color:"#607d8b"}}>🏂 Snow · {horasSnow}h</div>
+                <div style={{fontSize:18,fontWeight:"bold",color:"#FF9800"}}>{mostrarMonto?fmt(totalAcumuladoSnow):"••••••"}</div>
+                <div style={{fontSize:10,color:"#607d8b"}}>🏂 Snow</div>
               </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              {mejorMes&&<div style={{fontSize:11,color:"#FFB74D"}}>★ Mejor mes: {mejorMes.nombreMes} ({mostrarMonto?fmt(mejorMes.total):"••••••"})</div>}
+              <span style={{fontSize:11,color:"#CE93D8",background:"rgba(156,39,176,0.1)",border:"1px solid #CE93D844",borderRadius:6,padding:"2px 8px"}}>🏆 {totalAcumuladoSki+totalAcumuladoSnow>0?Math.round(totalAcumuladoSki/(totalAcumuladoSki+totalAcumuladoSnow)*100):0}% ski</span>
+            </div>
+            <div style={{display:"flex",gap:16,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.05)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:24,height:5,background:"#81C784",borderRadius:99}}/><span style={{fontSize:11,color:"#607d8b"}}>Mes en curso</span></div>
+              <div style={{display:"flex",alignItems:"center",gap:6}}><div style={{width:24,height:5,background:"rgba(79,195,247,0.4)",borderRadius:99}}/><span style={{fontSize:11,color:"#607d8b"}}>Mes completo</span></div>
             </div>
           </div>
         </>
       )}
+
       {subTab==="temp"&&(
         <>
-          <div style={{fontSize:11,letterSpacing:2,color:"#CE93D8",marginBottom:12}}>🎿 TEMPORADA COMPLETA</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:12}}>
-              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>⛷️ Ski</div>
-              <div style={{fontSize:15,fontWeight:"bold",color:"#4FC3F7",marginBottom:2}}>{mostrarMonto?fmt(totalSki):"••••••"}</div>
-              <div style={{fontSize:11,color:"#607d8b"}}>{horasSki}h · {skiClases.length} clases</div>
-              <div style={{height:4,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:`${totalSki+totalSnow>0?Math.round(totalSki/(totalSki+totalSnow)*100):0}%`,background:"#4FC3F7",borderRadius:99}}/></div>
-            </div>
-            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,152,0,0.15)",borderRadius:12,padding:12}}>
-              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>🏂 Snow</div>
-              <div style={{fontSize:15,fontWeight:"bold",color:"#FF9800",marginBottom:2}}>{mostrarMonto?fmt(totalSnow):"••••••"}</div>
-              <div style={{fontSize:11,color:"#607d8b"}}>{horasSnow}h · {snowClases.length} clases</div>
-              <div style={{height:4,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:`${totalSki+totalSnow>0?Math.round(totalSnow/(totalSki+totalSnow)*100):0}%`,background:"#FF9800",borderRadius:99}}/></div>
-            </div>
+          <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:8,padding:2,marginBottom:14,gap:2}}>
+            <button onClick={()=>setSubTemp("meses")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTemp==="meses"?"rgba(156,39,176,0.15)":"transparent",color:subTemp==="meses"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>📅 Por meses</button>
+            <button onClick={()=>setSubTemp("temporada")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTemp==="temporada"?"rgba(156,39,176,0.15)":"transparent",color:subTemp==="temporada"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>📆 Por temporada</button>
           </div>
-          <div style={{display:"flex",gap:8}}>
-            <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(129,199,132,0.08)",border:"1px solid rgba(129,199,132,0.2)",borderRadius:8}}>
-              <span style={{fontSize:11,color:"#607d8b"}}>💰 Total</span>
-              <span style={{fontSize:12,fontWeight:500,color:"#81C784"}}>{mostrarMonto?fmt(totalSki+totalSnow):"••••••"}</span>
-            </div>
-            <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(79,195,247,0.08)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:8}}>
-              <span style={{fontSize:11,color:"#607d8b"}}>⏱ Total</span>
-              <span style={{fontSize:12,fontWeight:500,color:"#4FC3F7"}}>{horasSki+horasSnow}h</span>
-            </div>
-          </div>
+
+          {subTemp==="meses"&&(
+            <>
+              <select value={mesSel} onChange={e=>setMesSel(e.target.value)} style={{width:"100%",fontSize:13,padding:"8px 10px",borderRadius:8,background:"#0d2a3a",border:"1px solid #CE93D844",color:"#e8f4f8",marginBottom:12}}>
+                {mesesNombre.map(m=><option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>)}
+              </select>
+              <div style={{fontSize:11,color:"#CE93D8",letterSpacing:2,marginBottom:10}}>{mesSel.toUpperCase()} — POR AÑOS</div>
+              {aniosDisp.length===0?(
+                <div style={{textAlign:"center",color:"#607d8b",fontSize:13,padding:20}}>Sin datos suficientes para comparar</div>
+              ):aniosDisp.map((anio,i)=>{
+                const mesNum=String(mesesNombre.indexOf(mesSel)+1).padStart(2,"0");
+                const mStr=`${anio}-${mesNum}`;
+                const cm=clases.filter(c=>c.fecha.startsWith(mStr));
+                const skiAnio=cm.filter(c=>(c.disciplina_clase||"ski")==="ski");
+                const snowAnio=cm.filter(c=>(c.disciplina_clase||"snow")==="snow");
+                const tSki=skiAnio.reduce((s,c)=>s+c.valor,0);
+                const tSnow=snowAnio.reduce((s,c)=>s+c.valor,0);
+                const hSki=skiAnio.reduce((s,c)=>s+(c.horas||1),0);
+                const hSnow=snowAnio.reduce((s,c)=>s+(c.horas||1),0);
+                const total=tSki+tSnow;
+                const horas=hSki+hSnow;
+                const esActual=mStr===mesActualStr;
+                const prevAnio=i>0?aniosDisp[i-1]:null;
+                let diffAnio=null;
+                if(prevAnio){
+                  const ps=`${prevAnio}-${mesNum}`;
+                  const pt=clases.filter(c=>c.fecha.startsWith(ps)).reduce((s,c)=>s+c.valor,0);
+                  diffAnio=total-pt;
+                }
+                const maxTotal=Math.max(...aniosDisp.map(a=>{
+                  const s=`${a}-${mesNum}`;
+                  return clases.filter(c=>c.fecha.startsWith(s)).reduce((ss,cc)=>ss+cc.valor,0);
+                }),1);
+                return (
+                  <div key={anio} style={{marginBottom:14}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        <span style={{fontSize:13,color:esActual?"#81C784":"#90CAF9",fontWeight:esActual?"bold":"normal"}}>{mesSel.charAt(0).toUpperCase()+mesSel.slice(1)} {anio}</span>
+                        {esActual&&<span style={{fontSize:10,color:"#FFB74D",background:"rgba(255,183,77,0.1)",border:"1px solid #FFB74D44",borderRadius:6,padding:"1px 5px"}}>en curso</span>}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:6}}>
+                        {diffAnio!==null&&diffAnio!==0&&<span style={{fontSize:11,borderRadius:6,padding:"1px 5px",color:diffAnio>0?"#81C784":"#ef9a9a",background:diffAnio>0?"rgba(129,199,132,0.1)":"rgba(239,83,80,0.1)",border:diffAnio>0?"1px solid #81C78444":"1px solid #ef535044"}}>{diffAnio>0?"↑":"↓"} {Math.abs(Math.round((diffAnio/Math.max(total-diffAnio,1))*100))}%</span>}
+                        <span style={{fontSize:13,fontWeight:"bold",color:"#fff"}}>{mostrarMonto?fmt(total):"••••••"}</span>
+                      </div>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:6}}>
+                      <div style={{display:"flex",alignItems:"center",gap:4}}>
+                        <span style={{fontSize:11}}>⛷️</span>
+                        <span style={{fontSize:12,color:"#4FC3F7",fontWeight:"bold"}}>{mostrarMonto?fmt(tSki):"••••••"}</span>
+                        <span style={{fontSize:10,color:"#607d8b"}}>· ⏱{hSki}h</span>
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:4,justifyContent:"flex-end"}}>
+                        <span style={{fontSize:10,color:"#607d8b"}}>⏱{hSnow}h ·</span>
+                        <span style={{fontSize:12,color:"#FF9800",fontWeight:"bold"}}>{mostrarMonto?fmt(tSnow):"••••••"}</span>
+                        <span style={{fontSize:11}}>🏂</span>
+                      </div>
+                    </div>
+                    <div style={{height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginBottom:4}}>
+                      <div style={{height:"100%",width:`${Math.round(total/maxTotal*100)}%`,background:esActual?"#81C784":"rgba(79,195,247,0.4)",borderRadius:99}}/>
+                    </div>
+                    <div style={{display:"flex",justifyContent:"space-between"}}>
+                      <span style={{fontSize:11,color:"#607d8b"}}>{skiAnio.length>0&&`⛷️ ${skiAnio.length} · `}{snowAnio.length>0&&`🏂 ${snowAnio.length} · `}📊 {cm.length} clases</span>
+                      <span style={{fontSize:11,color:"#CE93D8",background:"rgba(156,39,176,0.1)",border:"1px solid #CE93D844",borderRadius:6,padding:"1px 6px"}}>⏱ {horas}h</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {subTemp==="temporada"&&(
+            <>
+              <div style={{fontSize:11,color:"#CE93D8",letterSpacing:2,marginBottom:12}}>TEMPORADA COMPLETA</div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+                <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:12}}>
+                  <div style={{fontSize:11,color:"#607d8b",marginBottom:6}}>⛷️ Ski</div>
+                  <div style={{fontSize:15,fontWeight:"bold",color:"#4FC3F7",marginBottom:2}}>{mostrarMonto?fmt(totalAcumuladoSki):"••••••"}</div>
+                  <div style={{fontSize:11,color:"#607d8b"}}>{skiClasesTotal.reduce((s,c)=>s+(c.horas||1),0)}h · {skiClasesTotal.length} clases</div>
+                  <div style={{height:4,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:`${totalAcumulado>0?Math.round(totalAcumuladoSki/totalAcumulado*100):0}%`,background:"#4FC3F7",borderRadius:99}}/></div>
+                </div>
+                <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,152,0,0.15)",borderRadius:12,padding:12}}>
+                  <div style={{fontSize:11,color:"#607d8b",marginBottom:6}}>🏂 Snow</div>
+                  <div style={{fontSize:15,fontWeight:"bold",color:"#FF9800",marginBottom:2}}>{mostrarMonto?fmt(totalAcumuladoSnow):"••••••"}</div>
+                  <div style={{fontSize:11,color:"#607d8b"}}>{snowClasesTotal.reduce((s,c)=>s+(c.horas||1),0)}h · {snowClasesTotal.length} clases</div>
+                  <div style={{height:4,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:`${totalAcumulado>0?Math.round(totalAcumuladoSnow/totalAcumulado*100):0}%`,background:"#FF9800",borderRadius:99}}/></div>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:8}}>
+                <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(129,199,132,0.08)",border:"1px solid rgba(129,199,132,0.2)",borderRadius:8}}>
+                  <span style={{fontSize:11,color:"#607d8b"}}>💰 Total</span>
+                  <span style={{fontSize:12,fontWeight:500,color:"#81C784"}}>{mostrarMonto?fmt(totalAcumulado):"••••••"}</span>
+                </div>
+                <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(156,39,176,0.08)",border:"1px solid rgba(156,39,176,0.2)",borderRadius:8}}>
+                  <span style={{fontSize:11,color:"#607d8b"}}>⏱ Total</span>
+                  <span style={{fontSize:12,fontWeight:500,color:"#CE93D8"}}>{datosPorMes.reduce((s,d)=>s+d.horas,0)}h</span>
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>
@@ -952,6 +1083,7 @@ export default function SkiTracker() {
   async function setDisciplina(disc) {
     await supabase.from("profiles").update({disciplina:disc}).eq("id",profile.id);
     setProfile(p=>({...p,disciplina:disc}));
+    setSubTabCal("calendario");
   }
 
   function handleClaseDisc(tipo,val){ setClaseDisc(p=>({...p,[tipo]:val})); }
@@ -1102,7 +1234,7 @@ export default function SkiTracker() {
           </div>
         )}
         <div style={{display:"flex"}}>
-          {[["registro","📝 Registro"],["calendario","🗓️ Calendario"]].map(([key,label])=>(
+          {[["registro","📝 Registro"],["calendario","📊 Estadísticas"]].map(([key,label])=>(
             <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"10px 0",background:tab===key?"rgba(79,195,247,0.15)":"transparent",border:"none",borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent",color:tab===key?"#4FC3F7":"#607d8b",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
           ))}
         </div>
