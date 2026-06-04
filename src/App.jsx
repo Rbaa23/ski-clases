@@ -145,7 +145,7 @@ function AuthScreen({ onAuth }) {
             <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Control de ingresos</strong> — Lleva la cuenta de tus ganancias, descuentos y gastos</div>
             <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:16}}>✅ <strong style={{color:"#4FC3F7"}}>Multiusuario</strong> — Cada instructor tiene su propio registro y configuración de precios</div>
             <div style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:12,padding:"12px 14px",marginBottom:16}}>
-              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>💡 Creado para instructores, por instructores.</div>
+              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>💡 Creado por un instructor para instructores.</div>
               <div style={{fontSize:11,color:"#607d8b"}}>StatClass v1.0</div>
             </div>
             <button onClick={()=>setShowInfo(false)} style={{width:"100%",padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer"}}>Entendido</button>
