@@ -164,7 +164,7 @@ function PendienteScreen({user,onLogout,onCodigo}) {
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",textAlign:"center"}}>
       <div style={{fontSize:56,marginBottom:16}}>🔑</div>
       <div style={{fontSize:20,fontWeight:"bold",color:"#fff",marginBottom:8}}>Código de acceso</div>
-      <div style={{fontSize:14,color:"#90CAF9",marginBottom:24,lineHeight:1.6}}>Ingresa el código que recibiste para activar tu cuenta.</div>
+      <div style={{fontSize:14,color:"#90CAF9",marginBottom:24,lineHeight:1.6}}>Ingresa el código que recibiste para activar tu acceso a StatClass.</div>
       <input placeholder="Ej: A1B2C3D4" value={codigo} onChange={e=>{setCodigo(e.target.value.toUpperCase());setError("");}} onKeyDown={e=>e.key==="Enter"&&!loading&&onCodigo(codigo,setLoading,setError)} style={{width:"100%",maxWidth:360,background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"14px 16px",fontSize:18,textAlign:"center",letterSpacing:4,boxSizing:"border-box",fontFamily:"monospace",marginBottom:12}}/>
       {error&&<div style={{color:"#ef9a9a",fontSize:13,marginBottom:12,textAlign:"center"}}>{error}</div>}
       <button onClick={()=>onCodigo(codigo,setLoading,setError)} disabled={loading||!codigo.trim()} style={{width:"100%",maxWidth:360,padding:"14px",background:loading||!codigo.trim()?"rgba(79,195,247,0.1)":"linear-gradient(90deg,#0277bd,#0288d1)",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:loading||!codigo.trim()?"default":"pointer",marginBottom:16}}>{loading?"Validando...":"Activar cuenta"}</button>
@@ -312,14 +312,8 @@ function AdminPanel({onBack}) {
             {!u.is_admin&&<span style={{fontSize:10,borderRadius:6,padding:"2px 7px",color:u.aprobado?"#81C784":"#FFB74D",background:u.aprobado?"rgba(129,199,132,0.1)":"rgba(255,183,77,0.1)",border:u.aprobado?"1px solid #81C78444":"1px solid #FFB74D44"}}>{u.aprobado?"✅ Aprobado":"⏳ Pendiente"}</span>}
           </div>
         </div>
-        {showActions&&!u.is_admin&&(
-          <div style={{display:"flex",gap:8}}>
-            <button onClick={()=>cambiarEstado(u.id,true)} style={{flex:1,padding:"9px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",background:"rgba(129,199,132,0.15)",border:"1px solid #81C784",color:"#81C784"}}>✅ Aprobar</button>
-            <button onClick={()=>cambiarEstado(u.id,false)} style={{flex:1,padding:"9px",borderRadius:8,fontSize:13,cursor:"pointer",fontFamily:"inherit",background:"rgba(239,83,80,0.1)",border:"1px solid #ef5350",color:"#ef9a9a"}}>❌ Rechazar</button>
-          </div>
-        )}
-        {!showActions&&!u.is_admin&&(
-          <button onClick={()=>cambiarEstado(u.id,false)} style={{padding:"5px 9px",borderRadius:7,fontSize:11,cursor:"pointer",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535055",color:"#ef9a9a",fontFamily:"inherit",marginTop:6}}>❌ Bloquear</button>
+        {!u.is_admin&&(
+          <button onClick={()=>cambiarEstado(u.id,!u.aprobado)} style={{padding:"5px 9px",borderRadius:7,fontSize:11,cursor:"pointer",background:u.aprobado?"rgba(239,83,80,0.08)":"rgba(129,199,132,0.15)",border:u.aprobado?"1px solid #ef535055":"1px solid #81C784",color:u.aprobado?"#ef9a9a":"#81C784",fontFamily:"inherit",marginTop:6}}>{u.aprobado?"❌ Bloquear":"✅ Activar"}</button>
         )}
       </div>
     );
@@ -355,11 +349,11 @@ function AdminPanel({onBack}) {
               ))}
             </div>
 
-            {catTab==="pendientes"&&(
-              pendientes.length===0?(
-                <div style={{textAlign:"center",padding:"40px 20px",color:"#607d8b"}}><div style={{fontSize:36,marginBottom:8}}>🎉</div><div style={{fontSize:14}}>Sin solicitudes pendientes</div></div>
-              ):(
-                <div style={{background:"rgba(255,183,77,0.03)",border:"1px solid rgba(255,183,77,0.2)",borderRadius:12,overflow:"hidden"}}>
+          {catTab==="pendientes"&&(
+            pendientes.length===0?(
+              <div style={{textAlign:"center",padding:"40px 20px",color:"#607d8b"}}><div style={{fontSize:36,marginBottom:8}}>🎉</div><div style={{fontSize:14}}>Sin usuarios pendientes</div></div>
+            ):(
+              <div style={{background:"rgba(255,183,77,0.03)",border:"1px solid rgba(255,183,77,0.2)",borderRadius:12,overflow:"hidden"}}>
                   {pendientes.map(u=><UserRow key={u.id} u={u} showActions={true}/>)}
                 </div>
               )
