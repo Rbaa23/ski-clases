@@ -156,19 +156,13 @@ function AuthScreen({ onAuth }) {
   );
 }
 
-function PendienteScreen({user,onLogout,onCodigo}) {
-  const [codigo,setCodigo]=useState("");
-  const [loading,setLoading]=useState(false);
-  const [error,setError]=useState("");
+function PendienteScreen({user,onLogout}) {
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",textAlign:"center"}}>
-      <div style={{fontSize:56,marginBottom:16}}>🔑</div>
-      <div style={{fontSize:20,fontWeight:"bold",color:"#fff",marginBottom:8}}>Código de acceso</div>
-      <div style={{fontSize:14,color:"#90CAF9",marginBottom:24,lineHeight:1.6}}>Ingresa el código que recibiste para activar tu acceso a StatClass.</div>
-      <input placeholder="Ej: A1B2C3D4" value={codigo} onChange={e=>{setCodigo(e.target.value.toUpperCase());setError("");}} onKeyDown={e=>e.key==="Enter"&&!loading&&onCodigo(codigo,setLoading,setError)} style={{width:"100%",maxWidth:360,background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"14px 16px",fontSize:18,textAlign:"center",letterSpacing:4,boxSizing:"border-box",fontFamily:"monospace",marginBottom:12}}/>
-      {error&&<div style={{color:"#ef9a9a",fontSize:13,marginBottom:12,textAlign:"center"}}>{error}</div>}
-      <button onClick={()=>onCodigo(codigo,setLoading,setError)} disabled={loading||!codigo.trim()} style={{width:"100%",maxWidth:360,padding:"14px",background:loading||!codigo.trim()?"rgba(79,195,247,0.1)":"linear-gradient(90deg,#0277bd,#0288d1)",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:loading||!codigo.trim()?"default":"pointer",marginBottom:16}}>{loading?"Validando...":"Activar cuenta"}</button>
-      <div style={{width:"100%",maxWidth:360,background:"rgba(79,195,247,0.08)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:16,marginBottom:16}}>
+      <div style={{fontSize:56,marginBottom:16}}>⏳</div>
+      <div style={{fontSize:20,fontWeight:"bold",color:"#fff",marginBottom:8}}>Cuenta pendiente</div>
+      <div style={{fontSize:14,color:"#90CAF9",marginBottom:32,lineHeight:1.6}}>Tu cuenta está esperando aprobación.<br/>El administrador debe darte acceso.</div>
+      <div style={{background:"rgba(79,195,247,0.08)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:16,marginBottom:24,width:"100%",maxWidth:360}}>
         <div style={{fontSize:12,color:"#607d8b",marginBottom:4}}>Registrado como</div>
         <div style={{fontSize:14,color:"#4FC3F7"}}>{user.email}</div>
       </div>
@@ -330,7 +324,7 @@ function AdminPanel({onBack}) {
           </div>
         </div>
         <div style={{display:"flex"}}>
-          {[["usuarios","👥 Usuarios"],["historial","📋 Historial"],["stats","📊 Estadísticas"],["codigos","🔑 Códigos"]].map(([key,label])=>(
+          {[["usuarios","👥 Usuarios"],["historial","📋 Historial"],["stats","📊 Estadísticas"]].map(([key,label])=>(
             <button key={key} onClick={()=>setSubTab(key)} style={{flex:1,padding:"10px 0",border:"none",borderBottom:subTab===key?"2px solid #4FC3F7":"2px solid transparent",background:subTab===key?"rgba(79,195,247,0.1)":"transparent",color:subTab===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
           ))}
         </div>
@@ -354,7 +348,7 @@ function AdminPanel({onBack}) {
               <div style={{textAlign:"center",padding:"40px 20px",color:"#607d8b"}}><div style={{fontSize:36,marginBottom:8}}>🎉</div><div style={{fontSize:14}}>Sin usuarios pendientes</div></div>
             ):(
               <div style={{background:"rgba(255,183,77,0.03)",border:"1px solid rgba(255,183,77,0.2)",borderRadius:12,overflow:"hidden"}}>
-                  {pendientes.map(u=><UserRow key={u.id} u={u} showActions={true}/>)}
+                  {pendientes.map(u=><UserRow key={u.id} u={u}/>)}
                 </div>
               )
             )}
@@ -441,10 +435,6 @@ function AdminPanel({onBack}) {
           </>
         )}
 
-        {subTab==="codigos"&&(
-          <CodigosSection adminId={usuarios.find(u=>u.is_admin)?.id}/>
-        )}
-
         {subTab==="stats"&&(
           <>
             <select value={statsUsuario} onChange={e=>setStatsUsuario(e.target.value)} style={{width:"100%",fontSize:13,padding:"9px 12px",borderRadius:8,background:"#0d2a3a",border:"1px solid #4FC3F744",color:"#e8f4f8",marginBottom:16}}>
@@ -489,78 +479,6 @@ function AdminPanel({onBack}) {
         )}
       </div>
     </div>
-  );
-}
-
-function CodigosSection({adminId}) {
-  const [nombre,setNombre]=useState("");
-  const [codigos,setCodigos]=useState([]);
-  const [ultimoCodigo,setUltimoCodigo]=useState("");
-  const [loading,setLoading]=useState(false);
-  const [showUsados,setShowUsados]=useState(false);
-
-  useEffect(()=>{
-    supabase.from("codigos_acceso").select("*").order("creado_en",{ascending:false}).then(({data})=>setCodigos(data||[]));
-  },[]);
-
-  async function generar() {
-    if(!nombre.trim()) return;
-    setLoading(true);
-    const {data,error}=await supabase.rpc("crear_codigo",{p_nombre:nombre.trim(),p_tipo:"gratis",p_creado_por:adminId});
-    if(!error&&data) {
-      setUltimoCodigo(data);
-      setNombre("");
-      const {data:lista}=await supabase.from("codigos_acceso").select("*").order("creado_en",{ascending:false});
-      setCodigos(lista||[]);
-    }
-    setLoading(false);
-  }
-
-  const filtrados=showUsados?codigos:codigos.filter(c=>c.activo);
-
-  return (
-    <>
-      <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",marginBottom:12}}>GENERAR CÓDIGO</div>
-      <div style={{display:"flex",gap:8,marginBottom:20}}>
-        <input placeholder="Nombre de la persona" value={nombre} onChange={e=>setNombre(e.target.value)} onKeyDown={e=>e.key==="Enter"&&generar()} style={{flex:1,background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:10,color:"#fff",padding:"12px 14px",fontSize:14,fontFamily:"inherit"}}/>
-        <button onClick={generar} disabled={loading||!nombre.trim()} style={{padding:"12px 20px",background:loading?"rgba(79,195,247,0.1)":"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:10,color:"#fff",fontSize:14,cursor:loading?"default":"pointer",fontWeight:"bold",whiteSpace:"nowrap"}}>{loading?"...":"Generar"}</button>
-      </div>
-
-      {ultimoCodigo&&(
-        <div style={{background:"rgba(129,199,132,0.08)",border:"1px solid #81C784",borderRadius:12,padding:"14px",marginBottom:20,textAlign:"center"}}>
-          <div style={{fontSize:11,color:"#81C784",marginBottom:6}}>✅ Código generado para <strong>{nombre}</strong></div>
-          <div style={{fontSize:28,fontWeight:"bold",color:"#81C784",letterSpacing:6,fontFamily:"monospace"}}>{ultimoCodigo}</div>
-          <div style={{fontSize:11,color:"#607d8b",marginTop:6}}>Copia este código y entrégalo al usuario</div>
-        </div>
-      )}
-
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-        <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7"}}>CÓDIGOS {showUsados?"(todos)":"(activos)"}</div>
-        <button onClick={()=>setShowUsados(s=>!s)} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:11,cursor:"pointer",textDecoration:"underline",fontFamily:"inherit"}}>{showUsados?"Solo activos":"Ver usados"}</button>
-      </div>
-
-      {filtrados.length===0?(
-        <div style={{textAlign:"center",padding:"30px",color:"#607d8b",fontSize:13}}>Sin códigos aún</div>
-      ):(
-        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,overflow:"hidden"}}>
-          {filtrados.map(c=>(
-            <div key={c.codigo} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 14px",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
-              <div>
-                <div style={{fontSize:14,fontWeight:500,fontFamily:"monospace",letterSpacing:2}}>{c.codigo}</div>
-                <div style={{fontSize:11,color:"#607d8b"}}>{c.nombre} · {c.tipo==="pago"?"💰 Pago":"🎁 Gratis"}</div>
-              </div>
-              <div style={{textAlign:"right"}}>
-                {c.activo?(
-                  <span style={{fontSize:11,color:"#81C784"}}>✅ Disponible</span>
-                ):(
-                  <div style={{fontSize:11,color:"#607d8b"}}>Usado{c.usado_en?` ${new Date(c.usado_en).toLocaleDateString("es-CL")}`:""}</div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </>
   );
 }
 
@@ -1188,15 +1106,6 @@ export default function SkiTracker() {
     setUser(null);setProfile(null);setClases([]);setDescuentos([]);setOtros([]);
   }
 
-  async function handleCodigo(codigo, setLoading, setError) {
-    setLoading(true); setError("");
-    const {data,error}=await supabase.rpc("validar_codigo",{p_codigo:codigo,p_user_id:user.id});
-    if(error||data===false){setError("Código inválido o ya usado");setLoading(false);return;}
-    const {data:prof}=await supabase.from("profiles").select("*").eq("id",user.id).single();
-    setProfile(prof);
-    setLoading(false);
-  }
-
   async function setDisciplina(disc) {
     await supabase.from("profiles").update({disciplina:disc}).eq("id",profile.id);
     setProfile(p=>({...p,disciplina:disc}));
@@ -1280,7 +1189,7 @@ export default function SkiTracker() {
 
   if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif",fontSize:16}}>⛷️ Cargando...</div>;
   if(!user) return <AuthScreen onAuth={handleAuth}/>;
-  if(profile&&!profile.aprobado&&!profile.is_admin) return <PendienteScreen user={user} onLogout={logout} onCodigo={handleCodigo}/>;
+  if(profile&&!profile.aprobado&&!profile.is_admin) return <PendienteScreen user={user} onLogout={logout}/>;
   if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)}/>;
 
   const disc=profile?.disciplina||"ski";
