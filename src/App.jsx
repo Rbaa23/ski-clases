@@ -109,7 +109,7 @@ function AuthScreen({ onAuth }) {
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",position:"relative"}}>
       <div style={{position:"absolute",top:40,right:24}}>
-        <button onClick={()=>setShowInfo(true)} style={{background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:20,padding:"6px 14px",display:"flex",alignItems:"center",gap:6,fontSize:13,color:"#4FC3F7",cursor:"pointer",fontWeight:"bold",fontFamily:"inherit"}}><span style={{fontSize:16}}>?</span> ¿Qué es StatClass?</button>
+        <button onClick={()=>setShowInfo(true)} style={{background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:20,padding:"6px 14px",display:"flex",alignItems:"center",gap:6,fontSize:13,color:"#4FC3F7",cursor:"pointer",fontWeight:"bold",fontFamily:"inherit"}}>¿Qué es StatClass?</button>
       </div>
       <div style={{fontSize:48,marginBottom:8}}>⛷️</div>
       <div style={{fontSize:24,fontWeight:"bold",marginBottom:4}}>StatClass</div>
