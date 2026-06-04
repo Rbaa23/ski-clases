@@ -111,7 +111,7 @@ function AuthScreen({ onAuth }) {
       <div style={{position:"absolute",top:40,right:24}}>
         <button onClick={()=>setShowInfo(true)} style={{background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:20,padding:"6px 14px",display:"flex",alignItems:"center",gap:6,fontSize:13,color:"#4FC3F7",cursor:"pointer",fontWeight:"bold",fontFamily:"inherit"}}>¿Qué es StatClass?</button>
       </div>
-      <div style={{fontSize:48,marginBottom:8}}>⛷️</div>
+      <img src="/logo.png" alt="StatClass" style={{width:80,height:80,marginBottom:8,objectFit:"contain"}}/>
       <div style={{fontSize:24,fontWeight:"bold",marginBottom:4}}>StatClass</div>
       <div style={{fontSize:12,color:"#4FC3F7",letterSpacing:2,marginBottom:40}}>REGISTRO DE CLASES</div>
       <div style={{width:"100%",maxWidth:360}}>
