@@ -15,7 +15,7 @@ const DIAS_SEMANA = ["L","M","M","J","V","S","D"];
 
 function fmt(n){ return "$"+Math.round(n).toLocaleString("es-CL"); }
 function diasEnMes(anio,mes){ return new Date(anio,mes+1,0).getDate(); }
-function tipoEmoji(tipo, disc){ return tipo==="particular"?(disc==="snow"?"🏂":"⛷️"):tipo==="colectiva"?"👥":"📋"; }
+function tipoEmoji(tipo, disc, claseDisc){ const d=claseDisc||disc; return tipo==="particular"?(d==="snow"?"🏂":d==="poli"?"🎿":"⛷️"):tipo==="colectiva"?"👥":"📋"; }
 function timeAgo(dateStr) {
   if(!dateStr) return "nunca";
   const diff=(Date.now()-new Date(dateStr).getTime())/1000;
@@ -108,7 +108,7 @@ function AuthScreen({ onAuth }) {
   return (
     <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       <div style={{fontSize:48,marginBottom:8}}>⛷️</div>
-      <div style={{fontSize:24,fontWeight:"bold",marginBottom:4}}>StatSki</div>
+      <div style={{fontSize:24,fontWeight:"bold",marginBottom:4}}>StatClass</div>
       <div style={{fontSize:12,color:"#4FC3F7",letterSpacing:2,marginBottom:40}}>REGISTRO DE CLASES</div>
       <div style={{width:"100%",maxWidth:360}}>
         <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:12,padding:4,marginBottom:24}}>
@@ -513,7 +513,7 @@ function Calendario({clases, disc}) {
           {diasSelDia.length===0?<div style={{fontSize:13,color:"#607d8b"}}>Sin clases este día</div>:(
             <>{diasSelDia.map((c,i)=>{const tipo=TIPOS.find(t=>t.key===c.tipo);return(
               <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<diasSelDia.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
-                <div><span style={{fontSize:13,color:tipo.color}}>{tipoEmoji(c.tipo,disc)} {tipo.label}</span>{c.tipo==="colectiva"&&<span style={{fontSize:12,color:"#90CAF9"}}> · {c.personas} pers.</span>}{c.horas>0&&<span style={{fontSize:11,color:"#4FC3F7"}}> · ⏱{c.horas}h</span>}</div>
+                <div><span style={{fontSize:13,color:tipo.color}}>{tipoEmoji(c.tipo,disc,c.disciplina_clase)} {tipo.label}</span>{c.tipo==="colectiva"&&<span style={{fontSize:12,color:"#90CAF9"}}> · {c.personas} pers.</span>}{c.horas>0&&<span style={{fontSize:11,color:"#4FC3F7"}}> · ⏱{c.horas}h</span>}</div>
                 <span style={{fontSize:13,color:"#fff"}}>{fmt(c.valor)}</span>
               </div>
             );})}
@@ -781,6 +781,110 @@ function PorMes({clases}) {
   );
 }
 
+function PorDisciplina({clases, disc, mostrarMonto, fmt}) {
+  const [subTab,setSubTab]=useState("mes");
+  const hoy=new Date();
+  const mesesDisp=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort();
+  const skiClases=clases.filter(c=>(c.disciplina_clase||"ski")==="ski");
+  const snowClases=clases.filter(c=>(c.disciplina_clase||"snow")==="snow");
+  const totalSki=skiClases.reduce((s,c)=>s+c.valor,0);
+  const totalSnow=snowClases.reduce((s,c)=>s+c.valor,0);
+  const horasSki=skiClases.reduce((s,c)=>s+(c.horas||1),0);
+  const horasSnow=snowClases.reduce((s,c)=>s+(c.horas||1),0);
+
+  return (
+    <div>
+      <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:8,padding:2,marginBottom:14,gap:2}}>
+        <button onClick={()=>setSubTab("mes")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTab==="mes"?"rgba(156,39,176,0.15)":"transparent",color:subTab==="mes"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>📅 Por mes</button>
+        <button onClick={()=>setSubTab("temp")} style={{flex:1,padding:"6px 0",border:"none",borderRadius:7,background:subTab==="temp"?"rgba(156,39,176,0.15)":"transparent",color:subTab==="temp"?"#CE93D8":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>📆 Por temporada</button>
+      </div>
+      {subTab==="mes"&&(
+        <>
+          <div style={{fontSize:11,letterSpacing:2,color:"#CE93D8",marginBottom:12}}>🎿 POR MES</div>
+          {mesesDisp.length===0?<div style={{textAlign:"center",color:"#607d8b",padding:20,fontSize:13}}>Sin datos</div>:mesesDisp.map(m=>{
+            const skiM=skiClases.filter(c=>c.fecha.startsWith(m));
+            const snowM=snowClases.filter(c=>c.fecha.startsWith(m));
+            const tSki=skiM.reduce((s,c)=>s+c.valor,0);
+            const tSnow=snowM.reduce((s,c)=>s+c.valor,0);
+            const hSki=skiM.reduce((s,c)=>s+(c.horas||1),0);
+            const hSnow=snowM.reduce((s,c)=>s+(c.horas||1),0);
+            const maxT=Math.max(tSki,tSnow,1);
+            const esActual=m===`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}`;
+            return (
+              <div key={m} style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                  <span style={{fontSize:12,color:esActual?"#81C784":"#90CAF9",textTransform:"capitalize",fontWeight:esActual?"bold":"normal"}}>{new Date(m+"-01").toLocaleDateString("es-CL",{month:"long",year:"numeric"})} {esActual&&<span style={{fontSize:10,color:"#607d8b",fontWeight:"normal"}}>en curso</span>}</span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:10,padding:10,textAlign:"center"}}>
+                    <div style={{fontSize:18}}>⛷️</div>
+                    <div style={{fontSize:15,fontWeight:"bold",color:"#4FC3F7",marginTop:2}}>{mostrarMonto?fmt(tSki):"••••••"}</div>
+                    <div style={{fontSize:10,color:"#607d8b"}}>Ski · {hSki}h</div>
+                  </div>
+                  <div style={{background:"rgba(255,152,0,0.06)",border:"1px solid rgba(255,152,0,0.2)",borderRadius:10,padding:10,textAlign:"center"}}>
+                    <div style={{fontSize:18}}>🏂</div>
+                    <div style={{fontSize:15,fontWeight:"bold",color:"#FF9800",marginTop:2}}>{mostrarMonto?fmt(tSnow):"••••••"}</div>
+                    <div style={{fontSize:10,color:"#607d8b"}}>Snow · {hSnow}h</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:8,marginTop:6}}>
+                  <div style={{flex:1,height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(tSki/maxT*100)}%`,background:"#4FC3F7",borderRadius:99}}/></div>
+                  <div style={{flex:1,height:5,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden"}}><div style={{height:"100%",width:`${Math.round(tSnow/maxT*100)}%`,background:"#FF9800",borderRadius:99}}/></div>
+                </div>
+              </div>
+            );
+          })}
+          <div style={{borderTop:"1px solid rgba(255,255,255,0.07)",paddingTop:14}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+              <span style={{fontSize:12,color:"#607d8b"}}>Total acumulado</span>
+              <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{mostrarMonto?fmt(totalSki+totalSnow):"••••••"}</span>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:8}}>
+              <div style={{textAlign:"center",padding:8,background:"rgba(79,195,247,0.06)",borderRadius:8}}>
+                <div style={{fontSize:18,fontWeight:"bold",color:"#4FC3F7"}}>{mostrarMonto?fmt(totalSki):"••••••"}</div>
+                <div style={{fontSize:10,color:"#607d8b"}}>⛷️ Ski · {horasSki}h</div>
+              </div>
+              <div style={{textAlign:"center",padding:8,background:"rgba(255,152,0,0.06)",borderRadius:8}}>
+                <div style={{fontSize:18,fontWeight:"bold",color:"#FF9800"}}>{mostrarMonto?fmt(totalSnow):"••••••"}</div>
+                <div style={{fontSize:10,color:"#607d8b"}}>🏂 Snow · {horasSnow}h</div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+      {subTab==="temp"&&(
+        <>
+          <div style={{fontSize:11,letterSpacing:2,color:"#CE93D8",marginBottom:12}}>🎿 TEMPORADA COMPLETA</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:12}}>
+              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>⛷️ Ski</div>
+              <div style={{fontSize:15,fontWeight:"bold",color:"#4FC3F7",marginBottom:2}}>{mostrarMonto?fmt(totalSki):"••••••"}</div>
+              <div style={{fontSize:11,color:"#607d8b"}}>{horasSki}h · {skiClases.length} clases</div>
+              <div style={{height:4,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:`${totalSki+totalSnow>0?Math.round(totalSki/(totalSki+totalSnow)*100):0}%`,background:"#4FC3F7",borderRadius:99}}/></div>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,152,0,0.15)",borderRadius:12,padding:12}}>
+              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>🏂 Snow</div>
+              <div style={{fontSize:15,fontWeight:"bold",color:"#FF9800",marginBottom:2}}>{mostrarMonto?fmt(totalSnow):"••••••"}</div>
+              <div style={{fontSize:11,color:"#607d8b"}}>{horasSnow}h · {snowClases.length} clases</div>
+              <div style={{height:4,background:"rgba(255,255,255,0.08)",borderRadius:99,overflow:"hidden",marginTop:6}}><div style={{height:"100%",width:`${totalSki+totalSnow>0?Math.round(totalSnow/(totalSki+totalSnow)*100):0}%`,background:"#FF9800",borderRadius:99}}/></div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(129,199,132,0.08)",border:"1px solid rgba(129,199,132,0.2)",borderRadius:8}}>
+              <span style={{fontSize:11,color:"#607d8b"}}>💰 Total</span>
+              <span style={{fontSize:12,fontWeight:500,color:"#81C784"}}>{mostrarMonto?fmt(totalSki+totalSnow):"••••••"}</span>
+            </div>
+            <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(79,195,247,0.08)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:8}}>
+              <span style={{fontSize:11,color:"#607d8b"}}>⏱ Total</span>
+              <span style={{fontSize:12,fontWeight:500,color:"#4FC3F7"}}>{horasSki+horasSnow}h</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function SkiTracker() {
   const [user,setUser]=useState(null);
   const [profile,setProfile]=useState(null);
@@ -805,6 +909,7 @@ export default function SkiTracker() {
   const [showAgregarOtro,setShowAgregarOtro]=useState(null);
   const [nuevoOtroNombre,setNuevoOtroNombre]=useState("");
   const [nuevoOtroMonto,setNuevoOtroMonto]=useState("");
+  const [claseDisc,setClaseDisc]=useState({particular:"ski",colectiva:"ski",requerida:"ski"});
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
@@ -849,6 +954,10 @@ export default function SkiTracker() {
     setProfile(p=>({...p,disciplina:disc}));
   }
 
+  function handleClaseDisc(tipo,val){ setClaseDisc(p=>({...p,[tipo]:val})); }
+
+  function disciplinaClaseActual(tipo){ return disc==="poli"?claseDisc[tipo]:disc; }
+
   function calcularValor(tipo,horas) {
     const h=horas||1;
     if(tipo==="particular") return precios.particular*h;
@@ -863,7 +972,8 @@ export default function SkiTracker() {
     const valor=calcularValor(tipo,horas);
     const extras=tipo==="colectiva"?Math.max(0,personas-precios.colectiva_base):0;
     const comentario=comentarioPrevio[tipo]||"";
-    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,comentario:comentario||null,horas,fecha:new Date().toISOString()}).select().single();
+    const dc=disciplinaClaseActual(tipo);
+    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,comentario:comentario||null,horas,fecha:new Date().toISOString(),disciplina_clase:dc}).select().single();
     if(!error&&data){setClases(prev=>[...prev,data]);if(comentario.trim()) setComentarios(p=>({...p,[data.id]:comentario}));}
     setComentarioPrevio(p=>({...p,[tipo]:""}));
     setMostrarComentarioPrevio(p=>({...p,[tipo]:false}));
@@ -936,6 +1046,16 @@ export default function SkiTracker() {
   const horasPorTipo={particular:0,colectiva:0,requerida:0};
   clasesMes.forEach(c=>{horasPorTipo[c.tipo]+=(c.horas||1);});
   const totalHorasMes=Object.values(horasPorTipo).reduce((s,h)=>s+h,0);
+  const skiClases=clasesMes.filter(c=>(c.disciplina_clase||disc)==="ski");
+  const snowClases=clasesMes.filter(c=>(c.disciplina_clase||disc)==="snow");
+  const totalSki=skiClases.reduce((s,c)=>s+c.valor,0);
+  const totalSnow=snowClases.reduce((s,c)=>s+c.valor,0);
+  const horasSki={particular:0,colectiva:0,requerida:0};
+  const horasSnow={particular:0,colectiva:0,requerida:0};
+  skiClases.forEach(c=>{horasSki[c.tipo]+=(c.horas||1);});
+  snowClases.forEach(c=>{horasSnow[c.tipo]+=(c.horas||1);});
+  const totalHorasSki=Object.values(horasSki).reduce((s,h)=>s+h,0);
+  const totalHorasSnow=Object.values(horasSnow).reduce((s,h)=>s+h,0);
   const mesesDisponibles=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort().reverse();
   const extrasActuales=Math.max(0,personas-base);
   const colectivaPreview=calcularValor("colectiva",horasNuevaClase.colectiva);
@@ -946,10 +1066,10 @@ export default function SkiTracker() {
 
         {/* CAMBIO 2: Selector ski/snow */}
         <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:8,padding:2,marginBottom:10,width:"fit-content",gap:2}}>
-          {[["ski","⛷️","Ski"],["snow","🏂","Snow"]].map(([k,em,l])=>(
-            <button key={k} onClick={()=>setDisciplina(k)} style={{padding:"4px 14px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",border:"none",borderRadius:7,background:disc===k?"rgba(79,195,247,0.2)":"transparent",outline:disc===k?"1px solid #4FC3F7":"none",fontFamily:"inherit"}}>
+          {[["ski","⛷️","Ski"],["snow","🏂","Snow"],["poli","🎿","Polivalente"]].map(([k,em,l])=>(
+            <button key={k} onClick={()=>setDisciplina(k)} style={{padding:"4px 14px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",border:"none",borderRadius:7,background:disc===k?k==="poli"?"rgba(156,39,176,0.2)":"rgba(79,195,247,0.2)":"transparent",outline:disc===k?k==="poli"?"1px solid #CE93D8":"1px solid #4FC3F7":"none",fontFamily:"inherit"}}>
               <span style={{fontSize:15}}>{em}</span>
-              <span style={{fontSize:12,color:disc===k?"#4FC3F7":"#607d8b",fontWeight:disc===k?"bold":"normal"}}>{l}</span>
+              <span style={{fontSize:12,color:disc===k?k==="poli"?"#CE93D8":"#4FC3F7":"#607d8b",fontWeight:disc===k?"bold":"normal"}}>{l}</span>
             </button>
           ))}
         </div>
@@ -962,7 +1082,7 @@ export default function SkiTracker() {
               <div style={{width:16,height:16,borderRadius:"50%",background:"#4FC3F7",border:"2px solid #0d2a3a",position:"absolute",bottom:0,right:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9}}>✏️</div>
             </div>
             <div>
-              <div style={{fontSize:10,letterSpacing:3,color:"#4FC3F7",textTransform:"uppercase"}}>{disc==="snow"?"🏂 Snow Instructor":"⛷️ Ski Instructor"}</div>
+              <div style={{fontSize:10,letterSpacing:3,color:"#4FC3F7",textTransform:"uppercase"}}>{disc==="snow"?"🏂 Snow Instructor":disc==="poli"?"🎿 Instructor Polivalente":"⛷️ Ski Instructor"}</div>
               <div style={{fontSize:18,fontWeight:"bold",color:"#fff"}}>{profile?.nombre||profile?.email?.split("@")[0]||"Mi cuenta"}</div>
             </div>
           </div>
@@ -1010,6 +1130,53 @@ export default function SkiTracker() {
                 </div>
               ))}
             </div>
+            {disc==="poli"&&(
+              <>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.07)"}}>
+                  <div style={{background:"rgba(79,195,247,0.04)",border:"1px solid rgba(79,195,247,0.25)",borderRadius:12,padding:10,textAlign:"center"}}>
+                    <div style={{fontSize:18}}>⛷️</div>
+                    <div style={{fontSize:18,fontWeight:"bold",color:"#4FC3F7",marginTop:2}}>{mostrarMonto?fmt(totalSki):"••••••"}</div>
+                    <div style={{fontSize:11,color:"#607d8b"}}>⏱ {totalHorasSki}h</div>
+                  </div>
+                  <div style={{background:"rgba(255,152,0,0.04)",border:"1px solid rgba(255,152,0,0.25)",borderRadius:12,padding:10,textAlign:"center"}}>
+                    <div style={{fontSize:18}}>🏂</div>
+                    <div style={{fontSize:18,fontWeight:"bold",color:"#FF9800",marginTop:2}}>{mostrarMonto?fmt(totalSnow):"••••••"}</div>
+                    <div style={{fontSize:11,color:"#607d8b"}}>⏱ {totalHorasSnow}h</div>
+                  </div>
+                </div>
+                <div style={{marginTop:10,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.07)"}}>
+                  <div style={{fontSize:10,color:"#607d8b",letterSpacing:1,marginBottom:6,textAlign:"center"}}>HORAS POR CATEGORÍA</div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                    <div style={{background:"rgba(79,195,247,0.06)",borderRadius:8,padding:8}}>
+                      <div style={{fontSize:11,fontWeight:600,color:"#4FC3F7",marginBottom:6}}>⛷️ SKI</div>
+                      {TIPOS.map(t=>(
+                        <div key={t.key} style={{display:"flex",justifyContent:"space-between",fontSize:11,padding:"2px 0"}}>
+                          <span style={{color:"#90CAF9"}}>{t.label}</span>
+                          <span style={{fontWeight:"bold"}}>{horasSki[t.key]}h</span>
+                        </div>
+                      ))}
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,padding:"2px 0",borderTop:"1px solid rgba(255,255,255,0.07)",marginTop:4,paddingTop:4}}>
+                        <span style={{color:"#607d8b"}}>Total</span>
+                        <span style={{fontWeight:"bold",color:"#4FC3F7"}}>{totalHorasSki}h</span>
+                      </div>
+                    </div>
+                    <div style={{background:"rgba(255,152,0,0.06)",borderRadius:8,padding:8}}>
+                      <div style={{fontSize:11,fontWeight:600,color:"#FF9800",marginBottom:6}}>🏂 SNOW</div>
+                      {TIPOS.map(t=>(
+                        <div key={t.key} style={{display:"flex",justifyContent:"space-between",fontSize:11,padding:"2px 0"}}>
+                          <span style={{color:"#90CAF9"}}>{t.label}</span>
+                          <span style={{fontWeight:"bold"}}>{horasSnow[t.key]}h</span>
+                        </div>
+                      ))}
+                      <div style={{display:"flex",justifyContent:"space-between",fontSize:11,padding:"2px 0",borderTop:"1px solid rgba(255,255,255,0.07)",marginTop:4,paddingTop:4}}>
+                        <span style={{color:"#607d8b"}}>Total</span>
+                        <span style={{fontWeight:"bold",color:"#FF9800"}}>{totalHorasSnow}h</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
             <div style={{marginTop:12,paddingTop:10,borderTop:"1px solid rgba(255,255,255,0.07)",display:"flex",justifyContent:"center",alignItems:"center",gap:6}}>
               <span style={{fontSize:12,color:"#607d8b"}}>Total horas del mes</span>
               <span style={{fontSize:13,fontWeight:"bold",color:"#4FC3F7",background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:8,padding:"3px 10px"}}>⏱ {totalHorasMes}h</span>
@@ -1020,13 +1187,14 @@ export default function SkiTracker() {
         {tab==="calendario"&&(
           <>
             <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:10,padding:3,marginBottom:16}}>
-              {[["calendario","🗓️ Calendario"],["pordia","📅 Por Día"],["pormes","📊 Por Mes"]].map(([key,label])=>(
-                <button key={key} onClick={()=>setSubTabCal(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:subTabCal===key?"rgba(79,195,247,0.15)":"transparent",color:subTabCal===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
+              {[["calendario","🗓️ Calendario"],["pordia","📅 Por Día"],["pormes","📊 Por Mes"],disc==="poli"&&["pordisc","🎿 Por Disciplina"]].filter(Boolean).map(([key,label])=>(
+                <button key={key} onClick={()=>setSubTabCal(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:subTabCal===key?"rgba(79,195,247,0.15)":"transparent",color:subTabCal===key?key==="pordisc"?"#CE93D8":"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
               ))}
             </div>
             {subTabCal==="calendario"&&<Calendario clases={clases} disc={disc}/>}
             {subTabCal==="pordia"&&<PorDia clases={clases} disc={disc}/>}
             {subTabCal==="pormes"&&<PorMes clases={clases}/>}
+            {subTabCal==="pordisc"&&<PorDisciplina clases={clases} disc={disc} mostrarMonto={mostrarMonto} fmt={fmt}/>}
           </>
         )}
 
@@ -1037,6 +1205,11 @@ export default function SkiTracker() {
             {/* COLECTIVA */}
             <div style={{background:"#0d2a1a",border:"1px solid rgba(129,199,132,0.3)",borderRadius:14,padding:"16px",marginBottom:12}}>
               <div style={{fontSize:13,color:"#81C784",marginBottom:10,fontWeight:"bold"}}>👥 Colectiva</div>
+              {disc==="poli"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:8,padding:2,marginBottom:8,gap:2,width:"fit-content"}}>
+                {[["ski","⛷️"],["snow","🏂"]].map(([kd,em])=>(
+                  <button key={kd} onClick={()=>handleClaseDisc("colectiva",kd)} style={{padding:"4px 10px",border:"none",borderRadius:6,background:claseDisc.colectiva===kd?kd==="ski"?"rgba(79,195,247,0.2)":"rgba(255,152,0,0.2)":"transparent",color:claseDisc.colectiva===kd?kd==="ski"?"#4FC3F7":"#FF9800":"#607d8b",fontSize:11,cursor:"pointer",fontWeight:claseDisc.colectiva===kd?600:400,fontFamily:"inherit"}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
+                ))}
+              </div>}
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Precio base (incluye {base} pers.)</span>
                 <span style={{fontSize:12,color:"#81C784",fontWeight:"bold"}}>{fmt(precios.colectiva)}/h</span>
@@ -1084,6 +1257,11 @@ export default function SkiTracker() {
                     <div style={{fontSize:14,fontWeight:"bold",color:t.color}}>{t.label}</div>
                     <div style={{fontSize:11,color:"#90CAF9",marginTop:2}}>{fmt(precios[t.key])}/h</div>
                   </div>
+                  {disc==="poli"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:8,padding:2,marginBottom:8,gap:2,width:"fit-content",marginLeft:"auto",marginRight:"auto"}}>
+                    {[["ski","⛷️"],["snow","🏂"]].map(([kd,em])=>(
+                      <button key={kd} onClick={()=>handleClaseDisc(t.key,kd)} style={{padding:"4px 10px",border:"none",borderRadius:6,background:claseDisc[t.key]===kd?kd==="ski"?"rgba(79,195,247,0.2)":"rgba(255,152,0,0.2)":"transparent",color:claseDisc[t.key]===kd?kd==="ski"?"#4FC3F7":"#FF9800":"#607d8b",fontSize:11,cursor:"pointer",fontWeight:claseDisc[t.key]===kd?600:400,fontFamily:"inherit"}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
+                    ))}
+                  </div>}
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 8px",background:`rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.05)`,border:`1px solid rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.15)`,borderRadius:8}}>
                     <span style={{fontSize:11,color:"#607d8b"}}>⏱</span>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
