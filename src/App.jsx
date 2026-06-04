@@ -1160,7 +1160,12 @@ export default function SkiTracker() {
     setUser(u);
     await supabase.from("sesiones").insert({user_id:u.id});
     await supabase.from("profiles").update({last_seen:new Date().toISOString()}).eq("id",u.id);
-    const {data:prof}=await supabase.from("profiles").select("*").eq("id",u.id).single();
+    let {data:prof}=await supabase.from("profiles").select("*").eq("id",u.id).single();
+    if(!prof){
+      await supabase.from("profiles").insert({id:u.id,email:u.email,nombre:u.user_metadata?.nombre||"",aprobado:false,is_admin:false,disciplina:"ski",recordar:false});
+      const {data:newProf}=await supabase.from("profiles").select("*").eq("id",u.id).single();
+      prof=newProf;
+    }
     setProfile(prof);
     if(prof) setRecordar(prof.recordar??false);
     if(prof?.aprobado||prof?.is_admin){
