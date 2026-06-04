@@ -1,0 +1,20 @@
+<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="r1"><rect width="512" height="512" rx="115" ry="115"/></clipPath>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a1628"/>
+      <stop offset="100%" style="stop-color:#0d3a6a"/>
+    </linearGradient>
+    <marker id="arr" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L4,2 L0,4 L1,2 Z" fill="#4FC3F7"/>
+    </marker>
+  </defs>
+  <g clip-path="url(#r1)">
+    <rect width="512" height="512" fill="url(#bg1)"/>
+    <polygon points="80,420 230,150 380,420" fill="#1a3a6a"/>
+    <polygon points="240,420 370,230 500,420" fill="#0f2a50"/>
+    <polygon points="230,150 192,225 268,225" fill="white"/>
+    <polygon points="370,230 350,272 390,272" fill="white" opacity="0.7"/>
+    <polyline points="88,395 163,395 228,310 303,310 368,220 413,220 448,168" stroke="#4FC3F7" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arr)"/>
+  </g>
+</svg>
