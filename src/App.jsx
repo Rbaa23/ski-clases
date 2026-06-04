@@ -1156,6 +1156,7 @@ export default function SkiTracker() {
       mostrar_monto:tempPrecios.mostrar_monto
     }).eq("user_id",user.id);
     setPrecios({...tempPrecios});
+    setPersonas(p=>Math.max(p,tempPrecios.colectiva_base||3));
     setShowConfig(false);
   }
 
