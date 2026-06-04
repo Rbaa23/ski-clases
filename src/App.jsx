@@ -1156,7 +1156,6 @@ export default function SkiTracker() {
       mostrar_monto:tempPrecios.mostrar_monto
     }).eq("user_id",user.id);
     setPrecios({...tempPrecios});
-    setPersonas(p=>Math.max(p,tempPrecios.colectiva_base||3));
     setShowConfig(false);
   }
 
@@ -1350,7 +1349,7 @@ export default function SkiTracker() {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Personas en clase</span>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <button onClick={()=>setPersonas(p=>Math.max(base,p-1))} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>−</button>
+                  <button onClick={()=>setPersonas(p=>Math.max(1,p-1))} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>−</button>
                   <span style={{fontSize:22,fontWeight:"bold",color:"#fff",minWidth:24,textAlign:"center"}}>{personas}</span>
                   <button onClick={()=>setPersonas(p=>p+1)} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>+</button>
                 </div>
