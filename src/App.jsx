@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const SUPABASE_URL = "https://eoppuoiaxnfaihpyovsy.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvcHB1b2lheG5mYWlocHlvdnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNTkwNjIsImV4cCI6MjA5NTkzNTA2Mn0.YfbzhlfNwf9wvCk0iO-8II7RIABEzyWqitHhHi7Q-eo";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, extra_por_hora:true, mostrar_monto:true };
@@ -755,7 +755,7 @@ function PorMes({clases}) {
                         {["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"].map(m=><option key={m}>{m}</option>)}
                       </select>
                       <select style={{flex:1,fontSize:10,padding:"3px 4px",borderRadius:6,background:"#0d2a3a",border:`1px solid ${t.border}`,color:"#e8f4f8"}}>
-                        {(aniosDisp.length>0?aniosDisp:["2025","2026"]).map(a=>["Jun","Oct"].map(m=>`${m} ${a}`)).flat().map(m=><option key={m}>{m}</option>)}
+                        {["2026","2027","2028","2029","2030","2031"].map(a=>["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"].map(m=>`${m} ${a}`)).flat().map(m=><option key={m}>{m}</option>)}
                       </select>
                     </div>
                     <div style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>$0</div>
