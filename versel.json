@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/recordatorio",
+      "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/resumen-mensual",
+      "schedule": "0 9 1 * *"
+    }
+  ]
+}
