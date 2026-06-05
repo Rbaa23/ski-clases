@@ -968,15 +968,18 @@ export default function SkiTracker() {
     setProfile(prof);
     if(prof?.aprobado||prof?.is_admin){
       const {data:prec}=await supabase.from("precios").select("*").eq("user_id",u.id).single();
-      if(prec) setPrecios({
-        particular:prec.particular,
-        colectiva:prec.colectiva,
-        colectiva_extra:prec.colectiva_extra,
-        colectiva_base:prec.colectiva_base,
-        requerida:prec.requerida,
-        extra_por_hora:prec.extra_por_hora??true,
-        mostrar_monto:prec.mostrar_monto!==false
-      });
+      if(prec){
+        setPrecios({
+          particular:prec.particular,
+          colectiva:prec.colectiva,
+          colectiva_extra:prec.colectiva_extra,
+          colectiva_base:prec.colectiva_base,
+          requerida:prec.requerida,
+          extra_por_hora:prec.extra_por_hora??true,
+          mostrar_monto:prec.mostrar_monto!==false
+        });
+        setPersonas(prec.colectiva_base||3);
+      }
       const {data:cls}=await supabase.from("clases").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
       if(cls){setClases(cls);const c={};cls.forEach(x=>{if(x.comentario) c[x.id]=x.comentario;});setComentarios(c);}
       const {data:desc}=await supabase.from("descuentos").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
@@ -1099,10 +1102,10 @@ export default function SkiTracker() {
 
         {/* CAMBIO 2: Selector ski/snow */}
         <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:8,padding:2,marginBottom:10,width:"fit-content",gap:2}}>
-          {[["ski","⛷️","Ski"],["snow","🏂","Snow"],["polivalente","🎿","Polivalente"]].map(([k,em,l])=>(
-            <button key={k} onClick={()=>setDisciplina(k)} style={{padding:"4px 14px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",border:"none",borderRadius:7,background:disc===k?"rgba(79,195,247,0.2)":"transparent",outline:disc===k?"1px solid #4FC3F7":"none",fontFamily:"inherit"}}>
+          {[["ski","⛷️","Ski","#4FC3F7","rgba(79,195,247,0.2)"],["snow","🏂","Snow","#FFA726","rgba(255,167,38,0.2)"],["polivalente","🎿","Polivalente","#DA77F2","rgba(218,119,242,0.2)"]].map(([k,em,l,col,bg])=>(
+            <button key={k} onClick={()=>setDisciplina(k)} style={{padding:"4px 14px",display:"flex",alignItems:"center",gap:5,cursor:"pointer",border:"none",borderRadius:7,background:disc===k?bg:"transparent",outline:disc===k?`1px solid ${col}`:"none",fontFamily:"inherit"}}>
               <span style={{fontSize:15}}>{em}</span>
-              <span style={{fontSize:12,color:disc===k?"#4FC3F7":"#607d8b",fontWeight:disc===k?"bold":"normal"}}>{l}</span>
+              <span style={{fontSize:12,color:disc===k?col:"#607d8b",fontWeight:disc===k?"bold":"normal"}}>{l}</span>
             </button>
           ))}
         </div>
@@ -1115,7 +1118,7 @@ export default function SkiTracker() {
               <div style={{width:16,height:16,borderRadius:"50%",background:"#4FC3F7",border:"2px solid #0d2a3a",position:"absolute",bottom:0,right:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9}}>✏️</div>
             </div>
             <div>
-              <div style={{fontSize:10,letterSpacing:3,color:"#4FC3F7",textTransform:"uppercase"}}>{disc==="snow"?"🏂 Snow Instructor":disc==="polivalente"?"🎿 Polivalente":"⛷️ Ski Instructor"}</div>
+              <div style={{fontSize:10,letterSpacing:3,color:disc==="snow"?"#FFA726":disc==="polivalente"?"#DA77F2":"#4FC3F7",textTransform:"uppercase"}}>{disc==="snow"?"🏂 Snow Instructor":disc==="polivalente"?"🎿 Instructor Polivalente":"⛷️ Ski Instructor"}</div>
               <div style={{fontSize:18,fontWeight:"bold",color:"#fff"}}>{profile?.nombre||profile?.email?.split("@")[0]||"Mi cuenta"}</div>
             </div>
           </div>
@@ -1135,7 +1138,7 @@ export default function SkiTracker() {
           </div>
         )}
         <div style={{display:"flex"}}>
-          {[["registro","📝 Registro"],["calendario","📊 Estadísticas"]].map(([key,label])=>(
+          {[["registro","📝 Registro"],["calendario","🗓️ Calendario"]].map(([key,label])=>(
             <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"10px 0",background:tab===key?"rgba(79,195,247,0.15)":"transparent",border:"none",borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent",color:tab===key?"#4FC3F7":"#607d8b",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
           ))}
         </div>
@@ -1173,7 +1176,7 @@ export default function SkiTracker() {
         {tab==="calendario"&&(
           <>
             <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:10,padding:3,marginBottom:16}}>
-              {[["calendario","📊 Estadísticas"],["pordia","📅 Por Día"],["pormes","📊 Por Mes"],...(disc==="polivalente"?[["disciplina","🎿 Disciplina"]]:[])]
+              {[["calendario","🗓️ Calendario"],["pordia","📅 Por Día"],["pormes","📊 Por Mes"],...(disc==="polivalente"?[["disciplina","🎿 Disciplina"]]:[])]
                 .map(([key,label])=>(
                   <button key={key} onClick={()=>setSubTabCal(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:subTabCal===key?"rgba(79,195,247,0.15)":"transparent",color:subTabCal===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
                 ))}
@@ -1195,7 +1198,7 @@ export default function SkiTracker() {
                 <div style={{fontSize:13,color:"#81C784",fontWeight:"bold"}}>👥 Colectiva</div>
                 {disc==="polivalente"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:7,padding:2,gap:2}}>
                   {[["ski","⛷️"],["snow","🏂"]].map(([kd,em])=>(
-                    <button key={kd} onClick={()=>setDiscClase(p=>({...p,colectiva:kd}))} style={{padding:"3px 9px",border:"none",borderRadius:5,fontSize:10,cursor:"pointer",fontFamily:"inherit",background:discClase.colectiva===kd?(kd==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase.colectiva===kd?(kd==="ski"?"#4FC3F7":"#F06292"):"#607d8b",fontWeight:discClase.colectiva===kd?600:400}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
+                    <button key={kd} onClick={()=>setDiscClase(p=>({...p,colectiva:kd}))} style={{padding:"6px 13px",border:"none",borderRadius:7,fontSize:12,cursor:"pointer",fontFamily:"inherit",background:discClase.colectiva===kd?(kd==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase.colectiva===kd?(kd==="ski"?"#4FC3F7":"#F06292"):"#607d8b",fontWeight:discClase.colectiva===kd?600:400,outline:discClase.colectiva===kd?`1px solid ${kd==="ski"?"#4FC3F7":"#F06292"}`:"none"}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
                   ))}
                 </div>}
               </div>
@@ -1248,7 +1251,7 @@ export default function SkiTracker() {
                   </div>
                   {disc==="polivalente"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:7,padding:2,gap:2,justifyContent:"center",marginBottom:8}}>
                     {[["ski","⛷️"],["snow","🏂"]].map(([kd,em])=>(
-                      <button key={kd} onClick={()=>setDiscClase(p=>({...p,[t.key]:kd}))} style={{padding:"3px 9px",border:"none",borderRadius:5,fontSize:10,cursor:"pointer",fontFamily:"inherit",background:discClase[t.key]===kd?(kd==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase[t.key]===kd?(kd==="ski"?"#4FC3F7":"#F06292"):"#607d8b",fontWeight:discClase[t.key]===kd?600:400}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
+                      <button key={kd} onClick={()=>setDiscClase(p=>({...p,[t.key]:kd}))} style={{padding:"6px 13px",border:"none",borderRadius:7,fontSize:12,cursor:"pointer",fontFamily:"inherit",background:discClase[t.key]===kd?(kd==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase[t.key]===kd?(kd==="ski"?"#4FC3F7":"#F06292"):"#607d8b",fontWeight:discClase[t.key]===kd?600:400,outline:discClase[t.key]===kd?`1px solid ${kd==="ski"?"#4FC3F7":"#F06292"}`:"none"}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
                     ))}
                   </div>}
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 8px",background:`rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.05)`,border:`1px solid rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.15)`,borderRadius:8}}>
@@ -1397,4 +1400,3 @@ export default function SkiTracker() {
     </div>
   );
 }
-
