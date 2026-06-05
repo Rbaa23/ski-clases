@@ -1138,7 +1138,7 @@ export default function SkiTracker() {
           </div>
         )}
         <div style={{display:"flex"}}>
-          {[["registro","📝 Registro"],["calendario","🗓️ Calendario"]].map(([key,label])=>(
+          {[["registro","📝 Registro"],["calendario","📊 Estadísticas"]].map(([key,label])=>(
             <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"10px 0",background:tab===key?"rgba(79,195,247,0.15)":"transparent",border:"none",borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent",color:tab===key?"#4FC3F7":"#607d8b",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
           ))}
         </div>
