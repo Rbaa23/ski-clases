@@ -141,18 +141,40 @@ function AuthScreen({ onAuth }) {
       {showInfo&&(
         <div onClick={()=>setShowInfo(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
           <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
-            <div style={{fontSize:18,fontWeight:"bold",marginBottom:16,color:"#4FC3F7"}}>❓ ¿Qué es StatClass?</div>
-            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:16}}>StatClass es una herramienta de registro y estadísticas para instructores de ski y snowboard.</div>
-            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Registro de clases</strong> — Agrega clases particulares, colectivas y requeridas</div>
-            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Modo polivalente</strong> — Clasifica tus clases entre Ski y Snowboard</div>
-            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Estadísticas</strong> — Calendario, resumen por día, mes y disciplina</div>
-            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:12}}>✅ <strong style={{color:"#4FC3F7"}}>Control de ingresos</strong> — Lleva la cuenta de tus ganancias, descuentos y gastos</div>
-            <div style={{fontSize:13,color:"#e8f4f8",lineHeight:1.7,marginBottom:16}}>✅ <strong style={{color:"#4FC3F7"}}>Multiusuario</strong> — Cada instructor tiene su propio registro y configuración de precios</div>
-            <div style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:12,padding:"12px 14px",marginBottom:16}}>
-              <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>💡 Creado por un instructor para instructores.</div>
-              <div style={{fontSize:11,color:"#607d8b"}}>StatClass v1.0</div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{fontSize:18,fontWeight:"bold",color:"#4FC3F7"}}>⛷️ StatClass</div>
+              <button onClick={()=>setShowInfo(false)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#90CAF9",padding:"6px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>✕ Cerrar</button>
             </div>
-            <button onClick={()=>setShowInfo(false)} style={{width:"100%",padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer"}}>Entendido</button>
+            <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.6,marginBottom:14}}>La herramienta para llevar el control de tus clases, ingresos y estadísticas en un solo lugar.</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+              {[{n:"3",l:"Tipos de clase"},{n:"∞",l:"Historial"},{n:"📊",l:"Estadísticas"}].map(s=>(
+                <div key={s.l} style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:10,padding:10,textAlign:"center"}}>
+                  <div style={{fontSize:20,fontWeight:"bold",color:"#4FC3F7"}}>{s.n}</div>
+                  <div style={{fontSize:10,color:"#607d8b",marginTop:2}}>{s.l}</div>
+                </div>
+              ))}
+            </div>
+            {[
+              {icon:"📝",title:"Registro de clases",desc:<>Agrega clases <strong style={{color:"#e8f4f8"}}>Particulares, Colectivas y Requeridas</strong> con control de horas, personas y extras. Calcula el valor automáticamente según tus tarifas.</>},
+              {icon:"🎿",title:"Modo Polivalente",desc:<>¿Enseñas ski y snowboard? Clasifica cada clase por disciplina y mira tus estadísticas <strong style={{color:"#e8f4f8"}}>separadas por ⛷️ Ski y 🏂 Snow</strong>.</>},
+              {icon:"📊",title:"Estadísticas completas",desc:"Calendario mensual, resumen por día, comparativa anual y análisis por temporadas. Ve exactamente cuánto ganaste y cuántas horas trabajaste."},
+              {icon:"💰",title:"Control de ingresos y gastos",desc:<>Registra <strong style={{color:"#81C784"}}>ingresos extras</strong> y <strong style={{color:"#ef9a9a"}}>gastos</strong> como descuentos de comida, arriendos o bonos. Tu total neto siempre actualizado.</>},
+              {icon:"🔔",title:"Recordatorios por email",desc:<>Recibe un correo si olvidaste registrar tus clases del día, y un <strong style={{color:"#e8f4f8"}}>resumen mensual</strong> el primer día de cada mes.</>},
+              {icon:"⚙️",title:"Precios personalizables",desc:"Configura tus tarifas por hora, personas base, extras y más. Cada instructor tiene su propia configuración."},
+            ].map(f=>(
+              <div key={f.title} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"flex-start",gap:12}}>
+                <div style={{fontSize:24,flexShrink:0,marginTop:2}}>{f.icon}</div>
+                <div>
+                  <div style={{fontSize:13,fontWeight:600,color:"#4FC3F7",marginBottom:4}}>{f.title}</div>
+                  <div style={{fontSize:12,color:"#90CAF9",lineHeight:1.5}}>{f.desc}</div>
+                </div>
+              </div>
+            ))}
+            <div style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{fontSize:11,color:"#607d8b"}}>💡 Creado por un instructor para instructores</div>
+              <div style={{fontSize:11,color:"#4FC3F7",fontWeight:600}}>v1.0</div>
+            </div>
+            <button onClick={()=>setShowInfo(false)} style={{width:"100%",padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>¡Entendido, quiero registrarme!</button>
           </div>
         </div>
       )}
