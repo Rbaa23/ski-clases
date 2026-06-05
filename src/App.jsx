@@ -1135,7 +1135,7 @@ export default function SkiTracker() {
           </div>
         )}
         <div style={{display:"flex"}}>
-          {[["registro","📝 Registro"],["calendario","🗓️ Calendario"]].map(([key,label])=>(
+          {[["registro","📝 Registro"],["calendario","📊 Estadísticas"]].map(([key,label])=>(
             <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"10px 0",background:tab===key?"rgba(79,195,247,0.15)":"transparent",border:"none",borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent",color:tab===key?"#4FC3F7":"#607d8b",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
           ))}
         </div>
@@ -1173,7 +1173,7 @@ export default function SkiTracker() {
         {tab==="calendario"&&(
           <>
             <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:10,padding:3,marginBottom:16}}>
-              {[["calendario","🗓️ Calendario"],["pordia","📅 Por Día"],["pormes","📊 Por Mes"],...(disc==="polivalente"?[["disciplina","🎿 Disciplina"]]:[])]
+              {[["calendario","📊 Estadísticas"],["pordia","📅 Por Día"],["pormes","📊 Por Mes"],...(disc==="polivalente"?[["disciplina","🎿 Disciplina"]]:[])]
                 .map(([key,label])=>(
                   <button key={key} onClick={()=>setSubTabCal(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:subTabCal===key?"rgba(79,195,247,0.15)":"transparent",color:subTabCal===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
                 ))}
@@ -1191,7 +1191,14 @@ export default function SkiTracker() {
 
             {/* COLECTIVA */}
             <div style={{background:"#0d2a1a",border:"1px solid rgba(129,199,132,0.3)",borderRadius:14,padding:"16px",marginBottom:12}}>
-              <div style={{fontSize:13,color:"#81C784",marginBottom:10,fontWeight:"bold"}}>👥 Colectiva</div>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                <div style={{fontSize:13,color:"#81C784",fontWeight:"bold"}}>👥 Colectiva</div>
+                {disc==="polivalente"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:7,padding:2,gap:2}}>
+                  {[["ski","⛷️"],["snow","🏂"]].map(([kd,em])=>(
+                    <button key={kd} onClick={()=>setDiscClase(p=>({...p,colectiva:kd}))} style={{padding:"3px 9px",border:"none",borderRadius:5,fontSize:10,cursor:"pointer",fontFamily:"inherit",background:discClase.colectiva===kd?(kd==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase.colectiva===kd?(kd==="ski"?"#4FC3F7":"#F06292"):"#607d8b",fontWeight:discClase.colectiva===kd?600:400}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
+                  ))}
+                </div>}
+              </div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Precio base (incluye {base} pers.)</span>
                 <span style={{fontSize:12,color:"#81C784",fontWeight:"bold"}}>{fmt(precios.colectiva)}/h</span>
@@ -1239,6 +1246,11 @@ export default function SkiTracker() {
                     <div style={{fontSize:14,fontWeight:"bold",color:t.color}}>{t.label}</div>
                     <div style={{fontSize:11,color:"#90CAF9",marginTop:2}}>{fmt(precios[t.key])}/h</div>
                   </div>
+                  {disc==="polivalente"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:7,padding:2,gap:2,justifyContent:"center",marginBottom:8}}>
+                    {[["ski","⛷️"],["snow","🏂"]].map(([kd,em])=>(
+                      <button key={kd} onClick={()=>setDiscClase(p=>({...p,[t.key]:kd}))} style={{padding:"3px 9px",border:"none",borderRadius:5,fontSize:10,cursor:"pointer",fontFamily:"inherit",background:discClase[t.key]===kd?(kd==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase[t.key]===kd?(kd==="ski"?"#4FC3F7":"#F06292"):"#607d8b",fontWeight:discClase[t.key]===kd?600:400}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
+                    ))}
+                  </div>}
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 8px",background:`rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.05)`,border:`1px solid rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.15)`,borderRadius:8}}>
                     <span style={{fontSize:11,color:"#607d8b"}}>⏱</span>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
@@ -1385,3 +1397,4 @@ export default function SkiTracker() {
     </div>
   );
 }
+
