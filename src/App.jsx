@@ -1103,7 +1103,11 @@ export default function SkiTracker() {
   const disc=profile?.disciplina||"ski";
   const mostrarMonto=precios.mostrar_monto!==false;
   const base=precios.colectiva_base||3;
-  const clasesMes=clases.filter(c=>c.fecha.startsWith(mes));
+  const clasesMes=clases.filter(c=>{
+    if(!c.fecha.startsWith(mes)) return false;
+    if(disc==="polivalente") return true;
+    return (c.disciplina_clase||"ski")===disc;
+  });
   const descuentosMes=descuentos.filter(d=>d.fecha.startsWith(mes));
   const otrosMes=otros.filter(o=>o.fecha.startsWith(mes));
   const totalBruto=clasesMes.reduce((s,c)=>s+c.valor,0);
@@ -1231,7 +1235,7 @@ export default function SkiTracker() {
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Personas en clase</span>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <button onClick={()=>setPersonas(p=>Math.max(base,p-1))} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>−</button>
+                  <button onClick={()=>setPersonas(p=>Math.max(1,p-1))} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>−</button>
                   <span style={{fontSize:22,fontWeight:"bold",color:"#fff",minWidth:24,textAlign:"center"}}>{personas}</span>
                   <button onClick={()=>setPersonas(p=>p+1)} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>+</button>
                 </div>
