@@ -754,6 +754,124 @@ function PorDisciplina({clases}) {
   );
 }
 
+function TemporadasComp({clases}) {
+  const mesesNombre=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const aniosDisp=[...new Set(clases.map(c=>c.fecha.slice(0,4)))].sort();
+  const anios=aniosDisp.length>0?aniosDisp:["2025","2026"];
+  const opcionesMes=anios.flatMap(a=>mesesNombre.map((m,i)=>({label:`${m} ${a}`,value:`${a}-${String(i+1).padStart(2,"0")}`})));
+
+  const hoy=new Date();
+  const mesActual=`${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}`;
+  const mesHace6=new Date(hoy.getFullYear(),hoy.getMonth()-5,1);
+  const mesHace6Str=`${mesHace6.getFullYear()}-${String(mesHace6.getMonth()+1).padStart(2,"0")}`;
+
+  const [aDesde,setADesde]=useState(mesHace6Str);
+  const [aHasta,setAHasta]=useState(mesActual);
+  const [bDesde,setBDesde]=useState(()=>{
+    const d=new Date(hoy.getFullYear()-1,hoy.getMonth()-5,1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  });
+  const [bHasta,setBHasta]=useState(()=>{
+    const d=new Date(hoy.getFullYear()-1,hoy.getMonth(),1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+  });
+
+  function calcTemp(desde,hasta){
+    const cf=clases.filter(c=>c.fecha.slice(0,7)>=desde&&c.fecha.slice(0,7)<=hasta);
+    const total=cf.reduce((s,c)=>s+c.valor,0);
+    const horas=cf.reduce((s,c)=>s+(c.horas||1),0);
+    const dias=new Set(cf.map(c=>c.fecha.slice(0,10))).size;
+    const conteo={particular:0,colectiva:0,requerida:0};
+    cf.forEach(c=>conteo[c.tipo]++);
+    return {total,horas,dias,conteo,clases:cf.length};
+  }
+
+  const statsA=calcTemp(aDesde,aHasta);
+  const statsB=calcTemp(bDesde,bHasta);
+  const fmt=n=>"$"+Math.round(n).toLocaleString("es-CL");
+
+  function MesSelect({value,onChange,color}){
+    return (
+      <select value={value} onChange={e=>onChange(e.target.value)} style={{width:"100%",fontSize:11,padding:"4px 6px",borderRadius:6,background:"#0d2a3a",border:`1px solid ${color}44`,color:"#e8f4f8",marginBottom:4}}>
+        {opcionesMes.map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    );
+  }
+
+  const diffTotal=statsA.total-statsB.total;
+  const diffHoras=statsA.horas-statsB.horas;
+
+  return (
+    <div style={{paddingBottom:20}}>
+      <div style={{fontSize:11,color:"#4FC3F7",letterSpacing:2,marginBottom:12}}>COMPARAR TEMPORADAS</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+        {[
+          {label:"Temporada A",color:"#4FC3F7",border:"rgba(79,195,247,0.25)",bg:"rgba(79,195,247,0.04)",desde:aDesde,hasta:aHasta,setDesde:setADesde,setHasta:setAHasta,stats:statsA},
+          {label:"Temporada B",color:"#81C784",border:"rgba(129,199,132,0.3)",bg:"rgba(129,199,132,0.05)",desde:bDesde,hasta:bHasta,setDesde:setBDesde,setHasta:setBHasta,stats:statsB},
+        ].map((t,i)=>(
+          <div key={i} style={{background:t.bg,border:`1px solid ${t.border}`,borderRadius:12,padding:12}}>
+            <div style={{fontSize:11,color:t.color,fontWeight:600,marginBottom:8}}>{t.label}</div>
+            <div style={{fontSize:9,color:"#607d8b",marginBottom:2}}>Desde</div>
+            <MesSelect value={t.desde} onChange={t.setDesde} color={t.color}/>
+            <div style={{fontSize:9,color:"#607d8b",marginBottom:2}}>Hasta</div>
+            <MesSelect value={t.hasta} onChange={t.setHasta} color={t.color}/>
+            <div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"8px 0"}}/>
+            <div style={{fontSize:18,fontWeight:"bold",color:"#fff"}}>{fmt(t.stats.total)}</div>
+            <div style={{fontSize:11,color:t.color,marginTop:2}}>⏱ {t.stats.horas}h · {t.stats.clases} clases · {t.stats.dias} días</div>
+          </div>
+        ))}
+      </div>
+      <div style={{fontSize:11,color:"#4FC3F7",letterSpacing:2,marginBottom:10}}>COMPARATIVA A vs B</div>
+      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:12,padding:14,marginBottom:12}}>
+        {[
+          {label:"💰 Ingresos",vA:statsA.total,vB:statsB.total,fmt:true},
+          {label:"⏱ Horas",vA:statsA.horas,vB:statsB.horas,fmt:false},
+          {label:"📚 Clases",vA:statsA.clases,vB:statsB.clases,fmt:false},
+          {label:"📅 Días trabajados",vA:statsA.dias,vB:statsB.dias,fmt:false},
+        ].map(row=>{
+          const max=Math.max(row.vA,row.vB,1);
+          const diff=row.vA-row.vB;
+          return (
+            <div key={row.label} style={{marginBottom:12}}>
+              <div style={{display:"flex",justifyContent:"space-between",fontSize:11,marginBottom:4}}>
+                <span style={{color:"#90CAF9"}}>{row.label}</span>
+                <span style={{color:diff>0?"#81C784":diff<0?"#ef9a9a":"#607d8b",fontSize:10}}>
+                  {diff!==0?(diff>0?"▲":"▼")+" "+(row.fmt?fmt(Math.abs(diff)):Math.abs(diff)):"="}
+                </span>
+              </div>
+              <div style={{display:"flex",gap:4,alignItems:"center"}}>
+                <span style={{fontSize:10,color:"#4FC3F7",minWidth:60,textAlign:"right"}}>{row.fmt?fmt(row.vA):row.vA}</span>
+                <div style={{flex:1,height:6,background:"rgba(255,255,255,0.06)",borderRadius:99,overflow:"hidden",position:"relative"}}>
+                  <div style={{position:"absolute",left:0,top:0,height:"100%",width:`${Math.round(row.vA/max*100)}%`,background:"#4FC3F7",borderRadius:99}}/>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:4,alignItems:"center",marginTop:3}}>
+                <span style={{fontSize:10,color:"#81C784",minWidth:60,textAlign:"right"}}>{row.fmt?fmt(row.vB):row.vB}</span>
+                <div style={{flex:1,height:6,background:"rgba(255,255,255,0.06)",borderRadius:99,overflow:"hidden",position:"relative"}}>
+                  <div style={{position:"absolute",left:0,top:0,height:"100%",width:`${Math.round(row.vB/max*100)}%`,background:"#81C784",borderRadius:99}}/>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        <div style={{padding:"10px",background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:10,textAlign:"center"}}>
+          <div style={{fontSize:10,color:"#4FC3F7",marginBottom:4}}>Temporada A</div>
+          <div style={{fontSize:16,fontWeight:"bold"}}>{fmt(statsA.total)}</div>
+          <div style={{fontSize:11,color:"#607d8b"}}>{statsA.horas}h totales</div>
+        </div>
+        <div style={{padding:"10px",background:"rgba(129,199,132,0.06)",border:"1px solid rgba(129,199,132,0.2)",borderRadius:10,textAlign:"center"}}>
+          <div style={{fontSize:10,color:"#81C784",marginBottom:4}}>Temporada B</div>
+          <div style={{fontSize:16,fontWeight:"bold"}}>{fmt(statsB.total)}</div>
+          <div style={{fontSize:11,color:"#607d8b"}}>{statsB.horas}h totales</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function PorMes({clases}) {
   const hoy=new Date();
   const [subTab,setSubTab]=useState("mes");
@@ -906,36 +1024,7 @@ function PorMes({clases}) {
           )}
 
           {subTemp==="temporada"&&(
-            <>
-              <div style={{fontSize:11,color:"#4FC3F7",letterSpacing:2,marginBottom:12}}>TEMPORADA COMPLETA</div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
-                {[{label:"Temporada A",color:"#4FC3F7",border:"rgba(79,195,247,0.2)",bg:"rgba(79,195,247,0.04)"},{label:"Temporada B",color:"#81C784",border:"rgba(129,199,132,0.3)",bg:"rgba(129,199,132,0.05)"}].map((t,idx)=>(
-                  <div key={idx} style={{background:t.bg,border:`1px solid ${t.border}`,borderRadius:12,padding:12}}>
-                    <div style={{fontSize:11,color:t.color,marginBottom:6}}>{t.label}</div>
-                    <div style={{display:"flex",gap:3,marginBottom:8}}>
-                      <select style={{flex:1,fontSize:10,padding:"3px 4px",borderRadius:6,background:"#0d2a3a",border:`1px solid ${t.border}`,color:"#e8f4f8"}}>
-                        {["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"].map(m=><option key={m}>{m}</option>)}
-                      </select>
-                      <select style={{flex:1,fontSize:10,padding:"3px 4px",borderRadius:6,background:"#0d2a3a",border:`1px solid ${t.border}`,color:"#e8f4f8"}}>
-                        {(aniosDisp.length>0?aniosDisp:["2025","2026"]).map(a=>["Jun","Oct"].map(m=>`${m} ${a}`)).flat().map(m=><option key={m}>{m}</option>)}
-                      </select>
-                    </div>
-                    <div style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>$0</div>
-                    <div style={{fontSize:11,color:"#90CAF9",marginTop:2}}>⏱ 0h</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{display:"flex",gap:8}}>
-                <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(129,199,132,0.08)",border:"1px solid rgba(129,199,132,0.2)",borderRadius:8}}>
-                  <span style={{fontSize:11,color:"#607d8b"}}>💰 Ingresos</span>
-                  <span style={{fontSize:12,fontWeight:500,color:"#607d8b"}}>—</span>
-                </div>
-                <div style={{flex:1,display:"flex",justifyContent:"space-between",padding:"9px 10px",background:"rgba(79,195,247,0.08)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:8}}>
-                  <span style={{fontSize:11,color:"#607d8b"}}>⏱ Horas</span>
-                  <span style={{fontSize:12,fontWeight:500,color:"#607d8b"}}>—</span>
-                </div>
-              </div>
-            </>
+            <TemporadasComp clases={clases}/>
           )}
         </>
       )}
@@ -1174,6 +1263,14 @@ export default function SkiTracker() {
       <div style={{padding:"20px 20px 100px"}}>
         {tab!=="calendario"&&(
           <div style={{background:"linear-gradient(135deg,#0d2a3a,#1a3a50)",border:"1px solid rgba(79,195,247,0.3)",borderRadius:18,padding:"18px 20px",marginBottom:20,textAlign:"center"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+              <button onClick={()=>{const [y,m]=mes.split("-").map(Number);const d=new Date(y,m-2,1);setMes(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`);}} style={{background:"rgba(79,195,247,0.1)",border:"1px solid rgba(79,195,247,0.3)",borderRadius:8,color:"#4FC3F7",width:32,height:32,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+              <div>
+                <div style={{fontSize:10,letterSpacing:2,color:"#4FC3F7",textTransform:"uppercase",marginBottom:2}}>MES ACTUAL</div>
+                <div style={{fontSize:14,fontWeight:"bold",color:"#fff",textTransform:"capitalize"}}>{new Date(mes+"-15").toLocaleDateString("es-CL",{month:"long",year:"numeric"})}</div>
+              </div>
+              <button onClick={()=>{const [y,m]=mes.split("-").map(Number);const d=new Date(y,m,1);setMes(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`);}} style={{background:"rgba(79,195,247,0.1)",border:"1px solid rgba(79,195,247,0.3)",borderRadius:8,color:"#4FC3F7",width:32,height:32,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+            </div>
             <div style={{fontSize:10,letterSpacing:2,color:"#4FC3F7",textTransform:"uppercase",marginBottom:4}}>Total estimado del mes</div>
             {/* CAMBIO 3: toggle mostrar/ocultar monto */}
             <div style={{fontSize:36,fontWeight:"bold",color:"#fff",letterSpacing:-1}}>{mostrarMonto?fmt(total):"••••••"}</div>
