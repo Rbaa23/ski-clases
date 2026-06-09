@@ -969,6 +969,7 @@ export default function SkiTracker() {
   const [nuevoOtroNombre,setNuevoOtroNombre]=useState("");
   const [nuevoOtroMonto,setNuevoOtroMonto]=useState("");
   const [recordar,setRecordar]=useState(false);
+  const [pendientesCount,setPendientesCount]=useState(0);
   const [resumenMensual,setResumenMensual]=useState(false);
 
   useEffect(()=>{
@@ -1008,6 +1009,10 @@ export default function SkiTracker() {
       if(desc) setDescuentos(desc);
       const {data:ot}=await supabase.from("otros").select("*").eq("user_id",u.id).order("fecha",{ascending:true});
       if(ot) setOtros(ot);
+    }
+    if(prof?.is_admin){
+      const {data:pendientes}=await supabase.from("profiles").select("id").eq("aprobado",false).eq("is_admin",false);
+      if(pendientes) setPendientesCount(pendientes.length);
     }
     setLoading(false);
   }
@@ -1149,20 +1154,16 @@ export default function SkiTracker() {
             </div>
           </div>
           <div style={{display:"flex",gap:8}}>
-            {profile?.is_admin&&<button onClick={()=>setShowAdmin(true)} style={{background:"rgba(255,183,77,0.15)",border:"1px solid #FFB74D",borderRadius:10,color:"#FFB74D",padding:"8px 10px",fontSize:12,cursor:"pointer"}}>👑</button>}
+            {profile?.is_admin&&<div style={{position:"relative"}}>
+              <button onClick={()=>setShowAdmin(true)} style={{background:"rgba(255,183,77,0.15)",border:"1px solid #FFB74D",borderRadius:10,color:"#FFB74D",padding:"8px 10px",fontSize:12,cursor:"pointer"}}>👑</button>
+              {pendientesCount>0&&<div style={{position:"absolute",top:-4,right:-4,width:10,height:10,borderRadius:"50%",background:"#ef5350",border:"2px solid #0d2a3a"}}/>}
+            </div>}
             <button onClick={()=>{setTempPrecios({...precios});setShowConfig(true);}} style={{background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:10,color:"#4FC3F7",padding:"8px 10px",fontSize:12,cursor:"pointer"}}>⚙️</button>
             <button onClick={logout} style={{background:"rgba(239,83,80,0.1)",border:"1px solid #ef535055",borderRadius:10,color:"#ef9a9a",padding:"8px 10px",fontSize:12,cursor:"pointer"}}>↩</button>
           </div>
         </div>
 
-        {tab!=="calendario"&&(
-          <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:12}}>
-            <span style={{fontSize:12,color:"#90CAF9"}}>Mes:</span>
-            <select value={mes} onChange={e=>setMes(e.target.value)} style={{background:"#0d2a3a",color:"#e8f4f8",border:"1px solid #4FC3F7",borderRadius:8,padding:"4px 10px",fontSize:13}}>
-              {[...new Set([mes,...mesesDisponibles])].map(m=><option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-        )}
+
         <div style={{display:"flex"}}>
           {[["registro","📝 Registro"],["calendario","📊 Estadísticas"]].map(([key,label])=>(
             <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"10px 0",background:tab===key?"rgba(79,195,247,0.15)":"transparent",border:"none",borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent",color:tab===key?"#4FC3F7":"#607d8b",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
