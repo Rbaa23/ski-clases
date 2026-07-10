@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BBbM2UIBc9l-spOsAeguae0ig2fShmYmSQkhvqg5puv0pMiU0EFTDOAunlIM7ZsOr2kWIBT-NWB0BgshOF61Xzw";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, mostrar_monto:true };
@@ -1075,6 +1076,7 @@ export default function SkiTracker() {
   const [recordar,setRecordar]=useState(false);
   const [pendientesCount,setPendientesCount]=useState(0);
   const [resumenMensual,setResumenMensual]=useState(false);
+  const [pushNotif,setPushNotif]=useState(false);
   const [confirmandoTipo,setConfirmandoTipo]=useState(null);
   const [recoveryUser,setRecoveryUser]=useState(null);
   const [newPass,setNewPass]=useState("");
@@ -1207,6 +1209,28 @@ export default function SkiTracker() {
   async function eliminarOtro(id){
     await supabase.from("otros").delete().eq("id",id);
     setOtros(prev=>prev.filter(o=>o.id!==id));
+  }
+
+  async function togglePush(v){
+    setPushNotif(v);
+    if(v){
+      try{
+        const perm=await Notification.requestPermission();
+        if(perm!=="granted"){setPushNotif(false);return;}
+        const reg=await navigator.serviceWorker.ready;
+        const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:VAPID_PUBLIC_KEY});
+        await fetch("/api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.id,subscription:sub.toJSON()})});
+      }catch(e){setPushNotif(false);}
+    }else{
+      if('serviceWorker' in navigator){
+        try{
+          const reg=await navigator.serviceWorker.ready;
+          const sub=await reg.pushManager.getSubscription();
+          if(sub)await sub.unsubscribe();
+        }catch{}
+      }
+      await fetch("/api/subscribe",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.id})});
+    }
   }
 
   async function guardarPrecios() {
@@ -1681,6 +1705,9 @@ export default function SkiTracker() {
             <Toggle value={recordar} onChange={setRecordar} label="🔔 Recordatorio diario" desc="Te envía un correo a las 9 PM si no registraste clases"/>
             <div style={{marginTop:10}}>
               <Toggle value={resumenMensual} onChange={setResumenMensual} label="📊 Resumen mensual" desc="Te envía un correo el día 1 con el resumen del mes anterior"/>
+            </div>
+            <div style={{marginTop:10}}>
+              <Toggle value={pushNotif} onChange={togglePush} label="🔔 Notificaciones push" desc="Recibe una notificación en el celular si olvidaste registrar clases"/>
             </div>
             <div style={{display:"flex",gap:12,marginTop:20}}>
               <button onClick={()=>setShowConfig(false)} style={{flex:1,padding:"14px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:15,cursor:"pointer"}}>Cancelar</button>

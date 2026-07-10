@@ -1,5 +1,13 @@
+import webPush from 'web-push';
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+
+webPush.setVapidDetails(
+  process.env.VAPID_SUBJECT || 'mailto:admin@statclass.com',
+  process.env.VAPID_PUBLIC_KEY,
+  process.env.VAPID_PRIVATE_KEY
+);
 
 function headers() {
   return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
@@ -28,6 +36,23 @@ export default async function handler(req, res) {
       );
       const cls = await clsRes.json();
       if (Array.isArray(cls) && cls.length > 0) continue;
+
+      const pushRes = await fetch(`${SUPABASE_URL}/rest/v1/push_subs?user_id=eq.${u.id}&select=id,endpoint,auth,p256dh`, { headers: headers() });
+      const pushSubs = await pushRes.json();
+      if (Array.isArray(pushSubs) && pushSubs.length > 0) {
+        for (const ps of pushSubs) {
+          try {
+            await webPush.sendNotification({
+              endpoint: ps.endpoint,
+              keys: { auth: ps.auth, p256dh: ps.p256dh }
+            }, JSON.stringify({ title: 'StatClass', body: `Hola ${u.nombre}, hoy no registraste clases. ¡Agrégalas ahora!`, url: 'https://ski-clases.vercel.app' }));
+          } catch (e) {
+            if (e.statusCode === 410) {
+              await fetch(`${SUPABASE_URL}/rest/v1/push_subs?id=eq.${ps.id}`, { method: 'DELETE', headers: headers() });
+            }
+          }
+        }
+      }
 
       const emailRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
