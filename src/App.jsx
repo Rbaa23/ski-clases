@@ -5,7 +5,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, extra_por_hora:true, mostrar_monto:true };
+const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, mostrar_monto:true };
 const TIPOS = [
   { key:"particular", label:"Particular", color:"#4FC3F7", bg:"#0d2a3a" },
   { key:"colectiva",  label:"Colectiva",  color:"#81C784", bg:"#0d2a1a" },
@@ -1091,7 +1091,6 @@ export default function SkiTracker() {
           colectiva_extra:prec.colectiva_extra,
           colectiva_base:prec.colectiva_base,
           requerida:prec.requerida,
-          extra_por_hora:prec.extra_por_hora??true,
           mostrar_monto:prec.mostrar_monto!==false
         });
         setPersonas(prec.colectiva_base||3);
@@ -1126,7 +1125,7 @@ export default function SkiTracker() {
     if(tipo==="particular") return precios.particular*h;
     if(tipo==="requerida") return precios.requerida*h;
     const extras=Math.max(0,personas-precios.colectiva_base);
-    const extraValor=precios.extra_por_hora?precios.colectiva_extra*extras*h:precios.colectiva_extra*extras;
+    const extraValor=precios.colectiva_extra*extras*h;
     return precios.colectiva*h+extraValor;
   }
 
@@ -1185,7 +1184,6 @@ export default function SkiTracker() {
       colectiva_extra:tempPrecios.colectiva_extra,
       colectiva_base:tempPrecios.colectiva_base,
       requerida:tempPrecios.requerida,
-      extra_por_hora:tempPrecios.extra_por_hora,
       mostrar_monto:tempPrecios.mostrar_monto
     }).eq("user_id",user.id);
     setPrecios({...tempPrecios});
@@ -1550,12 +1548,7 @@ export default function SkiTracker() {
                   {unit&&<span style={{color:"#607d8b",fontSize:12}}>{unit}</span>}
                   {unit2&&<span style={{color:"#90CAF9",fontSize:13}}>{unit2}</span>}
                 </div>
-                {key==="colectiva_extra"&&(
-                  <div style={{marginTop:10}}>
-                    <Toggle value={tempPrecios.extra_por_hora??true} onChange={v=>setTempPrecios(p=>({...p,extra_por_hora:v}))} label="⏱ Multiplicar por horas" desc="El extra se cobra por cada hora de clase"/>
-                    <div style={{fontSize:11,color:tempPrecios.extra_por_hora?"#81C784":"#607d8b",textAlign:"center",marginTop:6}}>{tempPrecios.extra_por_hora?`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} × 2h = ${fmt(tempPrecios.colectiva_extra*2*2)}`:`Ej: 2 extras × ${fmt(tempPrecios.colectiva_extra)} = ${fmt(tempPrecios.colectiva_extra*2)} (fijo)`}</div>
-                  </div>
-                )}
+                {}
               </div>
             ))}
             <div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"8px 0 16px"}}/>
