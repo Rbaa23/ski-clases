@@ -1060,6 +1060,7 @@ export default function SkiTracker() {
   const [recordar,setRecordar]=useState(false);
   const [pendientesCount,setPendientesCount]=useState(0);
   const [resumenMensual,setResumenMensual]=useState(false);
+  const [confirmandoTipo,setConfirmandoTipo]=useState(null);
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
@@ -1360,7 +1361,7 @@ export default function SkiTracker() {
                 <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,colectiva:!p.colectiva}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio.colectiva?"#81C784":"#607d8b",fontSize:12,cursor:"pointer",padding:0}}>{mostrarComentarioPrevio.colectiva?"✏️ Ocultar comentario":"✏️ Agregar comentario"}</button>
                 {mostrarComentarioPrevio.colectiva&&<textarea placeholder="Escribe un comentario..." value={comentarioPrevio.colectiva} onChange={e=>setComentarioPrevio(p=>({...p,colectiva:e.target.value}))} rows={2} style={{width:"100%",marginTop:6,background:"#0a1e0a",border:"1px solid #81C78455",borderRadius:8,color:"#e8f4f8",padding:"8px",fontSize:13,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
               </div>
-              <button onClick={()=>agregarClase("colectiva")} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#2e7d32,#388e3c)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",marginBottom:8}}>+ Agregar Clase Colectiva</button>
+              <button onClick={()=>setConfirmandoTipo("colectiva")} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#2e7d32,#388e3c)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",marginBottom:8}}>+ Agregar Clase Colectiva</button>
               <button onClick={()=>eliminarUltimaDeTipo("colectiva")} style={{width:"100%",padding:"9px",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535066",borderRadius:10,color:"#ef9a9a",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>↩ Deshacer última colectiva</button>
             </div>
 
@@ -1391,7 +1392,7 @@ export default function SkiTracker() {
                     <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,[t.key]:!p[t.key]}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio[t.key]?t.color:"#607d8b",fontSize:11,cursor:"pointer",padding:0,width:"100%"}}>{mostrarComentarioPrevio[t.key]?"✏️ Ocultar":"✏️ Comentario"}</button>
                     {mostrarComentarioPrevio[t.key]&&<textarea placeholder="Comentario..." value={comentarioPrevio[t.key]} onChange={e=>setComentarioPrevio(p=>({...p,[t.key]:e.target.value}))} rows={2} style={{width:"100%",marginTop:4,background:"rgba(0,0,0,0.3)",border:`1px solid ${t.color}44`,borderRadius:8,color:"#e8f4f8",padding:"6px 8px",fontSize:12,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
                   </div>
-                  <button onClick={()=>agregarClase(t.key)} style={{width:"100%",padding:"10px",background:t.bg,border:`1px solid ${t.color}88`,borderRadius:10,color:t.color,fontSize:13,fontWeight:"bold",cursor:"pointer",marginBottom:6}}>+ Agregar</button>
+                  <button onClick={()=>setConfirmandoTipo(t.key)} style={{width:"100%",padding:"10px",background:t.bg,border:`1px solid ${t.color}88`,borderRadius:10,color:t.color,fontSize:13,fontWeight:"bold",cursor:"pointer",marginBottom:6}}>+ Agregar</button>
                   <button onClick={()=>eliminarUltimaDeTipo(t.key)} style={{width:"100%",padding:"7px",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535066",borderRadius:8,color:"#ef9a9a",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↩ Deshacer</button>
                 </div>
               ))}
@@ -1461,6 +1462,57 @@ export default function SkiTracker() {
           </>
         )}
       </div>
+
+      {confirmandoTipo&&(()=>{
+        const tipo=confirmandoTipo;
+        const horas=horasNuevaClase[tipo]||1;
+        const valor=calcularValor(tipo,horas);
+        const extras=tipo==="colectiva"?Math.max(0,personas-precios.colectiva_base):0;
+        const tipoInfo=TIPOS.find(t=>t.key===tipo);
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
+            <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px"}}>
+              <div style={{textAlign:"center",marginBottom:20}}>
+                <div style={{fontSize:36,marginBottom:8}}>{tipoEmoji(tipo,disc)}</div>
+                <div style={{fontSize:18,fontWeight:"bold",color:tipoInfo?.color}}>{tipoInfo?.label}</div>
+              </div>
+              <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:16,marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                  <span style={{fontSize:13,color:"#90CAF9"}}>Precio por hora</span>
+                  <span style={{fontSize:13,color:"#fff"}}>{fmt(precios[tipo])}</span>
+                </div>
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                  <span style={{fontSize:13,color:"#90CAF9"}}>⏱ Horas</span>
+                  <span style={{fontSize:13,color:"#fff"}}>× {horas}h</span>
+                </div>
+                {tipo==="colectiva"&&(
+                  <>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                      <span style={{fontSize:13,color:"#90CAF9"}}>Personas</span>
+                      <span style={{fontSize:13,color:"#fff"}}>{personas}</span>
+                    </div>
+                    {extras>0&&(
+                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                        <span style={{fontSize:13,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)}{precios.extra_por_hora?"/h":""})</span>
+                        <span style={{fontSize:13,color:"#81C784"}}>{"+"}{fmt(precios.extra_por_hora?precios.colectiva_extra*extras*horas:precios.colectiva_extra*extras)}</span>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"8px 0"}}/>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span style={{fontSize:14,color:"#90CAF9",fontWeight:500}}>Total</span>
+                  <span style={{fontSize:22,fontWeight:"bold",color:"#fff"}}>{fmt(valor)}</span>
+                </div>
+              </div>
+              <div style={{display:"flex",gap:12}}>
+                <button onClick={()=>setConfirmandoTipo(null)} style={{flex:1,padding:"14px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
+                <button onClick={()=>{agregarClase(tipo);setConfirmandoTipo(null);}} style={{flex:2,padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>✅ Confirmar clase</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* CONFIGURACIÓN - con CAMBIO 3: toggle mostrar monto */}
       {showConfig&&(
