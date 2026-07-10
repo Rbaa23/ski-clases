@@ -22,6 +22,8 @@ function buildEmail(nombre, mes, data) {
   const totalGastos = otros.filter(o => o.tipo === "gasto").reduce((s, o) => s + o.valor, 0);
   const totalIngresos = otros.filter(o => o.tipo === "ingreso").reduce((s, o) => s + o.valor, 0);
   const totalNeto = totalBruto - totalDesc - totalGastos + totalIngresos;
+  const impuesto = Math.round(totalNeto * 0.1525);
+  const totalLiquido = totalNeto - impuesto;
   const skiClases = clases.filter(c => (c.disciplina_clase || "ski") === "ski").length;
   const snowClases = clases.filter(c => (c.disciplina_clase || "snow") === "snow").length;
   const diasTrabajados = new Set(clases.map(c => c.fecha?.slice(0, 10))).size;
@@ -63,6 +65,8 @@ function buildEmail(nombre, mes, data) {
       ${totalGastos > 0 ? `<tr><td style="padding:4px 0;color:#ef9a9a;font-size:12px">Gastos</td><td></td><td style="text-align:right;padding:4px 0;color:#ef9a9a;font-size:12px">-${fmt(totalGastos)}</td></tr>` : ""}
       ${totalIngresos > 0 ? `<tr><td style="padding:4px 0;color:#81C784;font-size:12px">Ingresos extra</td><td></td><td style="text-align:right;padding:4px 0;color:#81C784;font-size:12px">+${fmt(totalIngresos)}</td></tr>` : ""}
       <tr><td style="padding:8px 0;border-top:2px solid #4FC3F744;font-weight:bold;color:#4FC3F7">TOTAL NETO</td><td style="text-align:center;padding:8px 0;border-top:2px solid #4FC3F744;color:#607d8b;font-size:12px">${totalClases} clases · ${totalHoras}h</td><td style="text-align:right;padding:8px 0;border-top:2px solid #4FC3F744;font-weight:bold;color:#4FC3F7;font-size:16px">${fmt(totalNeto)}</td></tr>
+      <tr><td style="padding:4px 0;color:#FFB74D;font-size:12px">📄 Retención 15,25%</td><td></td><td style="text-align:right;padding:4px 0;color:#FFB74D;font-size:12px">-${fmt(impuesto)}</td></tr>
+      <tr><td style="padding:8px 0;border-top:2px solid #81C784;font-weight:bold;color:#81C784">💰 LÍQUIDO A RECIBIR</td><td style="text-align:center;padding:8px 0;border-top:2px solid #81C784;color:#607d8b;font-size:12px">${totalNeto} - ${impuesto}</td><td style="text-align:right;padding:8px 0;border-top:2px solid #81C784;font-weight:bold;color:#81C784;font-size:18px">${fmt(totalLiquido)}</td></tr>
     </table>
   `}
   <div style="font-size:11px;color:#607d8b;text-align:center;border-top:1px solid rgba(255,255,255,0.07);padding-top:12px">
