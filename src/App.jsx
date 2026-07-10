@@ -1061,10 +1061,13 @@ export default function SkiTracker() {
   const [pendientesCount,setPendientesCount]=useState(0);
   const [resumenMensual,setResumenMensual]=useState(false);
   const [confirmandoTipo,setConfirmandoTipo]=useState(null);
+  const [recoveryUser,setRecoveryUser]=useState(null);
+  const [newPass,setNewPass]=useState("");
+  const [newPassError,setNewPassError]=useState("");
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
-    const {data:{subscription}}=supabase.auth.onAuthStateChange((_,session)=>{if(session) handleAuth(session.user);else{setUser(null);setProfile(null);setLoading(false);}});
+    const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"&&session){setRecoveryUser(session.user);setLoading(false);return;}if(session) handleAuth(session.user);else{setUser(null);setProfile(null);setLoading(false);}});
     return ()=>subscription.unsubscribe();
   },[]);
 
@@ -1193,6 +1196,18 @@ export default function SkiTracker() {
   if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif",fontSize:16}}>⛷️ Cargando...</div>;
   if(!user) return <AuthScreen onAuth={handleAuth}/>;
   if(profile&&!profile.aprobado&&!profile.is_admin) return <PendienteScreen user={user} onLogout={logout}/>;
+  if(recoveryUser) return (
+    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
+      <div style={{width:"100%",maxWidth:360,textAlign:"center"}}>
+        <div style={{fontSize:48,marginBottom:12}}>🔑</div>
+        <div style={{fontSize:18,fontWeight:"bold",marginBottom:6}}>Restablecer contraseña</div>
+        <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.6,marginBottom:24}}>Ingresa tu nueva contraseña.</div>
+        <input type="password" placeholder="Nueva contraseña (mín. 6 caracteres)" value={newPass} onChange={e=>{setNewPass(e.target.value);setNewPassError("");}} onKeyDown={async e=>{if(e.key!=="Enter") return;if(newPass.length<6){setNewPassError("Mínimo 6 caracteres");return;}const{error}=await supabase.auth.updateUser({password:newPass});if(error) setNewPassError(error.message);else{setRecoveryUser(null);setNewPass("");}}} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:12,color:"#fff",padding:"14px 16px",fontSize:15,marginBottom:12,boxSizing:"border-box",fontFamily:"inherit"}}/>
+        {newPassError&&<div style={{color:"#ef9a9a",fontSize:13,marginBottom:12}}>{newPassError}</div>}
+        <button onClick={async()=>{if(newPass.length<6){setNewPassError("Mínimo 6 caracteres");return;}const{error}=await supabase.auth.updateUser({password:newPass});if(error) setNewPassError(error.message);else{setRecoveryUser(null);setNewPass("");}}} style={{width:"100%",padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>Cambiar contraseña</button>
+      </div>
+    </div>
+  );
   if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)}/>;
 
   const disc=profile?.disciplina||"ski";
