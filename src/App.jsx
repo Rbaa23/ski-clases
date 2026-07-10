@@ -514,7 +514,7 @@ function AdminPanel({onBack}) {
   );
 }
 
-function Calendario({clases, disc}) {
+function Calendario({clases, disc, onDelete, onEdit}) {
   const [mesOffset,setMesOffset]=useState(0);
   const [diaSeleccionado,setDiaSeleccionado]=useState(null);
   const hoy=new Date();
@@ -565,7 +565,11 @@ function Calendario({clases, disc}) {
             <>{diasSelDia.map((c,i)=>{const tipo=TIPOS.find(t=>t.key===c.tipo);return(
               <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<diasSelDia.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
                 <div><span style={{fontSize:13,color:tipo.color}}>{tipoEmoji(c.tipo,disc)} {tipo.label}</span>{c.tipo==="colectiva"&&<span style={{fontSize:12,color:"#90CAF9"}}> · {c.personas} pers.</span>}{c.horas>0&&<span style={{fontSize:11,color:"#4FC3F7"}}> · ⏱{c.horas}h</span>}</div>
-                <span style={{fontSize:13,color:"#fff"}}>{fmt(c.valor)}</span>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <span style={{fontSize:13,color:"#fff"}}>{fmt(c.valor)}</span>
+                  <button onClick={()=>onEdit(c)} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:13,cursor:"pointer",padding:2}}>✏️</button>
+                  <button onClick={()=>onDelete(c)} style={{background:"none",border:"none",color:"#ef9a9a",fontSize:13,cursor:"pointer",padding:2}}>🗑️</button>
+                </div>
               </div>
             );})}
             <div style={{display:"flex",justifyContent:"space-between",marginTop:10,paddingTop:8,borderTop:"1px solid rgba(255,255,255,0.08)"}}>
@@ -579,7 +583,7 @@ function Calendario({clases, disc}) {
   );
 }
 
-function PorDia({clases, disc}) {
+function PorDia({clases, disc, onDelete, onEdit}) {
   const hoy=new Date();
   const [mesOffset,setMesOffset]=useState(0);
   const fecha=new Date(hoy.getFullYear(),hoy.getMonth()+mesOffset,1);
@@ -620,7 +624,18 @@ function PorDia({clases, disc}) {
             <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
               {TIPOS.map(t=>cDia[t.key]>0&&(<div key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:7,padding:"3px 8px",fontSize:11,display:"flex",alignItems:"center",gap:4}}><span style={{color:t.color}}>{tipoEmoji(t.key,disc)} {t.label} ×{cDia[t.key]}</span>{t.key==="colectiva"&&extrasDelDia>0&&<span style={{background:"rgba(129,199,132,0.2)",border:"1px solid #81C78455",borderRadius:5,padding:"0px 5px",fontSize:10,color:"#81C784"}}>➕{extrasDelDia}</span>}</div>))}
             </div>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            {cd.map(c=>{const ct=TIPOS.find(t=>t.key===c.tipo);return(
+              <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
+                <div><span style={{fontSize:12,color:ct?.color}}>{tipoEmoji(c.tipo,disc)} {c.tipo==="colectiva"?`${c.personas} pers.`:""}{c.comentario?` 💬${c.comentario.slice(0,20)}`:""}</span></div>
+                <div style={{display:"flex",alignItems:"center",gap:5}}>
+                  <span style={{fontSize:12,color:"#90CAF9"}}>⏱{c.horas||1}h</span>
+                  <span style={{fontSize:12,fontWeight:"bold"}}>{fmt(c.valor)}</span>
+                  <button onClick={()=>onEdit(c)} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:12,cursor:"pointer",padding:2}}>✏️</button>
+                  <button onClick={()=>onDelete(c)} style={{background:"none",border:"none",color:"#ef9a9a",fontSize:12,cursor:"pointer",padding:2}}>🗑️</button>
+                </div>
+              </div>
+            );})}
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:6}}>
               <div style={{fontSize:11,color:esHoy?"#FF8C00":"#607d8b"}}>⏱ {hd}h · {cd.length} clase{cd.length>1?"s":""}</div>
               {tieneComentarios&&<div style={{fontSize:11,color:"#4FC3F7",background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:6,padding:"1px 6px"}}>💬 comentario</div>}
             </div>
@@ -1064,6 +1079,8 @@ export default function SkiTracker() {
   const [recoveryUser,setRecoveryUser]=useState(null);
   const [newPass,setNewPass]=useState("");
   const [newPassError,setNewPassError]=useState("");
+  const [editandoClase,setEditandoClase]=useState(null);
+  const [eliminandoClase,setEliminandoClase]=useState(null);
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
@@ -1148,6 +1165,22 @@ export default function SkiTracker() {
     if(!ultima) return;
     await supabase.from("clases").delete().eq("id",ultima.id);
     setClases(prev=>prev.filter(c=>c.id!==ultima.id));
+  }
+
+  async function handleEliminarClase(id) {
+    await supabase.from("clases").delete().eq("id",id);
+    setClases(prev=>prev.filter(c=>c.id!==id));
+    setEliminandoClase(null);
+  }
+
+  async function handleGuardarEdit(clase) {
+    const {data,error}=await supabase.from("clases").update({
+      tipo:clase.tipo, valor:clase.valor, personas:clase.personas||0,
+      extras:clase.extras||0, comentario:clase.comentario||null,
+      horas:clase.horas||1, disciplina_clase:clase.disciplina_clase||disc
+    }).eq("id",clase.id).select().single();
+    if(!error&&data){setClases(prev=>prev.map(c=>c.id===data.id?data:c));if(clase.comentario) setComentarios(p=>({...p,[data.id]:clase.comentario}));}
+    setEditandoClase(null);
   }
 
   async function agregarDescuento() {
@@ -1319,8 +1352,8 @@ export default function SkiTracker() {
                   <button key={key} onClick={()=>setSubTabCal(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:subTabCal===key?"rgba(79,195,247,0.15)":"transparent",color:subTabCal===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
                 ))}
             </div>
-            {subTabCal==="calendario"&&<Calendario clases={clases} disc={disc}/>}
-            {subTabCal==="pordia"&&<PorDia clases={clases} disc={disc}/>}
+            {subTabCal==="calendario"&&<Calendario clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})}/>}
+            {subTabCal==="pordia"&&<PorDia clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})}/>}
             {subTabCal==="pormes"&&<PorMes clases={clases}/>}
             {subTabCal==="disciplina"&&disc==="polivalente"&&<PorDisciplina clases={clases}/>}
           </>
@@ -1527,7 +1560,91 @@ export default function SkiTracker() {
         );
       })()}
 
-      {/* CONFIGURACIÓN - con CAMBIO 3: toggle mostrar monto */}
+      {/* Delete confirmation modal */}
+      {eliminandoClase&&(()=>{
+        const c=eliminandoClase;
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}} onClick={()=>setEliminandoClase(null)}>
+            <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #ef5350",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",textAlign:"center"}} onClick={e=>e.stopPropagation()}>
+              <div style={{fontSize:40,marginBottom:8}}>🗑️</div>
+              <div style={{fontSize:17,fontWeight:"bold",marginBottom:6}}>Eliminar clase</div>
+              <div style={{fontSize:13,color:"#90CAF9",marginBottom:16}}>
+                {tipoEmoji(c.tipo,disc)} {TIPOS.find(t=>t.key===c.tipo)?.label} — {fmt(c.valor)} · ⏱{c.horas||1}h
+                {c.tipo==="colectiva"&&` · ${c.personas} pers.`}
+                {c.comentario&&` · "${c.comentario.slice(0,30)}"`}
+              </div>
+              <div style={{display:"flex",gap:12}}>
+                <button onClick={()=>setEliminandoClase(null)} style={{flex:1,padding:"14px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
+                <button onClick={()=>handleEliminarClase(c.id)} style={{flex:2,padding:"14px",background:"rgba(239,83,80,0.2)",border:"1px solid #ef5350",borderRadius:12,color:"#ef9a9a",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>🗑️ Eliminar</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Edit class modal */}
+      {editandoClase&&(()=>{
+        const c=editandoClase;
+        const tiposEdit=TIPOS;
+        return (
+          <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
+            <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+              <div style={{fontSize:18,fontWeight:"bold",marginBottom:20,color:"#4FC3F7"}}>✏️ Editar clase</div>
+              <div style={{marginBottom:14}}>
+                <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Tipo</div>
+                <div style={{display:"flex",gap:6}}>
+                  {tiposEdit.map(t=>(
+                    <button key={t.key} onClick={()=>setEditandoClase(p=>({...p,tipo:t.key}))} style={{flex:1,padding:"8px",border:"none",borderRadius:8,background:c.tipo===t.key?t.bg:"rgba(255,255,255,0.04)",color:c.tipo===t.key?t.color:"#607d8b",fontSize:12,cursor:"pointer",fontWeight:c.tipo===t.key?"bold":"normal",fontFamily:"inherit",outline:c.tipo===t.key?`1px solid ${t.color}`:"none"}}>{tipoEmoji(t.key,disc)} {t.label}</button>
+                  ))}
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+                <div>
+                  <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>⏱ Horas</div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <button onClick={()=>setEditandoClase(p=>({...p,horas:Math.max(1,(p.horas||1)-1)}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
+                    <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.horas||1}h</span>
+                    <button onClick={()=>setEditandoClase(p=>({...p,horas:(p.horas||1)+1}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
+                  </div>
+                </div>
+                <div>
+                  <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>💰 Valor</div>
+                  <input type="number" value={c.valor} onChange={e=>setEditandoClase(p=>({...p,valor:Number(e.target.value)}))} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:8,color:"#fff",padding:"8px 10px",fontSize:14,boxSizing:"border-box",fontFamily:"inherit"}}/>
+                </div>
+              </div>
+              {c.tipo==="colectiva"&&(
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+                  <div>
+                    <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Personas</div>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <button onClick={()=>setEditandoClase(p=>({...p,personas:Math.max(1,(p.personas||1)-1)}))} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
+                      <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.personas||0}</span>
+                      <button onClick={()=>setEditandoClase(p=>({...p,personas:(p.personas||0)+1}))} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Extras</div>
+                    <input type="number" value={c.extras||0} onChange={e=>setEditandoClase(p=>({...p,extras:Number(e.target.value)}))} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:8,color:"#fff",padding:"8px 10px",fontSize:14,boxSizing:"border-box",fontFamily:"inherit"}}/>
+                  </div>
+                </div>
+              )}
+              <div style={{marginBottom:16}}>
+                <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>💬 Comentario</div>
+                <textarea value={c.comentario||""} onChange={e=>setEditandoClase(p=>({...p,comentario:e.target.value}))} rows={2} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:8,color:"#fff",padding:"10px 12px",fontSize:13,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
+              </div>
+              <div style={{fontSize:12,color:"#607d8b",marginBottom:16}}>
+                {new Date(c.fecha).toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"})}
+              </div>
+              <div style={{display:"flex",gap:12}}>
+                <button onClick={()=>setEditandoClase(null)} style={{flex:1,padding:"14px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
+                <button onClick={()=>handleGuardarEdit(c)} style={{flex:2,padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>💾 Guardar cambios</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* CONFIGURACIÓN */}
       {showConfig&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:100}}>
           <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>

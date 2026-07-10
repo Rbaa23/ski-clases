@@ -1,23 +1,37 @@
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+
+function headers() {
+  return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+}
+
 export default async function handler(req, res) {
   if (req.query.secret !== process.env.CRON_SECRET) {
     return res.status(401).json({ error: 'unauthorized' });
   }
-
   try {
-    const r = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/get_users_for_reminder`, {
-      headers: { apikey: process.env.SUPABASE_ANON_KEY },
-    });
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?recordar=eq.true&select=id,email,nombre`, { headers: headers() });
     const users = await r.json();
     if (!Array.isArray(users)) return res.json({ sent: 0, users: [] });
 
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().slice(0, 10);
+    const manana = new Date(hoy);
+    manana.setDate(manana.getDate() + 1);
+    const mananaStr = manana.toISOString().slice(0, 10);
+
     const results = [];
     for (const u of users) {
+      const clsRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/clases?user_id=eq.${u.id}&fecha=gte.${hoyStr}&fecha=lt.${mananaStr}&select=id`,
+        { headers: headers() }
+      );
+      const cls = await clsRes.json();
+      if (Array.isArray(cls) && cls.length > 0) continue;
+
       const emailRes = await fetch('https://api.resend.com/emails', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${process.env.RESEND_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { Authorization: `Bearer ${process.env.RESEND_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           from: 'StatClass <onboarding@resend.dev>',
           to: [u.email],
@@ -34,7 +48,7 @@ export default async function handler(req, res) {
       const emailData = await emailRes.json();
       results.push({ user: u.email, ok: emailRes.ok, id: emailData.id });
     }
-    res.json({ sent: results.filter(r=>r.ok).length, results });
+    res.json({ sent: results.filter(r => r.ok).length, results });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
