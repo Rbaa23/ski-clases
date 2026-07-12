@@ -1061,6 +1061,99 @@ function PorMes({clases}) {
   );
 }
 
+function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPersonas,disc,discClase,setDiscClase}) {
+  const [horas,setHoras]=useState(1);
+  const [adicional,setAdicional]=useState(0);
+  const [comentario,setComentario]=useState("");
+  const tipoInfo=TIPOS.find(t=>t.key===tipo);
+  const precioH=precios[tipo]||0;
+  const precioAd=precios.adicional||0;
+  const base=precios.colectiva_base||3;
+  const extras=Math.max(0,personas-base);
+  let valor=0;
+  if(tipo==="particular"||tipo==="requerida") valor=precioH*horas+precioAd*adicional*horas;
+  else valor=precios.colectiva*horas+precios.colectiva_extra*extras*horas;
+  const fechaLabel=new Date(fecha+"T12:00:00").toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  function confirmar(){
+    onConfirm({tipo,valor,horas,adicional,personas:tipo==="colectiva"?personas:0,extras:tipo==="colectiva"?extras:0,comentario,disciplina_clase:disc==="polivalente"?(discClase[tipo]||"ski"):disc,fecha});
+  }
+  return (
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
+      <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:`2px solid ${tipoInfo?.color||"#4FC3F7"}`,borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:36,marginBottom:4}}>{tipoEmoji(tipo,disc)}</div>
+          <div style={{fontSize:18,fontWeight:"bold",color:tipoInfo?.color}}>{tipoInfo?.label}</div>
+          <div style={{fontSize:12,color:"#90CAF9",marginTop:4}}>{fechaLabel}</div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:16,marginBottom:16}}>
+          {disc==="polivalente"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:8,padding:3,marginBottom:12,gap:3}}>
+            {[["ski","⛷️ Ski","#4FC3F7"],["snow","🏂 Snow","#F06292"]].map(([k,l,c])=>(
+              <button key={k} onClick={()=>setDiscClase(p=>({...p,[tipo]:k}))} style={{flex:1,padding:"7px",border:"none",borderRadius:7,background:discClase[tipo]===k?(k==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase[tipo]===k?c:"#607d8b",fontSize:12,cursor:"pointer",fontFamily:"inherit",fontWeight:discClase[tipo]===k?600:400,outline:discClase[tipo]===k?`1px solid ${c}`:"none"}}>{l}</button>
+            ))}
+          </div>}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:`rgba(255,255,255,0.03)`,border:`1px solid ${tipoInfo?.color}33`,borderRadius:10}}>
+            <span style={{fontSize:12,color:"#90CAF9"}}>⏱ Horas</span>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <button onClick={()=>setHoras(h=>Math.max(1,h-1))} style={{width:30,height:30,borderRadius:"50%",background:`${tipoInfo?.color}22`,border:`1px solid ${tipoInfo?.color}`,color:tipoInfo?.color,fontSize:16,cursor:"pointer"}}>−</button>
+              <span style={{fontSize:16,fontWeight:"bold",color:tipoInfo?.color,minWidth:28,textAlign:"center"}}>{horas}h</span>
+              <button onClick={()=>setHoras(h=>h+1)} style={{width:30,height:30,borderRadius:"50%",background:`${tipoInfo?.color}22`,border:`1px solid ${tipoInfo?.color}`,color:tipoInfo?.color,fontSize:16,cursor:"pointer"}}>+</button>
+            </div>
+          </div>
+          {tipo==="colectiva"&&(<>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(129,199,132,0.2)",borderRadius:10}}>
+              <span style={{fontSize:12,color:"#90CAF9"}}>👥 Personas</span>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <button onClick={()=>setPersonas(p=>Math.max(1,p-1))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
+                <span style={{fontSize:16,fontWeight:"bold",color:"#81C784",minWidth:28,textAlign:"center"}}>{personas}</span>
+                <button onClick={()=>setPersonas(p=>p+1)} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
+              </div>
+            </div>
+            {extras>0&&<div style={{fontSize:12,color:"#81C784",textAlign:"center",marginBottom:12}}>+{extras} extra{extras>1?"s":""} × {fmt(precios.colectiva_extra)} = +{fmt(precios.colectiva_extra*extras*horas)}</div>}
+          </>)}
+          {(tipo==="particular"||tipo==="requerida")&&(<>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:"rgba(255,255,255,0.03)",border:`1px solid ${tipoInfo?.color}33`,borderRadius:10}}>
+              <span style={{fontSize:12,color:"#90CAF9"}}>➕ Adicionales</span>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <button onClick={()=>setAdicional(a=>Math.max(0,a-1))} style={{width:30,height:30,borderRadius:"50%",background:`${tipoInfo?.color}22`,border:`1px solid ${tipoInfo?.color}`,color:tipoInfo?.color,fontSize:16,cursor:"pointer"}}>−</button>
+                <span style={{fontSize:16,fontWeight:"bold",color:tipoInfo?.color,minWidth:28,textAlign:"center"}}>{adicional}</span>
+                <button onClick={()=>setAdicional(a=>a+1)} style={{width:30,height:30,borderRadius:"50%",background:`${tipoInfo?.color}22`,border:`1px solid ${tipoInfo?.color}`,color:tipoInfo?.color,fontSize:16,cursor:"pointer"}}>+</button>
+              </div>
+            </div>
+            {adicional>0&&<div style={{fontSize:12,color:tipoInfo?.color,textAlign:"center",marginBottom:12}}>+{adicional} × {fmt(precioAd)} × {horas}h = +{fmt(precioAd*adicional*horas)}</div>}
+          </>)}
+          <div style={{marginBottom:0}}>
+            <div style={{fontSize:11,color:comentario?"#4FC3F7":"#607d8b",cursor:"pointer",marginBottom:4}} onClick={()=>setComentario(c=>c===false?"":false)}>{comentario!==false?"✏️ Ocultar comentario":"✏️ Comentario"}</div>
+            {comentario!==false&&<textarea placeholder="Comentario..." value={comentario} onChange={e=>setComentario(e.target.value)} rows={2} style={{width:"100%",background:"rgba(0,0,0,0.3)",border:`1px solid ${tipoInfo?.color}44`,borderRadius:8,color:"#e8f4f8",padding:"8px",fontSize:13,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
+          </div>
+        </div>
+        <div style={{background:"rgba(255,255,255,0.04)",borderRadius:14,padding:14,marginBottom:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+            <span style={{fontSize:12,color:"#90CAF9"}}>{fmt(precioH)} × {horas}h</span>
+            <span style={{fontSize:12,color:"#fff"}}>{fmt(precioH*horas)}</span>
+          </div>
+          {tipo==="colectiva"&&extras>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+            <span style={{fontSize:12,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)} × {horas}h)</span>
+            <span style={{fontSize:12,color:"#81C784"}}>+{fmt(precios.colectiva_extra*extras*horas)}</span>
+          </div>}
+          {(tipo==="particular"||tipo==="requerida")&&adicional>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+            <span style={{fontSize:12,color:"#90CAF9"}}>Adicionales ({adicional} × {fmt(precioAd)} × {horas}h)</span>
+            <span style={{fontSize:12,color:"#81C784"}}>+{fmt(precioAd*adicional*horas)}</span>
+          </div>}
+          <div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"8px 0"}}/>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:14,color:"#90CAF9",fontWeight:500}}>Total</span>
+            <span style={{fontSize:22,fontWeight:"bold",color:"#fff"}}>{fmt(valor)}</span>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:12}}>
+          <button onClick={onCancel} style={{flex:1,padding:"14px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#90CAF9",fontSize:15,cursor:"pointer",fontFamily:"inherit"}}>Cancelar</button>
+          <button onClick={confirmar} style={{flex:2,padding:"14px",background:`linear-gradient(90deg,${tipoInfo?.color||"#0277bd"},${tipoInfo?.color||"#0288d1"})`,border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>✅ Confirmar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SkiTracker() {
   const [user,setUser]=useState(null);
   const [profile,setProfile]=useState(null);
@@ -1098,6 +1191,9 @@ export default function SkiTracker() {
   const [editandoClase,setEditandoClase]=useState(null);
   const [eliminandoClase,setEliminandoClase]=useState(null);
   const [fechaSeleccionada,setFechaSeleccionada]=useState(null);
+  const [calendarAddFecha,setCalendarAddFecha]=useState(null);
+  const [calendarAddTipo,setCalendarAddTipo]=useState(null);
+  const [calendarAddPersonas,setCalendarAddPersonas]=useState(1);
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
@@ -1181,6 +1277,13 @@ export default function SkiTracker() {
     setHorasNuevaClase(p=>({...p,[tipo]:1}));
     if(tipo==="particular"||tipo==="requerida") setAdicionalNuevaClase(p=>({...p,[tipo]:0}));
     setFechaSeleccionada(null);
+  }
+
+  async function handleCalendarAdd({tipo,valor,horas,adicional,personas,extras,comentario,disciplina_clase,fecha}) {
+    const fechaClase=fecha+"T"+localISOString().slice(11);
+    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,adicional,comentario:comentario||null,horas,fecha:fechaClase,disciplina_clase}).select().single();
+    if(!error&&data){setClases(prev=>[...prev,data]);}
+    setCalendarAddFecha(null);setCalendarAddTipo(null);
   }
 
   async function eliminarUltimaDeTipo(tipo) {
@@ -1398,7 +1501,7 @@ export default function SkiTracker() {
                   <button key={key} onClick={()=>setSubTabCal(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:subTabCal===key?"rgba(79,195,247,0.15)":"transparent",color:subTabCal===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
                 ))}
             </div>
-            {subTabCal==="calendario"&&<Calendario clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})} onAddForDate={(fecha,tipo)=>{setFechaSeleccionada(fecha);setConfirmandoTipo(tipo);}}/>}
+            {subTabCal==="calendario"&&<Calendario clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})} onAddForDate={(fecha,tipo)=>{setCalendarAddFecha(fecha);setCalendarAddTipo(tipo);}}/>}
             {subTabCal==="pordia"&&<PorDia clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})}/>}
             {subTabCal==="pormes"&&<PorMes clases={clases}/>}
             {subTabCal==="disciplina"&&disc==="polivalente"&&<PorDisciplina clases={clases}/>}
@@ -1774,6 +1877,21 @@ export default function SkiTracker() {
           profile={profile}
           onGuardar={(data)=>setProfile(p=>({...p,...data}))}
           onCerrar={()=>setShowEditarPerfil(false)}
+        />
+      )}
+
+      {calendarAddTipo&&(
+        <CalendarAddModal
+          fecha={calendarAddFecha}
+          tipo={calendarAddTipo}
+          precios={precios}
+          personas={calendarAddPersonas}
+          setPersonas={setCalendarAddPersonas}
+          disc={profile?.disciplina||"ski"}
+          discClase={discClase}
+          setDiscClase={setDiscClase}
+          onConfirm={handleCalendarAdd}
+          onCancel={()=>{setCalendarAddFecha(null);setCalendarAddTipo(null);}}
         />
       )}
     </div>
