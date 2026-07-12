@@ -1144,8 +1144,8 @@ export default function SkiTracker() {
   function calcularValor(tipo,horas,adicional) {
     const h=horas||1;
     const ad=adicional||0;
-    if(tipo==="particular") return precios.particular*h+precios.adicional*ad;
-    if(tipo==="requerida") return precios.requerida*h+precios.adicional*ad;
+    if(tipo==="particular") return precios.particular*h+precios.adicional*ad*h;
+    if(tipo==="requerida") return precios.requerida*h+precios.adicional*ad*h;
     const extras=Math.max(0,personas-precios.colectiva_base);
     const extraValor=precios.colectiva_extra*extras*h;
     return precios.colectiva*h+extraValor;
@@ -1472,7 +1472,7 @@ export default function SkiTracker() {
                     </div>
                   </div>
                   <div style={{fontSize:11,color:"#607d8b",textAlign:"center",marginBottom:8}}>
-                    {fmt(precios[t.key])} × {horasNuevaClase[t.key]}h{(adicionalNuevaClase[t.key]||0)>0?` + ${adicionalNuevaClase[t.key]}×${fmt(precios.adicional)}`:""} = <strong style={{color:t.color}}>{fmt(calcularValor(t.key,horasNuevaClase[t.key],adicionalNuevaClase[t.key]||0))}</strong>
+                    {fmt(precios[t.key])} × {horasNuevaClase[t.key]}h{(adicionalNuevaClase[t.key]||0)>0?` + ${adicionalNuevaClase[t.key]}×${fmt(precios.adicional)}×${horasNuevaClase[t.key]}h`:""} = <strong style={{color:t.color}}>{fmt(calcularValor(t.key,horasNuevaClase[t.key],adicionalNuevaClase[t.key]||0))}</strong>
                   </div>
                   <div style={{marginBottom:6}}>
                     <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,[t.key]:!p[t.key]}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio[t.key]?t.color:"#607d8b",fontSize:11,cursor:"pointer",padding:0,width:"100%"}}>{mostrarComentarioPrevio[t.key]?"✏️ Ocultar":"✏️ Comentario"}</button>
@@ -1588,8 +1588,8 @@ export default function SkiTracker() {
                 )}
                 {(tipo==="particular"||tipo==="requerida")&&adicional>0&&(
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                    <span style={{fontSize:13,color:"#90CAF9"}}>Adicionales ({adicional} × {fmt(precios.adicional)})</span>
-                    <span style={{fontSize:13,color:"#81C784"}}>{"+"}{fmt(precios.adicional*adicional)}</span>
+                    <span style={{fontSize:13,color:"#90CAF9"}}>Adicionales ({adicional} × {fmt(precios.adicional)} × {horas}h)</span>
+                    <span style={{fontSize:13,color:"#81C784"}}>{"+"}{fmt(precios.adicional*adicional*horas)}</span>
                   </div>
                 )}
                 <div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"8px 0"}}/>
