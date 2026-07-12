@@ -1761,7 +1761,7 @@ export default function SkiTracker() {
                 <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Tipo</div>
                 <div style={{display:"flex",gap:6}}>
                   {tiposEdit.map(t=>(
-                    <button key={t.key} onClick={()=>setEditandoClase(p=>({...p,tipo:t.key}))} style={{flex:1,padding:"8px",border:"none",borderRadius:8,background:c.tipo===t.key?t.bg:"rgba(255,255,255,0.04)",color:c.tipo===t.key?t.color:"#607d8b",fontSize:12,cursor:"pointer",fontWeight:c.tipo===t.key?"bold":"normal",fontFamily:"inherit",outline:c.tipo===t.key?`1px solid ${t.color}`:"none"}}>{tipoEmoji(t.key,disc)} {t.label}</button>
+                    <button key={t.key} onClick={()=>setEditandoClase(p=>{const h=p.horas||1;const ad=p.adicional||0;const tk=t.key;if(tk==="particular"||tk==="requerida")return{...p,tipo:tk,valor:precios[tk]*h+precios.adicional*ad*h};const ex=Math.max(0,(p.personas||0)-precios.colectiva_base);return{...p,tipo:tk,valor:precios.colectiva*h+precios.colectiva_extra*ex*h}})} style={{flex:1,padding:"8px",border:"none",borderRadius:8,background:c.tipo===t.key?t.bg:"rgba(255,255,255,0.04)",color:c.tipo===t.key?t.color:"#607d8b",fontSize:12,cursor:"pointer",fontWeight:c.tipo===t.key?"bold":"normal",fontFamily:"inherit",outline:c.tipo===t.key?`1px solid ${t.color}`:"none"}}>{tipoEmoji(t.key,disc)} {t.label}</button>
                   ))}
                 </div>
               </div>
@@ -1769,9 +1769,9 @@ export default function SkiTracker() {
                 <div>
                   <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>⏱ Horas</div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <button onClick={()=>setEditandoClase(p=>({...p,horas:Math.max(1,(p.horas||1)-1)}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
+                    <button onClick={()=>{const nh=Math.max(1,(p.horas||1)-1);setEditandoClase(p=>{const h=nh;const ad=p.adicional||0;const t=p.tipo;if(t==="particular"||t==="requerida")return{...p,horas:h,valor:precios[t]*h+precios.adicional*ad*h};const ex=Math.max(0,(p.personas||0)-precios.colectiva_base);return{...p,horas:h,valor:precios.colectiva*h+precios.colectiva_extra*ex*h}})}} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
                     <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.horas||1}h</span>
-                    <button onClick={()=>setEditandoClase(p=>({...p,horas:(p.horas||1)+1}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
+                    <button onClick={()=>{setEditandoClase(p=>{const h=(p.horas||1)+1;const ad=p.adicional||0;const t=p.tipo;if(t==="particular"||t==="requerida")return{...p,horas:h,valor:precios[t]*h+precios.adicional*ad*h};const ex=Math.max(0,(p.personas||0)-precios.colectiva_base);return{...p,horas:h,valor:precios.colectiva*h+precios.colectiva_extra*ex*h}})}} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
                   </div>
                 </div>
                 <div>
@@ -1784,9 +1784,9 @@ export default function SkiTracker() {
                   <div>
                     <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Personas</div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <button onClick={()=>setEditandoClase(p=>({...p,personas:Math.max(1,(p.personas||1)-1)}))} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
+                      <button onClick={()=>setEditandoClase(p=>{const np=Math.max(1,(p.personas||1)-1);const ex=Math.max(0,np-precios.colectiva_base);return{...p,personas:np,extras:ex,valor:precios.colectiva*(p.horas||1)+precios.colectiva_extra*ex*(p.horas||1)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
                       <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.personas||0}</span>
-                      <button onClick={()=>setEditandoClase(p=>({...p,personas:(p.personas||0)+1}))} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
+                      <button onClick={()=>setEditandoClase(p=>{const np=(p.personas||0)+1;const ex=Math.max(0,np-precios.colectiva_base);return{...p,personas:np,extras:ex,valor:precios.colectiva*(p.horas||1)+precios.colectiva_extra*ex*(p.horas||1)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
                     </div>
                   </div>
                   <div>
@@ -1799,9 +1799,9 @@ export default function SkiTracker() {
                 <div style={{marginBottom:14}}>
                   <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>➕ Adicionales</div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <button onClick={()=>setEditandoClase(p=>({...p,adicional:Math.max(0,(p.adicional||0)-1)}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
+                    <button onClick={()=>setEditandoClase(p=>{const nad=Math.max(0,(p.adicional||0)-1);return{...p,adicional:nad,valor:precios[p.tipo]*(p.horas||1)+precios.adicional*nad*(p.horas||1)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
                     <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.adicional||0}</span>
-                    <button onClick={()=>setEditandoClase(p=>({...p,adicional:(p.adicional||0)+1}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
+                    <button onClick={()=>setEditandoClase(p=>{const nad=(p.adicional||0)+1;return{...p,adicional:nad,valor:precios[p.tipo]*(p.horas||1)+precios.adicional*nad*(p.horas||1)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
                   </div>
                 </div>
               )}
