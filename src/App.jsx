@@ -1769,9 +1769,9 @@ export default function SkiTracker() {
                 <div>
                   <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>⏱ Horas</div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <button onClick={()=>setEditandoClase(p=>{const h=Math.max(1,(p.horas||1)-1);const ad=p.adicional||0;const t=p.tipo;if(t==="particular"||t==="requerida")return{...p,horas:h,valor:precios[t]*h+precios.adicional*ad*h};const ex=Math.max(0,(p.personas||0)-precios.colectiva_base);return{...p,horas:h,valor:precios.colectiva*h+precios.colectiva_extra*ex*h}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
+                    <button onClick={()=>setEditandoClase(p=>{const h=Math.max(1,(p.horas||1)-1);return{...p,horas:h,valor:calcularValor(p.tipo,h,p.adicional)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
                     <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.horas||1}h</span>
-                    <button onClick={()=>{setEditandoClase(p=>{const h=(p.horas||1)+1;const ad=p.adicional||0;const t=p.tipo;if(t==="particular"||t==="requerida")return{...p,horas:h,valor:precios[t]*h+precios.adicional*ad*h};const ex=Math.max(0,(p.personas||0)-precios.colectiva_base);return{...p,horas:h,valor:precios.colectiva*h+precios.colectiva_extra*ex*h}})}} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
+                    <button onClick={()=>setEditandoClase(p=>{const h=(p.horas||1)+1;return{...p,horas:h,valor:calcularValor(p.tipo,h,p.adicional)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
                   </div>
                 </div>
                 <div>
@@ -1784,9 +1784,9 @@ export default function SkiTracker() {
                   <div>
                     <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Personas</div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <button onClick={()=>setEditandoClase(p=>{const np=Math.max(1,(p.personas||1)-1);const ex=Math.max(0,np-precios.colectiva_base);return{...p,personas:np,extras:ex,valor:precios.colectiva*(p.horas||1)+precios.colectiva_extra*ex*(p.horas||1)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
+                      <button onClick={()=>setEditandoClase(p=>{const np=Math.max(1,(p.personas||1)-1);return{...p,personas:np,extras:Math.max(0,np-precios.colectiva_base),valor:calcularValor(p.tipo,p.horas)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
                       <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.personas||0}</span>
-                      <button onClick={()=>setEditandoClase(p=>{const np=(p.personas||0)+1;const ex=Math.max(0,np-precios.colectiva_base);return{...p,personas:np,extras:ex,valor:precios.colectiva*(p.horas||1)+precios.colectiva_extra*ex*(p.horas||1)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
+                      <button onClick={()=>setEditandoClase(p=>{const np=(p.personas||0)+1;return{...p,personas:np,extras:Math.max(0,np-precios.colectiva_base),valor:calcularValor(p.tipo,p.horas)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
                     </div>
                   </div>
                   <div>
@@ -1799,9 +1799,9 @@ export default function SkiTracker() {
                 <div style={{marginBottom:14}}>
                   <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>➕ Adicionales</div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <button onClick={()=>setEditandoClase(p=>{const nad=Math.max(0,(p.adicional||0)-1);return{...p,adicional:nad,valor:precios[p.tipo]*(p.horas||1)+precios.adicional*nad*(p.horas||1)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
+                    <button onClick={()=>setEditandoClase(p=>{const nad=Math.max(0,(p.adicional||0)-1);return{...p,adicional:nad,valor:calcularValor(p.tipo,p.horas,nad)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
                     <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.adicional||0}</span>
-                    <button onClick={()=>setEditandoClase(p=>{const nad=(p.adicional||0)+1;return{...p,adicional:nad,valor:precios[p.tipo]*(p.horas||1)+precios.adicional*nad*(p.horas||1)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
+                    <button onClick={()=>setEditandoClase(p=>{const nad=(p.adicional||0)+1;return{...p,adicional:nad,valor:calcularValor(p.tipo,p.horas,nad)}})} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
                   </div>
                 </div>
               )}
