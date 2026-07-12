@@ -32,6 +32,12 @@ function timeAgo(dateStr) {
   if(diff<172800) return "ayer "+new Date(dateStr).toLocaleTimeString("es-CL",{hour:"2-digit",minute:"2-digit"});
   return new Date(dateStr).toLocaleDateString("es-CL");
 }
+function localISOString(){
+  const d=new Date();
+  const off=d.getTimezoneOffset();
+  const local=new Date(d.getTime()-off*60000);
+  return local.toISOString().replace("Z","");
+}
 
 function Toggle({ value, onChange, label, desc }) {
   return (
@@ -1159,7 +1165,7 @@ export default function SkiTracker() {
     const comentario=comentarioPrevio[tipo]||"";
     const disc=profile?.disciplina||"ski";
     const disc_clase=disc==="polivalente"?discClase[tipo]:disc;
-    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,adicional,comentario:comentario||null,horas,fecha:new Date().toISOString(),disciplina_clase:disc_clase}).select().single();
+    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,adicional,comentario:comentario||null,horas,fecha:localISOString(),disciplina_clase:disc_clase}).select().single();
     if(!error&&data){setClases(prev=>[...prev,data]);if(comentario.trim()) setComentarios(p=>({...p,[data.id]:comentario}));}
     setComentarioPrevio(p=>({...p,[tipo]:""}));
     setMostrarComentarioPrevio(p=>({...p,[tipo]:false}));
@@ -1193,7 +1199,7 @@ export default function SkiTracker() {
   async function agregarDescuento() {
     const val=parseInt(descuentoInput.replace(/\D/g,""));
     if(!val||val<=0) return;
-    const {data,error}=await supabase.from("descuentos").insert({user_id:user.id,valor:val,fecha:new Date().toISOString()}).select().single();
+    const {data,error}=await supabase.from("descuentos").insert({user_id:user.id,valor:val,fecha:localISOString()}).select().single();
     if(!error&&data) setDescuentos(prev=>[...prev,data]);
     setDescuentoInput("");
   }
@@ -1206,7 +1212,7 @@ export default function SkiTracker() {
   async function agregarOtro() {
     const val=parseInt(nuevoOtroMonto.replace(/\D/g,""));
     if(!val||val<=0||!nuevoOtroNombre.trim()) return;
-    const {data,error}=await supabase.from("otros").insert({user_id:user.id,nombre:nuevoOtroNombre.trim(),tipo:showAgregarOtro,valor:val,fecha:new Date().toISOString()}).select().single();
+    const {data,error}=await supabase.from("otros").insert({user_id:user.id,nombre:nuevoOtroNombre.trim(),tipo:showAgregarOtro,valor:val,fecha:localISOString()}).select().single();
     if(!error&&data) setOtros(prev=>[...prev,data]);
     setNuevoOtroNombre(""); setNuevoOtroMonto(""); setShowAgregarOtro(null);
   }
