@@ -6,7 +6,7 @@ const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BBbM2UIBc9l-spOsAeguae0ig2fShmYmSQkhvqg5puv0pMiU0EFTDOAunlIM7ZsOr2kWIBT-NWB0BgshOF61Xzw";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, mostrar_monto:true };
+const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, adicional:5000, mostrar_monto:true };
 const TIPOS = [
   { key:"particular", label:"Particular", color:"#4FC3F7", bg:"#0d2a3a" },
   { key:"colectiva",  label:"Colectiva",  color:"#81C784", bg:"#0d2a1a" },
@@ -1060,6 +1060,7 @@ export default function SkiTracker() {
   const [otros,setOtros]=useState([]);
   const [personas,setPersonas]=useState(3);
   const [horasNuevaClase,setHorasNuevaClase]=useState({particular:1,colectiva:1,requerida:1});
+  const [adicionalNuevaClase,setAdicionalNuevaClase]=useState({particular:0,requerida:0});
   const [discClase,setDiscClase]=useState({particular:"ski",colectiva:"ski",requerida:"ski"});
   const [showConfig,setShowConfig]=useState(false);
   const [tempPrecios,setTempPrecios]=useState(DEFAULT_PRECIOS);
@@ -1110,6 +1111,7 @@ export default function SkiTracker() {
           colectiva_extra:prec.colectiva_extra,
           colectiva_base:prec.colectiva_base,
           requerida:prec.requerida,
+          adicional:prec.adicional||0,
           mostrar_monto:prec.mostrar_monto!==false
         });
         setPersonas(prec.colectiva_base||3);
@@ -1139,10 +1141,11 @@ export default function SkiTracker() {
     if(disc!=="polivalente") setDiscClase({particular:disc,colectiva:disc,requerida:disc});
   }
 
-  function calcularValor(tipo,horas) {
+  function calcularValor(tipo,horas,adicional) {
     const h=horas||1;
-    if(tipo==="particular") return precios.particular*h;
-    if(tipo==="requerida") return precios.requerida*h;
+    const ad=adicional||0;
+    if(tipo==="particular") return precios.particular*h+precios.adicional*ad;
+    if(tipo==="requerida") return precios.requerida*h+precios.adicional*ad;
     const extras=Math.max(0,personas-precios.colectiva_base);
     const extraValor=precios.colectiva_extra*extras*h;
     return precios.colectiva*h+extraValor;
@@ -1150,16 +1153,18 @@ export default function SkiTracker() {
 
   async function agregarClase(tipo) {
     const horas=horasNuevaClase[tipo]||1;
-    const valor=calcularValor(tipo,horas);
+    const adicional=(tipo==="particular"||tipo==="requerida")?(adicionalNuevaClase[tipo]||0):0;
+    const valor=calcularValor(tipo,horas,adicional);
     const extras=tipo==="colectiva"?Math.max(0,personas-precios.colectiva_base):0;
     const comentario=comentarioPrevio[tipo]||"";
     const disc=profile?.disciplina||"ski";
     const disc_clase=disc==="polivalente"?discClase[tipo]:disc;
-    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,comentario:comentario||null,horas,fecha:new Date().toISOString(),disciplina_clase:disc_clase}).select().single();
+    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,adicional,comentario:comentario||null,horas,fecha:new Date().toISOString(),disciplina_clase:disc_clase}).select().single();
     if(!error&&data){setClases(prev=>[...prev,data]);if(comentario.trim()) setComentarios(p=>({...p,[data.id]:comentario}));}
     setComentarioPrevio(p=>({...p,[tipo]:""}));
     setMostrarComentarioPrevio(p=>({...p,[tipo]:false}));
     setHorasNuevaClase(p=>({...p,[tipo]:1}));
+    if(tipo==="particular"||tipo==="requerida") setAdicionalNuevaClase(p=>({...p,[tipo]:0}));
   }
 
   async function eliminarUltimaDeTipo(tipo) {
@@ -1178,7 +1183,7 @@ export default function SkiTracker() {
   async function handleGuardarEdit(clase) {
     const {data,error}=await supabase.from("clases").update({
       tipo:clase.tipo, valor:clase.valor, personas:clase.personas||0,
-      extras:clase.extras||0, comentario:clase.comentario||null,
+      extras:clase.extras||0, adicional:clase.adicional||0, comentario:clase.comentario||null,
       horas:clase.horas||1, disciplina_clase:clase.disciplina_clase||disc
     }).eq("id",clase.id).select().single();
     if(!error&&data){setClases(prev=>prev.map(c=>c.id===data.id?data:c));if(clase.comentario) setComentarios(p=>({...p,[data.id]:clase.comentario}));}
@@ -1241,6 +1246,7 @@ export default function SkiTracker() {
       colectiva_extra:tempPrecios.colectiva_extra,
       colectiva_base:tempPrecios.colectiva_base,
       requerida:tempPrecios.requerida,
+      adicional:tempPrecios.adicional||0,
       mostrar_monto:tempPrecios.mostrar_monto
     }).eq("user_id",user.id);
     setPrecios({...tempPrecios});
@@ -1457,7 +1463,17 @@ export default function SkiTracker() {
                       <button onClick={()=>setHorasNuevaClase(p=>({...p,[t.key]:p[t.key]+1}))} style={{background:"none",border:"none",color:t.color,fontSize:16,cursor:"pointer",padding:"0 4px"}}>+</button>
                     </div>
                   </div>
-                  <div style={{fontSize:11,color:"#607d8b",textAlign:"center",marginBottom:8}}>{fmt(precios[t.key])} × {horasNuevaClase[t.key]}h = <strong style={{color:t.color}}>{fmt(precios[t.key]*horasNuevaClase[t.key])}</strong></div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,padding:"6px 8px",background:`rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.05)`,border:`1px solid rgba(${t.key==="particular"?"79,195,247":"255,183,77"},0.15)`,borderRadius:8}}>
+                    <span style={{fontSize:11,color:"#607d8b"}}>➕</span>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <button onClick={()=>setAdicionalNuevaClase(p=>({...p,[t.key]:Math.max(0,p[t.key]-1)}))} style={{background:"none",border:"none",color:t.color,fontSize:16,cursor:"pointer",padding:"0 4px"}}>−</button>
+                      <span style={{fontSize:13,fontWeight:"bold",color:t.color,minWidth:24,textAlign:"center"}}>{adicionalNuevaClase[t.key]||0}</span>
+                      <button onClick={()=>setAdicionalNuevaClase(p=>({...p,[t.key]:(p[t.key]||0)+1}))} style={{background:"none",border:"none",color:t.color,fontSize:16,cursor:"pointer",padding:"0 4px"}}>+</button>
+                    </div>
+                  </div>
+                  <div style={{fontSize:11,color:"#607d8b",textAlign:"center",marginBottom:8}}>
+                    {fmt(precios[t.key])} × {horasNuevaClase[t.key]}h{(adicionalNuevaClase[t.key]||0)>0?` + ${adicionalNuevaClase[t.key]}×${fmt(precios.adicional)}`:""} = <strong style={{color:t.color}}>{fmt(calcularValor(t.key,horasNuevaClase[t.key],adicionalNuevaClase[t.key]||0))}</strong>
+                  </div>
                   <div style={{marginBottom:6}}>
                     <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,[t.key]:!p[t.key]}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio[t.key]?t.color:"#607d8b",fontSize:11,cursor:"pointer",padding:0,width:"100%"}}>{mostrarComentarioPrevio[t.key]?"✏️ Ocultar":"✏️ Comentario"}</button>
                     {mostrarComentarioPrevio[t.key]&&<textarea placeholder="Comentario..." value={comentarioPrevio[t.key]} onChange={e=>setComentarioPrevio(p=>({...p,[t.key]:e.target.value}))} rows={2} style={{width:"100%",marginTop:4,background:"rgba(0,0,0,0.3)",border:`1px solid ${t.color}44`,borderRadius:8,color:"#e8f4f8",padding:"6px 8px",fontSize:12,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
@@ -1536,7 +1552,8 @@ export default function SkiTracker() {
       {confirmandoTipo&&(()=>{
         const tipo=confirmandoTipo;
         const horas=horasNuevaClase[tipo]||1;
-        const valor=calcularValor(tipo,horas);
+        const adicional=(tipo==="particular"||tipo==="requerida")?(adicionalNuevaClase[tipo]||0):0;
+        const valor=calcularValor(tipo,horas,adicional);
         const extras=tipo==="colectiva"?Math.max(0,personas-precios.colectiva_base):0;
         const tipoInfo=TIPOS.find(t=>t.key===tipo);
         return (
@@ -1569,6 +1586,12 @@ export default function SkiTracker() {
                     )}
                   </>
                 )}
+                {(tipo==="particular"||tipo==="requerida")&&adicional>0&&(
+                  <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+                    <span style={{fontSize:13,color:"#90CAF9"}}>Adicionales ({adicional} × {fmt(precios.adicional)})</span>
+                    <span style={{fontSize:13,color:"#81C784"}}>{"+"}{fmt(precios.adicional*adicional)}</span>
+                  </div>
+                )}
                 <div style={{height:1,background:"rgba(255,255,255,0.07)",margin:"8px 0"}}/>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <span style={{fontSize:14,color:"#90CAF9",fontWeight:500}}>Total</span>
@@ -1595,6 +1618,7 @@ export default function SkiTracker() {
               <div style={{fontSize:13,color:"#90CAF9",marginBottom:16}}>
                 {tipoEmoji(c.tipo,disc)} {TIPOS.find(t=>t.key===c.tipo)?.label} — {fmt(c.valor)} · ⏱{c.horas||1}h
                 {c.tipo==="colectiva"&&` · ${c.personas} pers.`}
+                {(c.tipo==="particular"||c.tipo==="requerida")&&(c.adicional||0)>0&&` · +${c.adicional} adicional${(c.adicional||0)>1?"es":""}`}
                 {c.comentario&&` · "${c.comentario.slice(0,30)}"`}
               </div>
               <div style={{display:"flex",gap:12}}>
@@ -1652,6 +1676,16 @@ export default function SkiTracker() {
                   </div>
                 </div>
               )}
+              {(c.tipo==="particular"||c.tipo==="requerida")&&(
+                <div style={{marginBottom:14}}>
+                  <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>➕ Adicionales</div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <button onClick={()=>setEditandoClase(p=>({...p,adicional:Math.max(0,(p.adicional||0)-1)}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>−</button>
+                    <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.adicional||0}</span>
+                    <button onClick={()=>setEditandoClase(p=>({...p,adicional:(p.adicional||0)+1}))} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:16,cursor:"pointer"}}>+</button>
+                  </div>
+                </div>
+              )}
               <div style={{marginBottom:16}}>
                 <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>💬 Comentario</div>
                 <textarea value={c.comentario||""} onChange={e=>setEditandoClase(p=>({...p,comentario:e.target.value}))} rows={2} style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F744",borderRadius:8,color:"#fff",padding:"10px 12px",fontSize:13,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>
@@ -1679,6 +1713,7 @@ export default function SkiTracker() {
               {key:"colectiva_base",label:"Personas incluidas sin extra",emoji:"👤",desc:"A partir de esta cantidad se cobra adicional",unit2:"pers."},
               {key:"colectiva_extra",label:"Adicional por persona extra",emoji:"➕"},
               {key:"requerida",label:"Clase Requerida",emoji:"📋",unit:"/h"},
+              {key:"adicional",label:"Adicional por clase (Particular/Requerida)",emoji:"➕",desc:"Monto que se suma por cada adicional agregado a la clase",unit:"/unidad"},
             ].map(({key,label,emoji,desc,unit,unit2})=>(
               <div key={key} style={{marginBottom:18}}>
                 <label style={{fontSize:12,color:"#90CAF9",display:"block",marginBottom:2}}>{emoji} {label}</label>

@@ -37,3 +37,17 @@ BEGIN
       FOR ALL USING (auth.uid() = user_id);
   END IF;
 END $$;
+
+-- ============================================================
+-- MIGRACIÓN: Columna "adicional" para precios y clases
+-- Ejecutar en el SQL Editor de Supabase
+-- ============================================================
+
+-- 1. Agregar columna adicional a la tabla precios (monto configurable por instructor)
+ALTER TABLE precios ADD COLUMN IF NOT EXISTS adicional numeric DEFAULT 0;
+
+-- 2. Agregar columna adicional a la tabla clases (cantidad de adicionales en la clase)
+ALTER TABLE clases ADD COLUMN IF NOT EXISTS adicional integer DEFAULT 0;
+
+-- 3. (Opcional) Actualizar precios existentes con un valor default para adicional
+-- UPDATE precios SET adicional = 5000 WHERE adicional IS NULL OR adicional = 0;
