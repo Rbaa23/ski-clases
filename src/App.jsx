@@ -521,7 +521,7 @@ function AdminPanel({onBack}) {
   );
 }
 
-function Calendario({clases, disc, onDelete, onEdit}) {
+function Calendario({clases, disc, onDelete, onEdit, onAddForDate}) {
   const [mesOffset,setMesOffset]=useState(0);
   const [diaSeleccionado,setDiaSeleccionado]=useState(null);
   const hoy=new Date();
@@ -557,7 +557,7 @@ function Calendario({clases, disc, onDelete, onEdit}) {
           const seleccionado=diaSeleccionado===dStr;
           const tiposPresentes=tiene?[...new Set(tiene.clases.map(c=>c.tipo))]:[];
           return (
-            <div key={i} onClick={()=>setDiaSeleccionado(seleccionado?null:dStr)} style={{borderRadius:10,padding:"6px 2px",textAlign:"center",cursor:tiene?"pointer":"default",background:seleccionado?"rgba(79,195,247,0.2)":esHoy?"rgba(255,140,0,0.1)":tiene?"rgba(255,255,255,0.05)":"transparent",border:seleccionado?"1px solid #4FC3F7":esHoy?"1px solid rgba(255,140,0,0.5)":"1px solid transparent"}}>
+            <div key={i} onClick={()=>setDiaSeleccionado(seleccionado?null:dStr)} style={{borderRadius:10,padding:"6px 2px",textAlign:"center",cursor:"pointer",background:seleccionado?"rgba(79,195,247,0.2)":esHoy?"rgba(255,140,0,0.1)":tiene?"rgba(255,255,255,0.05)":"transparent",border:seleccionado?"1px solid #4FC3F7":esHoy?"1px solid rgba(255,140,0,0.5)":"1px solid transparent"}}>
               <div style={{fontSize:13,color:seleccionado?"#4FC3F7":esHoy?"#FF8C00":tiene?"#fff":"#607d8b",fontWeight:esHoy||seleccionado?"bold":"normal"}}>{dia}</div>
               {tiene&&<div style={{display:"flex",justifyContent:"center",gap:2,marginTop:3,flexWrap:"wrap"}}>{tiposPresentes.map(t=>{const tipo=TIPOS.find(x=>x.key===t);return <div key={t} style={{width:6,height:6,borderRadius:"50%",background:tipo?.color||"#fff"}}/>;})}</div>}
             </div>
@@ -568,7 +568,7 @@ function Calendario({clases, disc, onDelete, onEdit}) {
       {diaSeleccionado&&(
         <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px"}}>
           <div style={{fontSize:13,color:"#4FC3F7",marginBottom:10,textTransform:"capitalize"}}>{fechaDia}</div>
-          {diasSelDia.length===0?<div style={{fontSize:13,color:"#607d8b"}}>Sin clases este día</div>:(
+          {diasSelDia.length===0?<div style={{fontSize:13,color:"#607d8b",marginBottom:10}}>Sin clases este día</div>:(
             <>{diasSelDia.map((c,i)=>{const tipo=TIPOS.find(t=>t.key===c.tipo);return(
               <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"6px 0",borderBottom:i<diasSelDia.length-1?"1px solid rgba(255,255,255,0.05)":"none"}}>
                 <div><span style={{fontSize:13,color:tipo.color}}>{tipoEmoji(c.tipo,disc)} {tipo.label}</span>{c.tipo==="colectiva"&&<span style={{fontSize:12,color:"#90CAF9"}}> · {c.personas} pers.</span>}{c.horas>0&&<span style={{fontSize:11,color:"#4FC3F7"}}> · ⏱{c.horas}h</span>}</div>
@@ -584,6 +584,13 @@ function Calendario({clases, disc, onDelete, onEdit}) {
               <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{fmt(totalDia)}</span>
             </div></>
           )}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:12}}>
+            {TIPOS.map(t=>(
+              <button key={t.key} onClick={()=>onAddForDate(`${mesStr}-${String(diaSeleccionado).padStart(2,"0")}`,t.key)} style={{padding:"8px",background:t.bg,border:`1px solid ${t.color}88`,borderRadius:8,color:t.color,fontSize:11,cursor:"pointer",fontFamily:"inherit",fontWeight:"bold",textAlign:"center"}}>
+                {tipoEmoji(t.key,disc)} {t.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -1090,6 +1097,7 @@ export default function SkiTracker() {
   const [newPassError,setNewPassError]=useState("");
   const [editandoClase,setEditandoClase]=useState(null);
   const [eliminandoClase,setEliminandoClase]=useState(null);
+  const [fechaSeleccionada,setFechaSeleccionada]=useState(null);
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
@@ -1165,12 +1173,14 @@ export default function SkiTracker() {
     const comentario=comentarioPrevio[tipo]||"";
     const disc=profile?.disciplina||"ski";
     const disc_clase=disc==="polivalente"?discClase[tipo]:disc;
-    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,adicional,comentario:comentario||null,horas,fecha:localISOString(),disciplina_clase:disc_clase}).select().single();
+    const fechaClase=fechaSeleccionada||(new Date().getFullYear()+"-"+String(new Date().getMonth()+1).padStart(2,"0")+"-"+String(new Date().getDate()).padStart(2,"0"));
+    const {data,error}=await supabase.from("clases").insert({user_id:user.id,tipo,valor,personas:tipo==="colectiva"?personas:0,extras,adicional,comentario:comentario||null,horas,fecha:fechaClase+"T"+localISOString().slice(11),disciplina_clase:disc_clase}).select().single();
     if(!error&&data){setClases(prev=>[...prev,data]);if(comentario.trim()) setComentarios(p=>({...p,[data.id]:comentario}));}
     setComentarioPrevio(p=>({...p,[tipo]:""}));
     setMostrarComentarioPrevio(p=>({...p,[tipo]:false}));
     setHorasNuevaClase(p=>({...p,[tipo]:1}));
     if(tipo==="particular"||tipo==="requerida") setAdicionalNuevaClase(p=>({...p,[tipo]:0}));
+    setFechaSeleccionada(null);
   }
 
   async function eliminarUltimaDeTipo(tipo) {
@@ -1388,7 +1398,7 @@ export default function SkiTracker() {
                   <button key={key} onClick={()=>setSubTabCal(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:subTabCal===key?"rgba(79,195,247,0.15)":"transparent",color:subTabCal===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
                 ))}
             </div>
-            {subTabCal==="calendario"&&<Calendario clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})}/>}
+            {subTabCal==="calendario"&&<Calendario clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})} onAddForDate={(fecha,tipo)=>{setFechaSeleccionada(fecha);setConfirmandoTipo(tipo);}}/>}
             {subTabCal==="pordia"&&<PorDia clases={clases} disc={disc} onDelete={(c)=>setEliminandoClase(c)} onEdit={(c)=>setEditandoClase({...c})}/>}
             {subTabCal==="pormes"&&<PorMes clases={clases}/>}
             {subTabCal==="disciplina"&&disc==="polivalente"&&<PorDisciplina clases={clases}/>}
