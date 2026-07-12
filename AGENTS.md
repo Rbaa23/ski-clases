@@ -58,7 +58,7 @@ ski-clases/
 
 ```
 Particular:  valor = precio × horas + adicional × cantidad × horas
-Colectiva:   valor = precio × horas + extra_price × extras × horas
+Colectiva:   valor = precio × horas + extra_price × extras
              extras = max(0, personas - colectiva_base)
 Requerida:   valor = precio × horas + adicional × cantidad × horas
 

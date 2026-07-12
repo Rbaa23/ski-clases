@@ -1072,7 +1072,7 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
   const extras=Math.max(0,personas-base);
   let valor=0;
   if(tipo==="particular"||tipo==="requerida") valor=precioH*horas+precioAd*adicional*horas;
-  else valor=precios.colectiva*horas+precios.colectiva_extra*extras*horas;
+  else valor=precios.colectiva*horas+precios.colectiva_extra*extras;
   const fechaLabel=new Date(fecha+"T12:00:00").toLocaleDateString("es-CL",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
   function confirmar(){
     onConfirm({tipo,valor,horas,adicional,personas:tipo==="colectiva"?personas:0,extras:tipo==="colectiva"?extras:0,comentario,disciplina_clase:disc==="polivalente"?(discClase[tipo]||"ski"):disc,fecha});
@@ -1108,7 +1108,7 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
                 <button onClick={()=>setPersonas(p=>p+1)} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
               </div>
             </div>
-            {extras>0&&<div style={{fontSize:12,color:"#81C784",textAlign:"center",marginBottom:12}}>+{extras} extra{extras>1?"s":""} × {fmt(precios.colectiva_extra)} = +{fmt(precios.colectiva_extra*extras*horas)}</div>}
+            {extras>0&&<div style={{fontSize:12,color:"#81C784",textAlign:"center",marginBottom:12}}>+{extras} extra{extras>1?"s":""} × {fmt(precios.colectiva_extra)} = +{fmt(precios.colectiva_extra*extras)}</div>}
           </>)}
           {(tipo==="particular"||tipo==="requerida")&&(<>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:"rgba(255,255,255,0.03)",border:`1px solid ${tipoInfo?.color}33`,borderRadius:10}}>
@@ -1132,8 +1132,8 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
             <span style={{fontSize:12,color:"#fff"}}>{fmt(precioH*horas)}</span>
           </div>
           {tipo==="colectiva"&&extras>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-            <span style={{fontSize:12,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)} × {horas}h)</span>
-            <span style={{fontSize:12,color:"#81C784"}}>+{fmt(precios.colectiva_extra*extras*horas)}</span>
+            <span style={{fontSize:12,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)})</span>
+            <span style={{fontSize:12,color:"#81C784"}}>+{fmt(precios.colectiva_extra*extras)}</span>
           </div>}
           {(tipo==="particular"||tipo==="requerida")&&adicional>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
             <span style={{fontSize:12,color:"#90CAF9"}}>Adicionales ({adicional} × {fmt(precioAd)} × {horas}h)</span>
@@ -1257,7 +1257,7 @@ export default function SkiTracker() {
     if(tipo==="particular") return precios.particular*h+precios.adicional*ad*h;
     if(tipo==="requerida") return precios.requerida*h+precios.adicional*ad*h;
     const extras=Math.max(0,personas-precios.colectiva_base);
-    const extraValor=precios.colectiva_extra*extras*h;
+    const extraValor=precios.colectiva_extra*extras;
     return precios.colectiva*h+extraValor;
   }
 
@@ -1536,7 +1536,7 @@ export default function SkiTracker() {
               </div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
                 <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`${extrasActuales} extra${extrasActuales>1?"s":""} × ${fmt(precios.colectiva_extra)}${precios.extra_por_hora?"/h":""}`:`Sin extras (base = ${base} pers.)`}</span>
-                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`+ ${fmt(precios.extra_por_hora?precios.colectiva_extra*extrasActuales*horasNuevaClase.colectiva:precios.colectiva_extra*extrasActuales)}`:"+$0"}</span>
+                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`+ ${fmt(precios.colectiva_extra*extrasActuales)}`:"+$0"}</span>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"8px 10px",background:"rgba(129,199,132,0.05)",border:"1px solid rgba(129,199,132,0.15)",borderRadius:10}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>⏱ Duración</span>
@@ -1699,8 +1699,8 @@ export default function SkiTracker() {
                     </div>
                     {extras>0&&(
                       <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
-                        <span style={{fontSize:13,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)}{precios.extra_por_hora?"/h":""})</span>
-                        <span style={{fontSize:13,color:"#81C784"}}>{"+"}{fmt(precios.extra_por_hora?precios.colectiva_extra*extras*horas:precios.colectiva_extra*extras)}</span>
+                        <span style={{fontSize:13,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)})</span>
+                        <span style={{fontSize:13,color:"#81C784"}}>{"+"}{fmt(precios.colectiva_extra*extras)}</span>
                       </div>
                     )}
                   </>
