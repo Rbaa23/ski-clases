@@ -8,9 +8,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, adicional:5000, mostrar_monto:true };
 const TIPOS = [
-  { key:"particular", label:"Particular", color:"#4FC3F7", bg:"#0d2a3a" },
-  { key:"colectiva",  label:"Colectiva",  color:"#81C784", bg:"#0d2a1a" },
-  { key:"requerida",  label:"Requerida",  color:"#FFB74D", bg:"#2a1d0d" },
+  { key:"particular", label:"Particular", color:"#66BB6A", bg:"#0d2a1a" },
+  { key:"colectiva",  label:"Colectiva",  color:"#546E7A", bg:"#0d1a1f" },
+  { key:"requerida",  label:"Requerida",  color:"#E1BEE7", bg:"#1a1520" },
 ];
 const COLORES_POLI = {
   ski:  { particular:"#6495ED", colectiva:"#4DB6AC", requerida:"#FFA726" },
@@ -253,7 +253,7 @@ function EditarPerfil({profile, onGuardar, onCerrar}) {
   );
 }
 
-function AdminPanel({onBack}) {
+function AdminPanel({onBack, pendientesCount, setPendientesCount}) {
   const [subTab, setSubTab] = useState("usuarios");
   const [catTab, setCatTab] = useState("pendientes");
   const [usuarios, setUsuarios] = useState([]);
@@ -280,8 +280,14 @@ function AdminPanel({onBack}) {
   }
 
   async function cambiarEstado(id, aprobado) {
+    const user=usuarios.find(u=>u.id===id);
+    const wasPending=user&&!user.aprobado&&!user.is_admin;
     await supabase.from("profiles").update({aprobado}).eq("id",id);
     setUsuarios(prev=>prev.map(u=>u.id===id?{...u,aprobado}:u));
+    if(setPendientesCount){
+      if(wasPending&&aprobado) setPendientesCount(prev=>Math.max(0,prev-1));
+      if(!wasPending&&!aprobado&&!user?.is_admin) setPendientesCount(prev=>prev+1);
+    }
   }
 
   if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif"}}>Cargando...</div>;
@@ -1388,7 +1394,7 @@ export default function SkiTracker() {
       </div>
     </div>
   );
-  if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)}/>;
+  if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)} pendientesCount={pendientesCount} setPendientesCount={setPendientesCount}/>;
 
   const disc=profile?.disciplina||"ski";
   const mostrarMonto=precios.mostrar_monto!==false;
