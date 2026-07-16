@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview Negros</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a0a;font-family:system-ui,-apple-system,sans-serif;color:#e8f4f8;display:flex;gap:16px;justify-content:center;min-height:100vh;padding:20px;flex-wrap:wrap}
+.phone{width:320px;min-height:680px;border-radius:18px;border:1px solid rgba(255,255,255,0.08);overflow:hidden;flex-shrink:0}
+.bg-label{text-align:center;padding:8px;font-size:12px;font-weight:600;letter-spacing:1;border-bottom:1px solid rgba(255,255,255,0.05)}
+.header{padding:14px 16px 8px}
+.disc-tabs{display:flex;gap:3px;margin-bottom:10px}
+.disc-tab{flex:1;padding:5px 0;border:none;border-radius:5px;font-size:10px;background:transparent;color:#607d8b}
+.disc-tab.active{background:rgba(79,195,247,0.15);color:#4FC3F7}
+.user-row{display:flex;justify-content:space-between;align-items:center}
+.user-left{display:flex;align-items:center;gap:7px}
+.avatar{width:28px;height:28px;border-radius:50%;background:rgba(79,195,247,0.15);border:2px solid rgba(79,195,247,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:#4FC3F7}
+.user-name{font-size:13px;font-weight:bold;color:#fff}
+.user-btn{background:rgba(255,183,77,0.15);border:1px solid #FFB74D;border-radius:7px;padding:5px 7px;font-size:10px;color:#FFB74D}
+.tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.05)}
+.tab{flex:1;padding:7px 0;text-align:center;font-size:10px;color:#607d8b;border-bottom:2px solid transparent}
+.tab.active{color:#4FC3F7;border-bottom-color:#4FC3F7}
+.content{padding:14px}
+.total-card{border:1px solid rgba(79,195,247,0.3);border-radius:12px;padding:12px 14px;text-align:center;margin-bottom:12px}
+.total-label{font-size:8px;letter-spacing:2px;color:#4FC3F7;text-transform:uppercase;margin-bottom:2px}
+.total-month{font-size:12px;font-weight:bold;color:#fff}
+.total-sub{font-size:8px;letter-spacing:2px;color:#4FC3F7;text-transform:uppercase;margin-top:6px}
+.total-amount{font-size:24px;font-weight:bold;color:#fff}
+.total-types{display:flex;justify-content:center;gap:12px;margin-top:8px}
+.total-type{text-align:center}
+.total-type-emoji{font-size:12px}
+.total-type-hours{font-size:14px;font-weight:bold}
+.total-type-label{font-size:8px;color:#90CAF9}
+.section-title{font-size:9px;letter-spacing:2px;color:#4FC3F7;text-transform:uppercase;margin-bottom:8px}
+.colectiva-card{border-radius:10px;padding:12px;margin-bottom:8px}
+.colectiva-title{font-size:11px;font-weight:bold;margin-bottom:6px}
+.colectiva-row{display:flex;justify-content:space-between;margin-bottom:3px;font-size:10px}
+.personas-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.personas-controls{display:flex;align-items:center;gap:6px}
+.stepper{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer}
+.personas-num{font-size:16px;font-weight:bold;color:#fff}
+.preview-row{border-top:1px solid rgba(84,110,122,0.2);padding-top:5px;margin-bottom:6px}
+.preview-detail{display:flex;justify-content:space-between}
+.preview-calc{font-size:9px;color:#607d8b}
+.preview-total{font-size:12px;font-weight:bold;color:#fff}
+.add-btn{width:100%;padding:8px;border:none;border-radius:8px;color:#fff;font-size:11px;font-weight:bold;cursor:pointer;margin-bottom:5px}
+.undo-btn{width:100%;padding:5px;background:rgba(239,83,80,0.08);border:1px solid rgba(239,83,80,0.4);border-radius:7;color:#ef9a9a;font-size:9px;cursor:pointer;font-family:inherit}
+.types-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.type-card{border-radius:10px;padding:10px 8px;text-align:center}
+.type-emoji{font-size:18px;margin-bottom:1px}
+.type-name{font-size:11px;font-weight:bold}
+.type-price{font-size:9px;color:#90CAF9;margin-top:1px}
+.type-stepper{display:flex;justify-content:space-between;align-items:center;margin:4px 0;padding:4px 5px;border-radius:5px}
+.type-stepper-label{font-size:9px;color:#607d8b}
+.type-stepper-controls{display:flex;align-items:center;gap:3px}
+.type-stepper-btn{background:none;border:none;font-size:12px;cursor:pointer}
+.type-stepper-val{font-size:11px;font-weight:bold;min-width:18px;text-align:center}
+.type-calc{font-size:9px;color:#607d8b;margin:4px 0}
+.type-calc strong{font-weight:bold}
+.type-add{width:100%;padding:6px;border:none;border-radius:7px;font-size:11px;font-weight:bold;cursor:pointer;margin-bottom:3px}
+.type-undo{width:100%;padding:4px;background:rgba(239,83,80,0.08);border:1px solid rgba(239,83,80,0.4);border-radius:5;color:#ef9a9a;font-size:8px;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+
+<!-- Negro puro -->
+<div class="phone" style="background:#000000">
+  <div class="bg-label" style="color:#999">NEGRO PURO<br><span style="font-size:10px;color:#555">#000000</span></div>
+  <div class="header">
+    <div class="disc-tabs"><button class="disc-tab active">⛷️ Ski</button><button class="disc-tab">🏂 Snow</button></div>
+    <div class="user-row"><div class="user-left"><div class="avatar">MR</div><div><div class="user-name">Marco</div></div></div><button class="user-btn">👑</button></div>
+  </div>
+  <div class="tabs"><div class="tab active">📝 Registro</div><div class="tab">📊 Stats</div></div>
+  <div class="content">
+    <div class="total-card">
+      <div class="total-label">Mes Actual</div><div class="total-month">julio 2026</div>
+      <div class="total-sub">Total estimado</div><div class="total-amount">$384.500</div>
+      <div class="total-types">
+        <div class="total-type"><div class="total-type-emoji">⛷️</div><div class="total-type-hours" style="color:#66BB6A">6h</div><div class="total-type-label">Particular</div></div>
+        <div class="total-type"><div class="total-type-emoji">👥</div><div class="total-type-hours" style="color:#90A4AE">9h</div><div class="total-type-label">Colectiva</div></div>
+        <div class="total-type"><div class="total-type-emoji">📋</div><div class="total-type-hours" style="color:#E1BEE7">3h</div><div class="total-type-label">Requerida</div></div>
+      </div>
+    </div>
+    <div class="section-title">Registrar clase</div>
+    <div class="colectiva-card" style="background:#0a0a0a;border:1px solid rgba(84,110,122,0.3)">
+      <div class="colectiva-title" style="color:#90A4AE">👥 Colectiva</div>
+      <div class="colectiva-row"><span style="color:#90CAF9">Precio base</span><span style="color:#90A4AE;font-weight:bold">$27.000/h</span></div>
+      <div class="personas-row"><span style="color:#90CAF9">Personas</span><div class="personas-controls"><div class="stepper" style="background:rgba(84,110,122,0.2);border:1px solid #546E7A;color:#90A4AE">−</div><span class="personas-num">5</span><div class="stepper" style="background:rgba(84,110,122,0.2);border:1px solid #546E7A;color:#90A4AE">+</div></div></div>
+      <div class="preview-row"><div class="preview-detail"><span class="preview-calc">$27.000 × 1h + extras</span><span class="preview-total">$29.000</span></div></div>
+      <button class="add-btn" style="background:linear-gradient(90deg,#37474F,#455A64)">+ Agregar Colectiva</button>
+      <button class="undo-btn">↩ Deshacer</button>
+    </div>
+    <div class="types-grid">
+      <div class="type-card" style="background:linear-gradient(135deg,#0a1a0a,#0d2a1a);border:1px solid rgba(102,187,106,0.35)">
+        <div class="type-emoji">⛷️</div><div class="type-name" style="color:#66BB6A">Particular</div><div class="type-price">$24.000/h</div>
+        <div class="type-stepper" style="background:rgba(102,187,106,0.05);border:1px solid rgba(102,187,106,0.15)"><span class="type-stepper-label">⏱</span><div class="type-stepper-controls"><button class="type-stepper-btn" style="color:#66BB6A">−</button><span class="type-stepper-val" style="color:#66BB6A">1h</span><button class="type-stepper-btn" style="color:#66BB6A">+</button></div></div>
+        <div class="type-calc"><strong style="color:#66BB6A">$24.000</strong></div>
+        <button class="type-add" style="background:#0a1a0a;border:1px solid rgba(102,187,106,0.55);color:#66BB6A">+ Agregar</button>
+      </div>
+      <div class="type-card" style="background:linear-gradient(135deg,#15101a,#1a1520);border:1px solid rgba(225,190,231,0.35)">
+        <div class="type-emoji">📋</div><div class="type-name" style="color:#E1BEE7">Requerida</div><div class="type-price">$27.000/h</div>
+        <div class="type-stepper" style="background:rgba(225,190,231,0.05);border:1px solid rgba(225,190,231,0.15)"><span class="type-stepper-label">⏱</span><div class="type-stepper-controls"><button class="type-stepper-btn" style="color:#E1BEE7">−</button><span class="type-stepper-val" style="color:#E1BEE7">1h</span><button class="type-stepper-btn" style="color:#E1BEE7">+</button></div></div>
+        <div class="type-calc"><strong style="color:#E1BEE7">$27.000</strong></div>
+        <button class="type-add" style="background:#15101a;border:1px solid rgba(225,190,231,0.55);color:#E1BEE7">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Negro cálido -->
+<div class="phone" style="background:#0a0808">
+  <div class="bg-label" style="color:#c4a882">NEGRO CÁLIDO<br><span style="font-size:10px;color:#6b5a48">#0a0808</span></div>
+  <div class="header">
+    <div class="disc-tabs"><button class="disc-tab active">⛷️ Ski</button><button class="disc-tab">🏂 Snow</button></div>
+    <div class="user-row"><div class="user-left"><div class="avatar">MR</div><div><div class="user-name">Marco</div></div></div><button class="user-btn">👑</button></div>
+  </div>
+  <div class="tabs"><div class="tab active">📝 Registro</div><div class="tab">📊 Stats</div></div>
+  <div class="content">
+    <div class="total-card">
+      <div class="total-label">Mes Actual</div><div class="total-month">julio 2026</div>
+      <div class="total-sub">Total estimado</div><div class="total-amount">$384.500</div>
+      <div class="total-types">
+        <div class="total-type"><div class="total-type-emoji">⛷️</div><div class="total-type-hours" style="color:#66BB6A">6h</div><div class="total-type-label">Particular</div></div>
+        <div class="total-type"><div class="total-type-emoji">👥</div><div class="total-type-hours" style="color:#90A4AE">9h</div><div class="total-type-label">Colectiva</div></div>
+        <div class="total-type"><div class="total-type-emoji">📋</div><div class="total-type-hours" style="color:#E1BEE7">3h</div><div class="total-type-label">Requerida</div></div>
+      </div>
+    </div>
+    <div class="section-title">Registrar clase</div>
+    <div class="colectiva-card" style="background:#100c0c;border:1px solid rgba(84,110,122,0.3)">
+      <div class="colectiva-title" style="color:#90A4AE">👥 Colectiva</div>
+      <div class="colectiva-row"><span style="color:#90CAF9">Precio base</span><span style="color:#90A4AE;font-weight:bold">$27.000/h</span></div>
+      <div class="personas-row"><span style="color:#90CAF9">Personas</span><div class="personas-controls"><div class="stepper" style="background:rgba(84,110,122,0.2);border:1px solid #546E7A;color:#90A4AE">−</div><span class="personas-num">5</span><div class="stepper" style="background:rgba(84,110,122,0.2);border:1px solid #546E7A;color:#90A4AE">+</div></div></div>
+      <div class="preview-row"><div class="preview-detail"><span class="preview-calc">$27.000 × 1h + extras</span><span class="preview-total">$29.000</span></div></div>
+      <button class="add-btn" style="background:linear-gradient(90deg,#37474F,#455A64)">+ Agregar Colectiva</button>
+      <button class="undo-btn">↩ Deshacer</button>
+    </div>
+    <div class="types-grid">
+      <div class="type-card" style="background:linear-gradient(135deg,#0a1a0a,#0d2a1a);border:1px solid rgba(102,187,106,0.35)">
+        <div class="type-emoji">⛷️</div><div class="type-name" style="color:#66BB6A">Particular</div><div class="type-price">$24.000/h</div>
+        <div class="type-stepper" style="background:rgba(102,187,106,0.05);border:1px solid rgba(102,187,106,0.15)"><span class="type-stepper-label">⏱</span><div class="type-stepper-controls"><button class="type-stepper-btn" style="color:#66BB6A">−</button><span class="type-stepper-val" style="color:#66BB6A">1h</span><button class="type-stepper-btn" style="color:#66BB6A">+</button></div></div>
+        <div class="type-calc"><strong style="color:#66BB6A">$24.000</strong></div>
+        <button class="type-add" style="background:#0a1a0a;border:1px solid rgba(102,187,106,0.55);color:#66BB6A">+ Agregar</button>
+      </div>
+      <div class="type-card" style="background:linear-gradient(135deg,#15101a,#1a1520);border:1px solid rgba(225,190,231,0.35)">
+        <div class="type-emoji">📋</div><div class="type-name" style="color:#E1BEE7">Requerida</div><div class="type-price">$27.000/h</div>
+        <div class="type-stepper" style="background:rgba(225,190,231,0.05);border:1px solid rgba(225,190,231,0.15)"><span class="type-stepper-label">⏱</span><div class="type-stepper-controls"><button class="type-stepper-btn" style="color:#E1BEE7">−</button><span class="type-stepper-val" style="color:#E1BEE7">1h</span><button class="type-stepper-btn" style="color:#E1BEE7">+</button></div></div>
+        <div class="type-calc"><strong style="color:#E1BEE7">$27.000</strong></div>
+        <button class="type-add" style="background:#15101a;border:1px solid rgba(225,190,231,0.55);color:#E1BEE7">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Negro frío -->
+<div class="phone" style="background:#080a0e">
+  <div class="bg-label" style="color:#89b4fa">NEGRO FRÍO<br><span style="font-size:10px;color:#4a5568">#080a0e</span></div>
+  <div class="header">
+    <div class="disc-tabs"><button class="disc-tab active">⛷️ Ski</button><button class="disc-tab">🏂 Snow</button></div>
+    <div class="user-row"><div class="user-left"><div class="avatar">MR</div><div><div class="user-name">Marco</div></div></div><button class="user-btn">👑</button></div>
+  </div>
+  <div class="tabs"><div class="tab active">📝 Registro</div><div class="tab">📊 Stats</div></div>
+  <div class="content">
+    <div class="total-card">
+      <div class="total-label">Mes Actual</div><div class="total-month">julio 2026</div>
+      <div class="total-sub">Total estimado</div><div class="total-amount">$384.500</div>
+      <div class="total-types">
+        <div class="total-type"><div class="total-type-emoji">⛷️</div><div class="total-type-hours" style="color:#66BB6A">6h</div><div class="total-type-label">Particular</div></div>
+        <div class="total-type"><div class="total-type-emoji">👥</div><div class="total-type-hours" style="color:#90A4AE">9h</div><div class="total-type-label">Colectiva</div></div>
+        <div class="total-type"><div class="total-type-emoji">📋</div><div class="total-type-hours" style="color:#E1BEE7">3h</div><div class="total-type-label">Requerida</div></div>
+      </div>
+    </div>
+    <div class="section-title">Registrar clase</div>
+    <div class="colectiva-card" style="background:#0c0f14;border:1px solid rgba(84,110,122,0.3)">
+      <div class="colectiva-title" style="color:#90A4AE">👥 Colectiva</div>
+      <div class="colectiva-row"><span style="color:#90CAF9">Precio base</span><span style="color:#90A4AE;font-weight:bold">$27.000/h</span></div>
+      <div class="personas-row"><span style="color:#90CAF9">Personas</span><div class="personas-controls"><div class="stepper" style="background:rgba(84,110,122,0.2);border:1px solid #546E7A;color:#90A4AE">−</div><span class="personas-num">5</span><div class="stepper" style="background:rgba(84,110,122,0.2);border:1px solid #546E7A;color:#90A4AE">+</div></div></div>
+      <div class="preview-row"><div class="preview-detail"><span class="preview-calc">$27.000 × 1h + extras</span><span class="preview-total">$29.000</span></div></div>
+      <button class="add-btn" style="background:linear-gradient(90deg,#37474F,#455A64)">+ Agregar Colectiva</button>
+      <button class="undo-btn">↩ Deshacer</button>
+    </div>
+    <div class="types-grid">
+      <div class="type-card" style="background:linear-gradient(135deg,#0a1a0a,#0d2a1a);border:1px solid rgba(102,187,106,0.35)">
+        <div class="type-emoji">⛷️</div><div class="type-name" style="color:#66BB6A">Particular</div><div class="type-price">$24.000/h</div>
+        <div class="type-stepper" style="background:rgba(102,187,106,0.05);border:1px solid rgba(102,187,106,0.15)"><span class="type-stepper-label">⏱</span><div class="type-stepper-controls"><button class="type-stepper-btn" style="color:#66BB6A">−</button><span class="type-stepper-val" style="color:#66BB6A">1h</span><button class="type-stepper-btn" style="color:#66BB6A">+</button></div></div>
+        <div class="type-calc"><strong style="color:#66BB6A">$24.000</strong></div>
+        <button class="type-add" style="background:#0a1a0a;border:1px solid rgba(102,187,106,0.55);color:#66BB6A">+ Agregar</button>
+      </div>
+      <div class="type-card" style="background:linear-gradient(135deg,#15101a,#1a1520);border:1px solid rgba(225,190,231,0.35)">
+        <div class="type-emoji">📋</div><div class="type-name" style="color:#E1BEE7">Requerida</div><div class="type-price">$27.000/h</div>
+        <div class="type-stepper" style="background:rgba(225,190,231,0.05);border:1px solid rgba(225,190,231,0.15)"><span class="type-stepper-label">⏱</span><div class="type-stepper-controls"><button class="type-stepper-btn" style="color:#E1BEE7">−</button><span class="type-stepper-val" style="color:#E1BEE7">1h</span><button class="type-stepper-btn" style="color:#E1BEE7">+</button></div></div>
+        <div class="type-calc"><strong style="color:#E1BEE7">$27.000</strong></div>
+        <button class="type-add" style="background:#15101a;border:1px solid rgba(225,190,231,0.55);color:#E1BEE7">+ Agregar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

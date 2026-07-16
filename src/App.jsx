@@ -94,7 +94,7 @@ function AuthScreen({ onAuth }) {
   }
 
   if(recuperar) return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"#000000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       {enviado?(
         <div style={{width:"100%",maxWidth:360,textAlign:"center"}}>
           <div style={{fontSize:48,marginBottom:12}}>📬</div>
@@ -120,7 +120,7 @@ function AuthScreen({ onAuth }) {
   );
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",position:"relative"}}>
+    <div style={{minHeight:"100vh",background:"#000000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",position:"relative"}}>
       <div style={{position:"absolute",top:40,right:24}}>
         <button onClick={()=>setShowInfo(true)} style={{background:"rgba(79,195,247,0.1)",border:"1px solid #4FC3F744",borderRadius:20,padding:"6px 14px",display:"flex",alignItems:"center",gap:6,fontSize:13,color:"#4FC3F7",cursor:"pointer",fontWeight:"bold",fontFamily:"inherit"}}>¿Qué es StatClass?</button>
       </div>
@@ -147,7 +147,7 @@ function AuthScreen({ onAuth }) {
 
       {showInfo&&(
         <div onClick={()=>setShowInfo(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
-          <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"#000000",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
               <div style={{fontSize:18,fontWeight:"bold",color:"#4FC3F7"}}>⛷️ StatClass</div>
               <button onClick={()=>setShowInfo(false)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#90CAF9",padding:"6px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>✕ Cerrar</button>
@@ -191,7 +191,7 @@ function AuthScreen({ onAuth }) {
 
 function PendienteScreen({user,onLogout}) {
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",textAlign:"center"}}>
+    <div style={{minHeight:"100vh",background:"#000000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8",textAlign:"center"}}>
       <div style={{fontSize:56,marginBottom:16}}>⏳</div>
       <div style={{fontSize:20,fontWeight:"bold",color:"#fff",marginBottom:8}}>Cuenta pendiente</div>
       <div style={{fontSize:14,color:"#90CAF9",marginBottom:32,lineHeight:1.6}}>Tu cuenta está esperando aprobación.<br/>El administrador debe darte acceso.</div>
@@ -233,7 +233,7 @@ function EditarPerfil({profile, onGuardar, onCerrar}) {
 
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
-      <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px"}}>
+      <div style={{width:"100%",background:"#000000",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px"}}>
         <div style={{fontSize:18,fontWeight:"bold",marginBottom:20,color:"#4FC3F7"}}>✏️ Editar perfil</div>
         <div style={{display:"flex",flexDirection:"column",alignItems:"center",marginBottom:20}}>
           <div style={{position:"relative",marginBottom:12}}>
@@ -290,7 +290,7 @@ function AdminPanel({onBack, pendientesCount, setPendientesCount}) {
     }
   }
 
-  if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif"}}>Cargando...</div>;
+  if(loading) return <div style={{minHeight:"100vh",background:"#000000",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif"}}>Cargando...</div>;
 
   const ahora=new Date();
   const mesActual=`${ahora.getFullYear()}-${String(ahora.getMonth()+1).padStart(2,"0")}`;
@@ -359,7 +359,7 @@ function AdminPanel({onBack, pendientesCount, setPendientesCount}) {
   }
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"#000000",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       <div style={{background:"linear-gradient(90deg,#0d2a3a,#1a3a50)",borderBottom:"2px solid #4FC3F7",padding:"20px 20px 0"}}>
         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
           <button onClick={onBack} style={{background:"none",border:"none",color:"#4FC3F7",fontSize:20,cursor:"pointer"}}>←</button>
@@ -1085,7 +1085,7 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
   }
   return (
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
-      <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:`2px solid ${tipoInfo?.color||"#4FC3F7"}`,borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+      <div style={{width:"100%",background:"#000000",borderTop:`2px solid ${tipoInfo?.color||"#4FC3F7"}`,borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
         <div style={{textAlign:"center",marginBottom:16}}>
           <div style={{fontSize:36,marginBottom:4}}>{tipoEmoji(tipo,disc)}</div>
           <div style={{fontSize:18,fontWeight:"bold",color:tipoInfo?.color}}>{tipoInfo?.label}</div>
@@ -1379,11 +1379,11 @@ export default function SkiTracker() {
     setShowConfig(false);
   }
 
-  if(loading) return <div style={{minHeight:"100vh",background:"#0a1628",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif",fontSize:16}}>⛷️ Cargando...</div>;
+  if(loading) return <div style={{minHeight:"100vh",background:"#000000",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif",fontSize:16}}>⛷️ Cargando...</div>;
   if(!user) return <AuthScreen onAuth={handleAuth}/>;
   if(profile&&!profile.aprobado&&!profile.is_admin) return <PendienteScreen user={user} onLogout={logout}/>;
   if(recoveryUser) return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628,#0d2035)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"#000000",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:24,fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       <div style={{width:"100%",maxWidth:360,textAlign:"center"}}>
         <div style={{fontSize:48,marginBottom:12}}>🔑</div>
         <div style={{fontSize:18,fontWeight:"bold",marginBottom:6}}>Restablecer contraseña</div>
@@ -1419,7 +1419,7 @@ export default function SkiTracker() {
   const colectivaPreview=calcularValor("colectiva",horasNuevaClase.colectiva);
 
   return (
-    <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#0a1628 0%,#0d2035 50%,#0a1628 100%)",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
+    <div style={{minHeight:"100vh",background:"#000000",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
       <div style={{background:"linear-gradient(90deg,#0d2a3a,#1a3a50)",borderBottom:"2px solid #4FC3F7",padding:"16px 20px 0",position:"sticky",top:0,zIndex:10}}>
 
         {/* CAMBIO 2: Selector ski/snow */}
@@ -1683,7 +1683,7 @@ export default function SkiTracker() {
         const tipoInfo=TIPOS.find(t=>t.key===tipo);
         return (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
-            <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px"}}>
+            <div style={{width:"100%",background:"#000000",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px"}}>
               <div style={{textAlign:"center",marginBottom:20}}>
                 <div style={{fontSize:36,marginBottom:8}}>{tipoEmoji(tipo,disc)}</div>
                 <div style={{fontSize:18,fontWeight:"bold",color:tipoInfo?.color}}>{tipoInfo?.label}</div>
@@ -1737,7 +1737,7 @@ export default function SkiTracker() {
         const c=eliminandoClase;
         return (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}} onClick={()=>setEliminandoClase(null)}>
-            <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #ef5350",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",textAlign:"center"}} onClick={e=>e.stopPropagation()}>
+            <div style={{width:"100%",background:"#000000",borderTop:"2px solid #ef5350",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",textAlign:"center"}} onClick={e=>e.stopPropagation()}>
               <div style={{fontSize:40,marginBottom:8}}>🗑️</div>
               <div style={{fontSize:17,fontWeight:"bold",marginBottom:6}}>Eliminar clase</div>
               <div style={{fontSize:13,color:"#90CAF9",marginBottom:16}}>
@@ -1761,7 +1761,7 @@ export default function SkiTracker() {
         const tiposEdit=TIPOS;
         return (
           <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
-            <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+            <div style={{width:"100%",background:"#000000",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
               <div style={{fontSize:18,fontWeight:"bold",marginBottom:20,color:"#4FC3F7"}}>✏️ Editar clase</div>
               <div style={{marginBottom:14}}>
                 <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Tipo</div>
@@ -1830,7 +1830,7 @@ export default function SkiTracker() {
       {/* CONFIGURACIÓN */}
       {showConfig&&(
         <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:100}}>
-          <div style={{width:"100%",background:"linear-gradient(160deg,#0a1628,#0d2035)",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+          <div style={{width:"100%",background:"#000000",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
             <div style={{fontSize:18,fontWeight:"bold",marginBottom:20,color:"#4FC3F7"}}>⚙️ Configurar Precios</div>
             {[
               {key:"particular",label:"Clase Particular",emoji:tipoEmoji("particular",disc),unit:"/h"},
