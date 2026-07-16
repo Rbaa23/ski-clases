@@ -470,7 +470,7 @@ function AdminPanel({onBack, pendientesCount, setPendientesCount}) {
                   </div>
                   <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:4}}>
                     {TIPOS.map(t=>cDia[t.key]>0&&(
-                      <span key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:6,padding:"2px 8px",fontSize:11,color:t.color}}>{tipoEmoji(t.key,"ski")} ×{cDia[t.key]}{t.key==="colectiva"&&extras>0&&<span style={{color:"#81C784"}}> ➕{extras}</span>}</span>
+                      <span key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:6,padding:"2px 8px",fontSize:11,color:t.color}}>{tipoEmoji(t.key,"ski")} ×{cDia[t.key]}{t.key==="colectiva"&&extras>0&&<span style={{color:"#90A4AE"}}> ➕{extras}</span>}</span>
                     ))}
                   </div>
                   <div style={{fontSize:11,color:esHoy?"#FF8C00":"#607d8b"}}>⏱ {hd}h</div>
@@ -642,7 +642,7 @@ function PorDia({clases, disc, onDelete, onEdit}) {
               <div style={{fontSize:14,fontWeight:"bold",color:"#fff"}}>{fmt(td)}</div>
             </div>
             <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:6}}>
-              {TIPOS.map(t=>cDia[t.key]>0&&(<div key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:7,padding:"3px 8px",fontSize:11,display:"flex",alignItems:"center",gap:4}}><span style={{color:t.color}}>{tipoEmoji(t.key,disc)} {t.label} ×{cDia[t.key]}</span>{t.key==="colectiva"&&extrasDelDia>0&&<span style={{background:"rgba(129,199,132,0.2)",border:"1px solid #81C78455",borderRadius:5,padding:"0px 5px",fontSize:10,color:"#81C784"}}>➕{extrasDelDia}</span>}</div>))}
+              {TIPOS.map(t=>cDia[t.key]>0&&(<div key={t.key} style={{background:t.bg,border:`1px solid ${t.color}44`,borderRadius:7,padding:"3px 8px",fontSize:11,display:"flex",alignItems:"center",gap:4}}><span style={{color:t.color}}>{tipoEmoji(t.key,disc)} {t.label} ×{cDia[t.key]}</span>{t.key==="colectiva"&&extrasDelDia>0&&<span style={{background:"rgba(84,110,122,0.2)",border:"1px solid #546E7A55",borderRadius:5,padding:"0px 5px",fontSize:10,color:"#90A4AE"}}>➕{extrasDelDia}</span>}</div>))}
             </div>
             {cd.map(c=>{const ct=TIPOS.find(t=>t.key===c.tipo);return(
               <div key={c.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 0",borderTop:"1px solid rgba(255,255,255,0.04)"}}>
@@ -1106,15 +1106,15 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
             </div>
           </div>
           {tipo==="colectiva"&&(<>
-            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(129,199,132,0.2)",borderRadius:10}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(84,110,122,0.2)",borderRadius:10}}>
               <span style={{fontSize:12,color:"#90CAF9"}}>👥 Personas</span>
               <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <button onClick={()=>setPersonas(p=>Math.max(1,p-1))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
-                <span style={{fontSize:16,fontWeight:"bold",color:"#81C784",minWidth:28,textAlign:"center"}}>{personas}</span>
-                <button onClick={()=>setPersonas(p=>p+1)} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
+                <button onClick={()=>setPersonas(p=>Math.max(1,p-1))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(84,110,122,0.2)",border:"1px solid #546E7A",color:"#90A4AE",fontSize:16,cursor:"pointer"}}>−</button>
+                <span style={{fontSize:16,fontWeight:"bold",color:"#90A4AE",minWidth:28,textAlign:"center"}}>{personas}</span>
+                <button onClick={()=>setPersonas(p=>p+1)} style={{width:30,height:30,borderRadius:"50%",background:"rgba(84,110,122,0.2)",border:"1px solid #546E7A",color:"#90A4AE",fontSize:16,cursor:"pointer"}}>+</button>
               </div>
             </div>
-            {extras>0&&<div style={{fontSize:12,color:"#81C784",textAlign:"center",marginBottom:12}}>+{extras} extra{extras>1?"s":""} × {fmt(precios.colectiva_extra)} = +{fmt(precios.colectiva_extra*extras)}</div>}
+            {extras>0&&<div style={{fontSize:12,color:"#90A4AE",textAlign:"center",marginBottom:12}}>+{extras} extra{extras>1?"s":""} × {fmt(precios.colectiva_extra)} = +{fmt(precios.colectiva_extra*extras)}</div>}
           </>)}
           {(tipo==="particular"||tipo==="requerida")&&(<>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,padding:"8px 10px",background:"rgba(255,255,255,0.03)",border:`1px solid ${tipoInfo?.color}33`,borderRadius:10}}>
@@ -1139,7 +1139,7 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
           </div>
           {tipo==="colectiva"&&extras>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
             <span style={{fontSize:12,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)})</span>
-            <span style={{fontSize:12,color:"#81C784"}}>+{fmt(precios.colectiva_extra*extras)}</span>
+            <span style={{fontSize:12,color:"#90A4AE"}}>+{fmt(precios.colectiva_extra*extras)}</span>
           </div>}
           {(tipo==="particular"||tipo==="requerida")&&adicional>0&&<div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
             <span style={{fontSize:12,color:"#90CAF9"}}>Adicionales ({adicional} × {fmt(precioAd)} × {horas}h)</span>
@@ -1519,9 +1519,9 @@ export default function SkiTracker() {
             <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",textTransform:"uppercase",marginBottom:12}}>Registrar clase</div>
 
             {/* COLECTIVA */}
-            <div style={{background:"#0d2a1a",border:"1px solid rgba(129,199,132,0.3)",borderRadius:14,padding:"16px",marginBottom:12}}>
+            <div style={{background:"#0d1a1f",border:"1px solid rgba(84,110,122,0.3)",borderRadius:14,padding:"16px",marginBottom:12}}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
-                <div style={{fontSize:13,color:"#81C784",fontWeight:"bold"}}>👥 Colectiva</div>
+                <div style={{fontSize:13,color:"#90A4AE",fontWeight:"bold"}}>👥 Colectiva</div>
                 {disc==="polivalente"&&<div style={{display:"flex",background:"rgba(255,255,255,0.06)",borderRadius:7,padding:2,gap:2}}>
                   {[["ski","⛷️"],["snow","🏂"]].map(([kd,em])=>(
                     <button key={kd} onClick={()=>setDiscClase(p=>({...p,colectiva:kd}))} style={{padding:"6px 13px",border:"none",borderRadius:7,fontSize:12,cursor:"pointer",fontFamily:"inherit",background:discClase.colectiva===kd?(kd==="ski"?"rgba(79,195,247,0.25)":"rgba(240,98,146,0.25)"):"transparent",color:discClase.colectiva===kd?(kd==="ski"?"#4FC3F7":"#F06292"):"#607d8b",fontWeight:discClase.colectiva===kd?600:400,outline:discClase.colectiva===kd?`1px solid ${kd==="ski"?"#4FC3F7":"#F06292"}`:"none"}}>{em} {kd==="ski"?"Ski":"Snow"}</button>
@@ -1530,39 +1530,39 @@ export default function SkiTracker() {
               </div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Precio base (incluye {base} pers.)</span>
-                <span style={{fontSize:12,color:"#81C784",fontWeight:"bold"}}>{fmt(precios.colectiva)}/h</span>
+                <span style={{fontSize:12,color:"#90A4AE",fontWeight:"bold"}}>{fmt(precios.colectiva)}/h</span>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>Personas en clase</span>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <button onClick={()=>setPersonas(p=>Math.max(1,p-1))} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>−</button>
+                  <button onClick={()=>setPersonas(p=>Math.max(1,p-1))} style={{width:32,height:32,borderRadius:"50%",background:"rgba(84,110,122,0.2)",border:"1px solid #546E7A",color:"#90A4AE",fontSize:18,cursor:"pointer"}}>−</button>
                   <span style={{fontSize:22,fontWeight:"bold",color:"#fff",minWidth:24,textAlign:"center"}}>{personas}</span>
-                  <button onClick={()=>setPersonas(p=>p+1)} style={{width:32,height:32,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:18,cursor:"pointer"}}>+</button>
+                  <button onClick={()=>setPersonas(p=>p+1)} style={{width:32,height:32,borderRadius:"50%",background:"rgba(84,110,122,0.2)",border:"1px solid #546E7A",color:"#90A4AE",fontSize:18,cursor:"pointer"}}>+</button>
                 </div>
               </div>
               <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}>
-                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`${extrasActuales} extra${extrasActuales>1?"s":""} × ${fmt(precios.colectiva_extra)}${precios.extra_por_hora?"/h":""}`:`Sin extras (base = ${base} pers.)`}</span>
-                <span style={{fontSize:12,color:extrasActuales>0?"#81C784":"#607d8b"}}>{extrasActuales>0?`+ ${fmt(precios.colectiva_extra*extrasActuales)}`:"+$0"}</span>
+                <span style={{fontSize:12,color:extrasActuales>0?"#90A4AE":"#607d8b"}}>{extrasActuales>0?`${extrasActuales} extra${extrasActuales>1?"s":""} × ${fmt(precios.colectiva_extra)}${precios.extra_por_hora?"/h":""}`:`Sin extras (base = ${base} pers.)`}</span>
+                <span style={{fontSize:12,color:extrasActuales>0?"#90A4AE":"#607d8b"}}>{extrasActuales>0?`+ ${fmt(precios.colectiva_extra*extrasActuales)}`:"+$0"}</span>
               </div>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"8px 10px",background:"rgba(129,199,132,0.05)",border:"1px solid rgba(129,199,132,0.15)",borderRadius:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,padding:"8px 10px",background:"rgba(84,110,122,0.05)",border:"1px solid rgba(84,110,122,0.15)",borderRadius:10}}>
                 <span style={{fontSize:12,color:"#90CAF9"}}>⏱ Duración</span>
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <button onClick={()=>setHorasNuevaClase(p=>({...p,colectiva:Math.max(1,p.colectiva-1)}))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
-                  <span style={{fontSize:16,fontWeight:"bold",color:"#81C784",minWidth:28,textAlign:"center"}}>{horasNuevaClase.colectiva}h</span>
-                  <button onClick={()=>setHorasNuevaClase(p=>({...p,colectiva:p.colectiva+1}))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(129,199,132,0.2)",border:"1px solid #81C784",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
+                  <button onClick={()=>setHorasNuevaClase(p=>({...p,colectiva:Math.max(1,p.colectiva-1)}))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(84,110,122,0.2)",border:"1px solid #546E7A",color:"#90A4AE",fontSize:16,cursor:"pointer"}}>−</button>
+                  <span style={{fontSize:16,fontWeight:"bold",color:"#90A4AE",minWidth:28,textAlign:"center"}}>{horasNuevaClase.colectiva}h</span>
+                  <button onClick={()=>setHorasNuevaClase(p=>({...p,colectiva:p.colectiva+1}))} style={{width:30,height:30,borderRadius:"50%",background:"rgba(84,110,122,0.2)",border:"1px solid #546E7A",color:"#90A4AE",fontSize:16,cursor:"pointer"}}>+</button>
                 </div>
               </div>
-              <div style={{borderTop:"1px solid rgba(129,199,132,0.2)",paddingTop:8,marginBottom:12}}>
+              <div style={{borderTop:"1px solid rgba(84,110,122,0.2)",paddingTop:8,marginBottom:12}}>
                 <div style={{display:"flex",justifyContent:"space-between"}}>
                   <span style={{fontSize:11,color:"#607d8b"}}>{fmt(precios.colectiva)} × {horasNuevaClase.colectiva}h{extrasActuales>0?" + extras":""}</span>
                   <span style={{fontSize:15,fontWeight:"bold",color:"#fff"}}>{fmt(colectivaPreview)}</span>
                 </div>
               </div>
               <div style={{marginBottom:10}}>
-                <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,colectiva:!p.colectiva}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio.colectiva?"#81C784":"#607d8b",fontSize:12,cursor:"pointer",padding:0}}>{mostrarComentarioPrevio.colectiva?"✏️ Ocultar comentario":"✏️ Agregar comentario"}</button>
-                {mostrarComentarioPrevio.colectiva&&<textarea placeholder="Escribe un comentario..." value={comentarioPrevio.colectiva} onChange={e=>setComentarioPrevio(p=>({...p,colectiva:e.target.value}))} rows={2} style={{width:"100%",marginTop:6,background:"#0a1e0a",border:"1px solid #81C78455",borderRadius:8,color:"#e8f4f8",padding:"8px",fontSize:13,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
+                <button onClick={()=>setMostrarComentarioPrevio(p=>({...p,colectiva:!p.colectiva}))} style={{background:"none",border:"none",color:mostrarComentarioPrevio.colectiva?"#90A4AE":"#607d8b",fontSize:12,cursor:"pointer",padding:0}}>{mostrarComentarioPrevio.colectiva?"✏️ Ocultar comentario":"✏️ Agregar comentario"}</button>
+                {mostrarComentarioPrevio.colectiva&&<textarea placeholder="Escribe un comentario..." value={comentarioPrevio.colectiva} onChange={e=>setComentarioPrevio(p=>({...p,colectiva:e.target.value}))} rows={2} style={{width:"100%",marginTop:6,background:"#0a1e0a",border:"1px solid #546E7A55",borderRadius:8,color:"#e8f4f8",padding:"8px",fontSize:13,resize:"none",boxSizing:"border-box",fontFamily:"inherit"}}/>}
               </div>
-              <button onClick={()=>setConfirmandoTipo("colectiva")} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#2e7d32,#388e3c)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",marginBottom:8}}>+ Agregar Clase Colectiva</button>
+              <button onClick={()=>setConfirmandoTipo("colectiva")} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#37474F,#455A64)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",marginBottom:8}}>+ Agregar Clase Colectiva</button>
               <button onClick={()=>eliminarUltimaDeTipo("colectiva")} style={{width:"100%",padding:"9px",background:"rgba(239,83,80,0.08)",border:"1px solid #ef535066",borderRadius:10,color:"#ef9a9a",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>↩ Deshacer última colectiva</button>
             </div>
 
@@ -1706,7 +1706,7 @@ export default function SkiTracker() {
                     {extras>0&&(
                       <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
                         <span style={{fontSize:13,color:"#90CAF9"}}>Extras ({extras} × {fmt(precios.colectiva_extra)})</span>
-                        <span style={{fontSize:13,color:"#81C784"}}>{"+"}{fmt(precios.colectiva_extra*extras)}</span>
+                        <span style={{fontSize:13,color:"#90A4AE"}}>{"+"}{fmt(precios.colectiva_extra*extras)}</span>
                       </div>
                     )}
                   </>
@@ -1790,9 +1790,9 @@ export default function SkiTracker() {
                   <div>
                     <div style={{fontSize:11,color:"#607d8b",marginBottom:4}}>Personas</div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
-                      <button onClick={()=>setEditandoClase(p=>{const np=Math.max(1,(p.personas||1)-1);return{...p,personas:np,extras:Math.max(0,np-precios.colectiva_base),valor:calcularValor(p.tipo,p.horas)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>−</button>
+                      <button onClick={()=>setEditandoClase(p=>{const np=Math.max(1,(p.personas||1)-1);return{...p,personas:np,extras:Math.max(0,np-precios.colectiva_base),valor:calcularValor(p.tipo,p.horas)}})} style={{background:"none",border:"none",color:"#90A4AE",fontSize:16,cursor:"pointer"}}>−</button>
                       <span style={{fontSize:16,fontWeight:"bold",minWidth:24,textAlign:"center"}}>{c.personas||0}</span>
-                      <button onClick={()=>setEditandoClase(p=>{const np=(p.personas||0)+1;return{...p,personas:np,extras:Math.max(0,np-precios.colectiva_base),valor:calcularValor(p.tipo,p.horas)}})} style={{background:"none",border:"none",color:"#81C784",fontSize:16,cursor:"pointer"}}>+</button>
+                      <button onClick={()=>setEditandoClase(p=>{const np=(p.personas||0)+1;return{...p,personas:np,extras:Math.max(0,np-precios.colectiva_base),valor:calcularValor(p.tipo,p.horas)}})} style={{background:"none",border:"none",color:"#90A4AE",fontSize:16,cursor:"pointer"}}>+</button>
                     </div>
                   </div>
                   <div>
