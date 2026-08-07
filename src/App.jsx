@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BBbM2UIBc9l-spOsAeguae0ig2fShmYmSQkhvqg5puv0pMiU0EFTDOAunlIM7ZsOr2kWIBT-NWB0BgshOF61Xzw";
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BCtRqTIFEjR87hH3e2uRUipj0CXmAX18cOA1hYC8LoDOSfh2SpteIGQeDUWAhq1Mgf1NnxYUQ_igpg0jyJx65AM";
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, adicional:5000, mostrar_monto:true };
