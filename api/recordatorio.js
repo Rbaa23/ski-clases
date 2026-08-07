@@ -1,4 +1,5 @@
 import webPush from 'web-push';
+import { sendEmail } from './email.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
@@ -54,12 +55,9 @@ export default async function handler(req, res) {
         }
       }
 
-      const emailRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.RESEND_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: 'StatClass <onboarding@resend.dev>',
-          to: [u.email],
+      try {
+        const info = await sendEmail({
+          to: u.email,
           subject: '¿Te olvidaste de registrar tus clases hoy?',
           html: `<div style="font-family:sans-serif;padding:24px;max-width:480px;margin:auto;background:#0a1628;color:#e8f4f8;border-radius:12px;text-align:center">
             <div style="font-size:40px;margin-bottom:12px">⛷️</div>
@@ -68,10 +66,11 @@ export default async function handler(req, res) {
             <p style="font-size:14px;line-height:1.6;margin-bottom:20px">¿Se te pasó? Puedes agregarlas ahora en la app.</p>
             <a href="https://ski-clases.vercel.app" style="display:inline-block;padding:14px 32px;background:linear-gradient(90deg,#0277bd,#0288d1);color:#fff;text-decoration:none;border-radius:10px;font-weight:bold;font-size:15px">Ir a StatClass</a>
           </div>`,
-        }),
-      });
-      const emailData = await emailRes.json();
-      results.push({ user: u.email, ok: emailRes.ok, id: emailData.id });
+        });
+        results.push({ user: u.email, ok: true, id: info.messageId });
+      } catch (e) {
+        results.push({ user: u.email, ok: false, error: e.message });
+      }
     }
     res.json({ sent: results.filter(r => r.ok).length, results });
   } catch (e) {

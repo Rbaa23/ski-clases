@@ -1,3 +1,5 @@
+import { sendEmail } from './email.js';
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 
@@ -113,18 +115,13 @@ export default async function handler(req, res) {
         otros: Array.isArray(otros) ? otros : [],
       };
       const html = buildEmail(u.nombre, mesStr, data);
-      const emailRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${process.env.RESEND_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: 'StatClass <onboarding@resend.dev>',
-          to: [u.email],
-          subject: `📊 Resumen mensual StatClass — ${new Date(anioAnterior, mesAnterior - 1).toLocaleDateString("es-CL", { month: "long", year: "numeric" })}`,
-          html,
-        }),
-      });
-      const emailData = await emailRes.json();
-      results.push({ user: u.email, ok: emailRes.ok, id: emailData.id });
+      const subject = `📊 Resumen mensual StatClass — ${new Date(anioAnterior, mesAnterior - 1).toLocaleDateString("es-CL", { month: "long", year: "numeric" })}`;
+      try {
+        const info = await sendEmail({ to: u.email, subject, html });
+        results.push({ user: u.email, ok: true, id: info.messageId });
+      } catch (e) {
+        results.push({ user: u.email, ok: false, error: e.message });
+      }
     }
     res.json({ sent: results.filter(r => r.ok).length, results });
   } catch (e) {
