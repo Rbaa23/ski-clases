@@ -1188,7 +1188,7 @@ export default function SkiTracker() {
   const [nuevoOtroMonto,setNuevoOtroMonto]=useState("");
   const [recordar,setRecordar]=useState(false);
   const [pendientesCount,setPendientesCount]=useState(0);
-  const [resumenMensual,setResumenMensual]=useState(false);
+  const [resumenMensual,setResumenMensual]=useState(true);
   const [pushNotif,setPushNotif]=useState(false);
   const [confirmandoTipo,setConfirmandoTipo]=useState(null);
   const [recoveryUser,setRecoveryUser]=useState(null);
@@ -1213,11 +1213,13 @@ export default function SkiTracker() {
     await supabase.from("profiles").update({last_seen:new Date().toISOString()}).eq("id",u.id);
     let {data:prof}=await supabase.from("profiles").select("*").eq("id",u.id).single();
     if(!prof){
-      await supabase.from("profiles").insert({id:u.id,email:u.email,nombre:u.user_metadata?.nombre||"",aprobado:false,is_admin:false,disciplina:"ski"});
+      await supabase.from("profiles").insert({id:u.id,email:u.email,nombre:u.user_metadata?.nombre||"",aprobado:false,is_admin:false,disciplina:"ski",resumen_mensual:true});
       const {data:newProf}=await supabase.from("profiles").select("*").eq("id",u.id).single();
       prof=newProf;
     }
     setProfile(prof);
+    setResumenMensual(prof?.resumen_mensual!==false);
+    setRecordar(prof?.recordar===true);
     if(prof?.aprobado||prof?.is_admin){
       const {data:prec}=await supabase.from("precios").select("*").eq("user_id",u.id).single();
       if(prec){
