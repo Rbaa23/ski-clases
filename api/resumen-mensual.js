@@ -86,6 +86,9 @@ export default async function handler(req, res) {
     const mesAnterior = mes === 0 ? 12 : mes;
     const anioAnterior = mes === 0 ? anio - 1 : anio;
     const mesStr = `${anioAnterior}-${String(mesAnterior).padStart(2, '0')}`;
+    const siguienteAnio = mesAnterior === 12 ? anioAnterior + 1 : anioAnterior;
+    const siguienteMes = mesAnterior === 12 ? 1 : mesAnterior + 1;
+    const siguienteMesStr = `${siguienteAnio}-${String(siguienteMes).padStart(2, '0')}`;
 
     const usersRes = await fetch(
       `${SUPABASE_URL}/rest/v1/profiles?resumen_mensual=eq.true&select=id,email,nombre`,
@@ -97,9 +100,9 @@ export default async function handler(req, res) {
     const results = [];
     for (const u of users) {
       const [clasesRes, descuentosRes, otrosRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/clases?user_id=eq.${u.id}&fecha=like.${mesStr}%&select=*`, { headers: headers() }),
-        fetch(`${SUPABASE_URL}/rest/v1/descuentos?user_id=eq.${u.id}&fecha=like.${mesStr}%&select=*`, { headers: headers() }),
-        fetch(`${SUPABASE_URL}/rest/v1/otros?user_id=eq.${u.id}&fecha=like.${mesStr}%&select=*`, { headers: headers() }),
+        fetch(`${SUPABASE_URL}/rest/v1/clases?user_id=eq.${u.id}&fecha=gte.${mesStr}-01&fecha=lt.${siguienteMesStr}-01&select=*`, { headers: headers() }),
+        fetch(`${SUPABASE_URL}/rest/v1/descuentos?user_id=eq.${u.id}&fecha=gte.${mesStr}-01&fecha=lt.${siguienteMesStr}-01&select=*`, { headers: headers() }),
+        fetch(`${SUPABASE_URL}/rest/v1/otros?user_id=eq.${u.id}&fecha=gte.${mesStr}-01&fecha=lt.${siguienteMesStr}-01&select=*`, { headers: headers() }),
       ]);
       const clases = await clasesRes.json();
       const descuentos = await descuentosRes.json();
