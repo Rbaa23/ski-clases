@@ -2,7 +2,7 @@ import webPush from 'web-push';
 import { sendEmail } from './email.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 webPush.setVapidDetails(
   process.env.VAPID_SUBJECT || 'mailto:admin@statclass.com',
