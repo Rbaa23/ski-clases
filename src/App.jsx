@@ -264,7 +264,7 @@ function AdminPanel({onBack, pendientesCount, setPendientesCount}) {
   const [selMes, setSelMes] = useState("");
   const [statsUsuario, setStatsUsuario] = useState("todos");
 
-  useEffect(()=>{ cargar(); },[]);
+  useEffect(()=>{ cargar(); const t=setInterval(cargar,30000); return ()=>clearInterval(t); },[]);
 
   async function cargar() {
     const {data:perfiles}=await supabase.from("profiles").select("*").order("created_at",{ascending:false});
@@ -324,7 +324,8 @@ function AdminPanel({onBack, pendientesCount, setPendientesCount}) {
     const totalAccesos=sesiones.filter(s=>s.user_id===u.id).length;
     const accesosMes=sesiones.filter(s=>s.user_id===u.id&&s.fecha.startsWith(mesActual)).length;
     const ultimaSesion=sesiones.filter(s=>s.user_id===u.id).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
-    const activo=ultimaSesion&&(Date.now()-new Date(ultimaSesion.fecha).getTime())<300000;
+    const ultimaActividad=u.last_seen||ultimaSesion?.fecha;
+    const activo=ultimaActividad&&(Date.now()-new Date(ultimaActividad).getTime())<300000;
     return (
       <div style={{padding:"12px 14px",borderBottom:"1px solid rgba(255,255,255,0.05)"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:showActions?10:0}}>
@@ -336,7 +337,7 @@ function AdminPanel({onBack, pendientesCount, setPendientesCount}) {
             <div>
               <div style={{fontSize:13,fontWeight:500}}>{u.nombre||"Sin nombre"}</div>
               <div style={{fontSize:11,color:"#607d8b"}}>{u.email}</div>
-              <div style={{fontSize:11,color:activo?"#4CAF50":"#ef9a9a"}}>{activo?"● Activo ahora":"✕ "+timeAgo(ultimaSesion?.fecha)}</div>
+              <div style={{fontSize:11,color:activo?"#4CAF50":"#ef9a9a"}}>{activo?"● Activo ahora":"✕ "+timeAgo(ultimaActividad)}</div>
               <div style={{fontSize:11,color:"#607d8b"}}>📲 {totalAccesos} accesos · {accesosMes} este mes</div>
             </div>
           </div>
