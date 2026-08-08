@@ -1200,11 +1200,21 @@ export default function SkiTracker() {
   const [calendarAddFecha,setCalendarAddFecha]=useState(null);
   const [calendarAddTipo,setCalendarAddTipo]=useState(null);
   const [calendarAddPersonas,setCalendarAddPersonas]=useState(1);
+  const [installPrompt,setInstallPrompt]=useState(null);
+  const [showInstallIOS,setShowInstallIOS]=useState(false);
 
   useEffect(()=>{
     supabase.auth.getSession().then(({data:{session}})=>{if(session) handleAuth(session.user);else setLoading(false);});
     const {data:{subscription}}=supabase.auth.onAuthStateChange((event,session)=>{if(event==="PASSWORD_RECOVERY"&&session){setRecoveryUser(session.user);setLoading(false);return;}if(session) handleAuth(session.user);else{setUser(null);setProfile(null);setLoading(false);}});
     return ()=>subscription.unsubscribe();
+  },[]);
+
+  useEffect(()=>{
+    const onPrompt=e=>{e.preventDefault();setInstallPrompt(e);};
+    const onInstalled=()=>setInstallPrompt(null);
+    window.addEventListener("beforeinstallprompt",onPrompt);
+    window.addEventListener("appinstalled",onInstalled);
+    return ()=>{window.removeEventListener("beforeinstallprompt",onPrompt);window.removeEventListener("appinstalled",onInstalled);};
   },[]);
 
   async function handleAuth(u) {
@@ -1419,6 +1429,12 @@ export default function SkiTracker() {
   const mesesDisponibles=[...new Set(clases.map(c=>c.fecha.slice(0,7)))].sort().reverse();
   const extrasActuales=Math.max(0,personas-base);
   const colectivaPreview=calcularValor("colectiva",horasNuevaClase.colectiva);
+  const esIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone=window.matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+  async function instalarApp(){
+    if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;setInstallPrompt(null);return;}
+    if(esIOS) setShowInstallIOS(true);
+  }
 
   return (
     <div style={{minHeight:"100vh",background:"#000000",fontFamily:"system-ui,sans-serif",color:"#e8f4f8"}}>
@@ -1463,6 +1479,12 @@ export default function SkiTracker() {
           ))}
         </div>
       </div>
+
+      {!standalone&&(installPrompt||esIOS)&&(
+        <div style={{padding:"10px 20px 0"}}>
+          <button onClick={instalarApp} style={{width:"100%",padding:"12px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:14,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>📲 Instalar StatClass como app</button>
+        </div>
+      )}
 
       <div style={{padding:"20px 20px 100px"}}>
         {tab!=="calendario"&&(
@@ -1901,6 +1923,30 @@ export default function SkiTracker() {
           onConfirm={handleCalendarAdd}
           onCancel={()=>{setCalendarAddFecha(null);setCalendarAddTipo(null);}}
         />
+      )}
+
+      {showInstallIOS&&(
+        <div onClick={()=>setShowInstallIOS(false)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"flex-end",zIndex:200}}>
+          <div onClick={e=>e.stopPropagation()} style={{width:"100%",background:"#000000",borderTop:"2px solid #4FC3F7",borderRadius:"20px 20px 0 0",padding:"24px 24px 44px",maxHeight:"85vh",overflowY:"auto"}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
+              <div style={{fontSize:18,fontWeight:"bold",color:"#4FC3F7"}}>📲 Instalar StatClass</div>
+              <button onClick={()=>setShowInstallIOS(false)} style={{background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,color:"#90CAF9",padding:"6px 12px",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>✕ Cerrar</button>
+            </div>
+            <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.6,marginBottom:14}}>En iPhone, agrega StatClass a tu pantalla de inicio para usarla como una app:</div>
+            {[
+              {icon:"1️⃣",txt:"Abre StatClass en el navegador Safari."},
+              {icon:"2️⃣",txt:"Toca el botón Compartir (el cuadrado con la flecha hacia arriba)."},
+              {icon:"3️⃣",txt:"Elige «Añadir a pantalla de inicio»."},
+              {icon:"4️⃣",txt:"Toca «Agregar» y StatClass quedará en tu pantalla de inicio."}
+            ].map((s,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"flex-start",gap:10,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(79,195,247,0.15)",borderRadius:10,padding:"12px 14px",marginBottom:8}}>
+                <div style={{fontSize:18,flexShrink:0}}>{s.icon}</div>
+                <div style={{fontSize:13,color:"#90CAF9",lineHeight:1.5}}>{s.txt}</div>
+              </div>
+            ))}
+            <button onClick={()=>setShowInstallIOS(false)} style={{width:"100%",padding:"14px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:15,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>Entendido</button>
+          </div>
+        </div>
       )}
     </div>
   );
