@@ -11,6 +11,21 @@
 -- ============================================================
 
 -- ------------------------------------------------------------
+-- 0) Tabla push_subs (suscripciones push).
+--    Solo se crea si no existe (de supabase-functions.sql).
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.push_subs (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
+  endpoint text NOT NULL,
+  auth text NOT NULL,
+  p256dh text NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(user_id)
+);
+
+-- ------------------------------------------------------------
 -- 1) Función: ¿el usuario actual es admin?
 --    SECURITY DEFINER para evitar recursión de RLS.
 -- ------------------------------------------------------------
