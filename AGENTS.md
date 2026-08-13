@@ -157,8 +157,10 @@ RLS: "Users can manage their own push sub" FOR ALL USING (auth.uid() = user_id)
 ### Serverless (Vercel)
 - `SUPABASE_URL` — URL de Supabase
 - `SUPABASE_ANON_KEY` — Anon key
-- `RESEND_KEY` — API key de Resend
-- `CRON_SECRET` — Secret para autenticar crons
+- `SUPABASE_SERVICE_KEY` — Service role key (solo para los crons, NUNCA en el frontend)
+- `GMAIL_USER` — Email Gmail que envía los recordatorios
+- `GMAIL_APP_PASSWORD` — App password de Gmail
+- `CRON_SECRET` — Secret para autenticar crons (Vercel lo envía en el header `Authorization: Bearer`)
 - `VAPID_PUBLIC_KEY` — Web Push public key
 - `VAPID_PRIVATE_KEY` — Web Push private key
 - `VAPID_SUBJECT` — Default: mailto:admin@statclass.com
@@ -167,10 +169,10 @@ RLS: "Users can manage their own push sub" FOR ALL USING (auth.uid() = user_id)
 
 | Método | Ruta | Propósito |
 |---|---|---|
-| GET | `/api/recordatorio?secret=X` | Cron 21h: push + email recordatorio |
-| GET | `/api/resumen-mensual?secret=X` | Cron día 1: resumen financiero |
-| POST | `/api/subscribe` | Guardar suscripción push |
-| DELETE | `/api/subscribe` | Eliminar suscripción push |
+| GET | `/api/recordatorio` | Cron 21h: push + email recordatorio (auth por `Authorization: Bearer $CRON_SECRET` o `?secret=X`) |
+| GET | `/api/resumen-mensual` | Cron día 1: resumen financiero (auth por `Authorization: Bearer $CRON_SECRET` o `?secret=X`) |
+| POST | `/api/subscribe` | Guardar suscripción push (requiere el JWT del usuario en `Authorization`) |
+| DELETE | `/api/subscribe` | Eliminar suscripción push (requiere el JWT del usuario en `Authorization`) |
 
 ## Crons (vercel.json)
 
@@ -256,3 +258,11 @@ Vercel deploya automáticamente al hacer push a `main` en GitHub. El build se ve
 5. **El admin debe aprobar** a cada usuario nuevo antes de que pueda usar la app
 6. **Polivalente** permite registrar clases de ski y snow en la misma cuenta
 7. **El resumen mensual** calcula retención del 15.25% automáticamente
+
+## Seguridad (RLS)
+
+- **`supabase-security.sql`** contiene TODAS las políticas RLS: cada usuario solo ve/edita/borra sus propios datos; el admin lo ve todo (mismo panel, mismos poderes).
+- Un trigger impide que un no-admin cambie `is_admin`, `aprobado` o `email` en `profiles` (anti-escalada).
+- `/api/subscribe` reenvía el JWT del usuario a Supabase; RLS valida que `user_id` sea del propio token.
+- Los crons se autentican por header `Authorization: Bearer $CRON_SECRET` (Vercel lo inyecta solo si `CRON_SECRET` está en env). `?secret=` se mantiene por compatibilidad.
+- Ejecutar el SQL **una sola vez** y asignar el primer admin con: `UPDATE public.profiles SET is_admin = true WHERE email = 'TU_EMAIL';`

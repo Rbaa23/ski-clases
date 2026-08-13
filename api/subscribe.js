@@ -1,11 +1,19 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
-function headers() {
-  return { apikey: SUPABASE_KEY, Authorization: `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+function headers(req) {
+  return {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: req.headers.authorization || '',
+    'Content-Type': 'application/json',
+  };
 }
 
 export default async function handler(req, res) {
+  if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'unauthorized' });
+  }
+
   if (req.method === 'POST') {
     const { user_id, subscription } = req.body;
     if (!user_id || !subscription?.endpoint || !subscription?.keys?.auth || !subscription?.keys?.p256dh) {
@@ -13,7 +21,7 @@ export default async function handler(req, res) {
     }
     const r = await fetch(`${SUPABASE_URL}/rest/v1/push_subs`, {
       method: 'POST',
-      headers: { ...headers(), 'Prefer': 'resolution=merge-duplicates' },
+      headers: { ...headers(req), 'Prefer': 'resolution=merge-duplicates' },
       body: JSON.stringify({
         user_id,
         endpoint: subscription.endpoint,
@@ -27,9 +35,10 @@ export default async function handler(req, res) {
 
   if (req.method === 'DELETE') {
     const { user_id } = req.body;
+    if (!user_id) return res.status(400).json({ error: 'Missing user_id' });
     await fetch(`${SUPABASE_URL}/rest/v1/push_subs?user_id=eq.${user_id}`, {
       method: 'DELETE',
-      headers: headers(),
+      headers: headers(req),
     });
     return res.json({ ok: true });
   }

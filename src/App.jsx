@@ -1354,6 +1354,11 @@ export default function SkiTracker() {
     setOtros(prev=>prev.filter(o=>o.id!==id));
   }
 
+  async function getAuthHeaders(){
+    const { data: { session } } = await supabase.auth.getSession();
+    return { "Content-Type":"application/json", ...(session?.access_token?{Authorization:`Bearer ${session.access_token}`}:{}) };
+  }
+
   async function togglePush(v){
     setPushNotif(v);
     if(v){
@@ -1362,7 +1367,7 @@ export default function SkiTracker() {
         if(perm!=="granted"){setPushNotif(false);return;}
         const reg=await navigator.serviceWorker.ready;
         const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:VAPID_PUBLIC_KEY});
-        await fetch("/api/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.id,subscription:sub.toJSON()})});
+        await fetch("/api/subscribe",{method:"POST",headers:await getAuthHeaders(),body:JSON.stringify({user_id:user.id,subscription:sub.toJSON()})});
       }catch(e){setPushNotif(false);}
     }else{
       if('serviceWorker' in navigator){
@@ -1372,7 +1377,7 @@ export default function SkiTracker() {
           if(sub)await sub.unsubscribe();
         }catch{}
       }
-      await fetch("/api/subscribe",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({user_id:user.id})});
+      await fetch("/api/subscribe",{method:"DELETE",headers:await getAuthHeaders(),body:JSON.stringify({user_id:user.id})});
     }
   }
 

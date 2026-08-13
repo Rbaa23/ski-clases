@@ -77,8 +77,13 @@ function buildEmail(nombre, mes, data) {
 </div>`;
 }
 
+function isAuthorized(req) {
+  if (req.query.secret && req.query.secret === process.env.CRON_SECRET) return true;
+  return req.headers.authorization === `Bearer ${process.env.CRON_SECRET}`;
+}
+
 export default async function handler(req, res) {
-  if (req.query.secret !== process.env.CRON_SECRET) {
+  if (!isAuthorized(req)) {
     return res.status(401).json({ error: 'unauthorized' });
   }
   try {
