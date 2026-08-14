@@ -1174,6 +1174,7 @@ function QRTab({ profile, onGuardar }) {
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
+  const [sub, setSub] = useState("qr");
   const fondoRef = useRef(null);
 
   const publicUrl = profile?.id ? `${window.location.origin}/u.html?id=${profile.id}` : "";
@@ -1222,49 +1223,64 @@ function QRTab({ profile, onGuardar }) {
     <div style={{paddingBottom:20}}>
       <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",textTransform:"uppercase",marginBottom:12}}>Mi QR de contacto</div>
 
-      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:12}}>
-        <div style={{fontSize:11,color:"#90CAF9",marginBottom:4}}>📸 Instagram (sin @)</div>
-        <input value={ig} onChange={e=>setIg(e.target.value)} placeholder="ej: tu_usuario" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F7",borderRadius:10,color:"#fff",padding:"10px 12px",fontSize:14,marginBottom:12,boxSizing:"border-box",fontFamily:"inherit"}}/>
-        <div style={{fontSize:11,color:"#90CAF9",marginBottom:4}}>💬 WhatsApp (con código de país)</div>
-        <input value={wa} onChange={e=>setWa(e.target.value)} placeholder="ej: 56912345678" inputMode="tel" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F7",borderRadius:10,color:"#fff",padding:"10px 12px",fontSize:14,marginBottom:4,boxSizing:"border-box",fontFamily:"inherit"}}/>
-        <div style={{fontSize:11,color:"#607d8b",marginTop:4,marginBottom:12}}>Solo tú ves esta configuración. La persona que escanee el QR verá tus botones.</div>
-        <button onClick={guardar} disabled={guardando} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:14,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>
-          {guardando?"Guardando...":guardado?"✅ Guardado":"💾 Guardar cambios"}
-        </button>
+      <div style={{display:"flex",background:"rgba(255,255,255,0.05)",borderRadius:10,padding:3,marginBottom:16}}>
+        {[["qr","🔗 Mi QR"],["config","⚙️ Configurar"]].map(([key,label])=>(
+          <button key={key} onClick={()=>setSub(key)} style={{flex:1,padding:"8px 0",border:"none",borderRadius:8,background:sub===key?"rgba(79,195,247,0.15)":"transparent",color:sub===key?"#4FC3F7":"#607d8b",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
+        ))}
       </div>
 
-      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:12}}>
-        <div style={{fontSize:11,letterSpacing:1,color:"#4FC3F7",marginBottom:8}}>🖼️ FONDO DE TU PÁGINA</div>
-        <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
-          <div style={{width:200,height:112,borderRadius:12,background:fondo?`url(${fondo}) 50% 50%/cover no-repeat`:"#0a1628",backgroundPosition:"center",border:"1px solid rgba(79,195,247,0.3)",overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
-            {!fondo&&<div style={{fontSize:10,color:"#90CAF9",background:"rgba(0,0,0,0.55)",width:"100%",textAlign:"center",padding:"4px 0"}}>Fondo por defecto</div>}
+      {sub==="config"&&(
+        <>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:12}}>
+            <div style={{fontSize:11,color:"#90CAF9",marginBottom:4}}>📸 Instagram (sin @)</div>
+            <input value={ig} onChange={e=>setIg(e.target.value)} placeholder="ej: tu_usuario" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F7",borderRadius:10,color:"#fff",padding:"10px 12px",fontSize:14,marginBottom:12,boxSizing:"border-box",fontFamily:"inherit"}}/>
+            <div style={{fontSize:11,color:"#90CAF9",marginBottom:4}}>💬 WhatsApp (con código de país)</div>
+            <input value={wa} onChange={e=>setWa(e.target.value)} placeholder="ej: 56912345678" inputMode="tel" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F7",borderRadius:10,color:"#fff",padding:"10px 12px",fontSize:14,marginBottom:4,boxSizing:"border-box",fontFamily:"inherit"}}/>
+            <div style={{fontSize:11,color:"#607d8b",marginTop:4,marginBottom:12}}>Solo tú ves esta configuración. La persona que escanee el QR verá tus botones.</div>
+            <button onClick={guardar} disabled={guardando} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:14,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>
+              {guardando?"Guardando...":guardado?"✅ Guardado":"💾 Guardar cambios"}
+            </button>
           </div>
-        </div>
-        <input ref={fondoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&uploadFondo(e.target.files[0])}/>
-        <button onClick={()=>fondoRef.current.click()} disabled={subiendo} style={{width:"100%",padding:"11px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:10,color:"#4FC3F7",fontSize:12,cursor:"pointer",fontFamily:"inherit",marginBottom:8}}>{subiendo?"Subiendo...":"📷 Subir mi fondo"}</button>
-        {fondo&&<button onClick={()=>setFondo("")} style={{width:"100%",padding:"9px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:10,color:"#90CAF9",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↩ Usar fondo por defecto</button>}
-      </div>
 
-      <div style={{background:"rgba(129,199,132,0.04)",border:"1px solid rgba(129,199,132,0.25)",borderRadius:14,padding:"14px 16px"}}>
-        <div style={{fontSize:11,letterSpacing:1,color:"#81C784",marginBottom:8}}>🔗 TU ENLACE PÚBLICO</div>
-        <div style={{display:"flex",alignItems:"center",gap:8,background:"#0d2a3a",border:"1px dashed #4FC3F744",borderRadius:10,padding:"8px 10px",marginBottom:12}}>
-          <span style={{fontSize:11,color:"#90CAF9",wordBreak:"break-all",fontFamily:"monospace",flex:1}}>{publicUrl}</span>
-          <button onClick={copiar} style={{flexShrink:0,background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:8,color:"#4FC3F7",padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{copiado?"✅ Copiado":"Copiar"}</button>
-        </div>
-        <div style={{display:"flex",justifyContent:"center",padding:"12px 0 6px"}}>
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:12}}>
+            <div style={{fontSize:11,letterSpacing:1,color:"#4FC3F7",marginBottom:8}}>🖼️ FONDO DE TU PÁGINA</div>
+            <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+              <div style={{width:200,height:112,borderRadius:12,background:fondo?`url(${fondo}) 50% 50%/cover no-repeat`:"#0a1628",backgroundPosition:"center",border:"1px solid rgba(79,195,247,0.3)",overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+                {!fondo&&<div style={{fontSize:10,color:"#90CAF9",background:"rgba(0,0,0,0.55)",width:"100%",textAlign:"center",padding:"4px 0"}}>Fondo por defecto</div>}
+              </div>
+            </div>
+            <input ref={fondoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&uploadFondo(e.target.files[0])}/>
+            <button onClick={()=>fondoRef.current.click()} disabled={subiendo} style={{width:"100%",padding:"11px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:10,color:"#4FC3F7",fontSize:12,cursor:"pointer",fontFamily:"inherit",marginBottom:8}}>{subiendo?"Subiendo...":"📷 Subir mi fondo"}</button>
+            {fondo&&<button onClick={()=>setFondo("")} style={{width:"100%",padding:"9px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:10,color:"#90CAF9",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↩ Usar fondo por defecto</button>}
+          </div>
+
+          <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px"}}>
+            <div style={{fontSize:11,letterSpacing:1,color:"#4FC3F7",marginBottom:8}}>🔗 TU ENLACE PÚBLICO</div>
+            <div style={{display:"flex",alignItems:"center",gap:8,background:"#0d2a3a",border:"1px dashed #4FC3F744",borderRadius:10,padding:"8px 10px"}}>
+              <span style={{fontSize:11,color:"#90CAF9",wordBreak:"break-all",fontFamily:"monospace",flex:1}}>{publicUrl}</span>
+              <button onClick={copiar} style={{flexShrink:0,background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:8,color:"#4FC3F7",padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{copiado?"✅ Copiado":"Copiar"}</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {sub==="qr"&&(
+        <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"16px"}}>
+          <div style={{display:"flex",justifyContent:"center",padding:"8px 0"}}>
+            {qrUrl?(
+              <img src={qrUrl} alt="QR de contacto" style={{width:220,height:220,borderRadius:12,background:"#fff",padding:10,boxShadow:"0 10px 30px rgba(0,0,0,0.5)"}}/>
+            ):(
+              <div style={{width:220,height:220,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(79,195,247,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#607d8b"}}>Generando QR...</div>
+            )}
+          </div>
+          <div style={{fontSize:11,color:"#607d8b",textAlign:"center",margin:"10px 0 14px"}}>Escanéalo con la cámara del celular 📱</div>
           {qrUrl?(
-            <img src={qrUrl} alt="QR de contacto" style={{width:190,height:190,borderRadius:12,background:"#fff",padding:8,boxShadow:"0 10px 30px rgba(0,0,0,0.5)"}}/>
+            <a href={qrUrl} download="mi-qr.png" style={{display:"block",textAlign:"center",width:"100%",padding:"12px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:12,color:"#4FC3F7",fontSize:13,fontWeight:"bold",textDecoration:"none",fontFamily:"inherit",boxSizing:"border-box"}}>⬇️ Descargar QR</a>
           ):(
-            <div style={{width:190,height:190,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(79,195,247,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#607d8b"}}>Generando QR...</div>
+            <button disabled style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#607d8b",fontSize:13,fontFamily:"inherit"}}>⬇️ Descargar QR</button>
           )}
         </div>
-        <div style={{fontSize:11,color:"#607d8b",textAlign:"center",margin:"8px 0 12px"}}>Escanéalo con la cámara del celular 📱</div>
-        {qrUrl?(
-          <a href={qrUrl} download="mi-qr.png" style={{display:"block",textAlign:"center",width:"100%",padding:"12px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:12,color:"#4FC3F7",fontSize:13,fontWeight:"bold",textDecoration:"none",fontFamily:"inherit",boxSizing:"border-box"}}>⬇️ Descargar QR</a>
-        ):(
-          <button disabled style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#607d8b",fontSize:13,fontFamily:"inherit"}}>⬇️ Descargar QR</button>
-        )}
-      </div>
+      )}
     </div>
   );
 }
