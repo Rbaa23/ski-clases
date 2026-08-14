@@ -1236,7 +1236,7 @@ function QRTab({ profile, onGuardar }) {
       <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:12}}>
         <div style={{fontSize:11,letterSpacing:1,color:"#4FC3F7",marginBottom:8}}>🖼️ FONDO DE TU PÁGINA</div>
         <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
-          <div style={{width:200,height:112,borderRadius:12,background:fondo?`url(${fondo}) 50% 50%/cover no-repeat`:"url(/logo.png?v=1) 50% 50%/contain no-repeat",backgroundPosition:"center",border:"1px solid rgba(79,195,247,0.3)",overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+          <div style={{width:200,height:112,borderRadius:12,background:fondo?`url(${fondo}) 50% 50%/cover no-repeat`:"url(/logo.png?v=1) 50% 50%/cover no-repeat",backgroundPosition:"center",border:"1px solid rgba(79,195,247,0.3)",overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
             {!fondo&&<div style={{fontSize:10,color:"#90CAF9",background:"rgba(0,0,0,0.55)",width:"100%",textAlign:"center",padding:"4px 0"}}>Fondo por defecto</div>}
           </div>
         </div>
