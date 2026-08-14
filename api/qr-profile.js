@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
   try {
     const r = await fetch(
-      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}&select=nombre,avatar_url,disciplina,instagram,whatsapp`,
+      `${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(id)}&select=nombre,avatar_url,disciplina,instagram,whatsapp,qr_fondo`,
       { headers: headers() }
     );
     const rows = await r.json();
@@ -33,6 +33,7 @@ export default async function handler(req, res) {
       sub: SUBTITLES[p.disciplina] || 'Profesor de Ski',
       instagram: p.instagram || null,
       whatsapp: p.whatsapp || null,
+      qr_fondo: p.qr_fondo || null,
     });
   } catch (e) {
     res.status(500).json({ error: 'error interno' });

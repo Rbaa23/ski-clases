@@ -59,3 +59,4 @@ ALTER TABLE clases ADD COLUMN IF NOT EXISTS adicional integer DEFAULT 0;
 
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS instagram text;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS whatsapp text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS qr_fondo text;

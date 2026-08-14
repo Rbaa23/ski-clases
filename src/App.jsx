@@ -1168,10 +1168,13 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
 function QRTab({ profile, onGuardar }) {
   const [ig, setIg] = useState(profile?.instagram||"");
   const [wa, setWa] = useState(profile?.whatsapp||"");
+  const [fondo, setFondo] = useState(profile?.qr_fondo||"");
   const [qrUrl, setQrUrl] = useState("");
   const [copiado, setCopiado] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [guardado, setGuardado] = useState(false);
+  const [subiendo, setSubiendo] = useState(false);
+  const fondoRef = useRef(null);
 
   const publicUrl = profile?.id ? `${window.location.origin}/u.html?id=${profile.id}` : "";
 
@@ -1184,10 +1187,23 @@ function QRTab({ profile, onGuardar }) {
     return ()=>{ activo=false; };
   },[publicUrl]);
 
+  async function uploadFondo(file){
+    if(!file||!profile?.id) return;
+    setSubiendo(true);
+    const ext=file.name.split(".").pop();
+    const path=`${profile.id}/qrfondo.${ext}`;
+    const {error}=await supabase.storage.from("avatars").upload(path,file,{upsert:true});
+    if(!error){
+      const {data}=supabase.storage.from("avatars").getPublicUrl(path);
+      setFondo(data.publicUrl+"?t="+Date.now());
+    }
+    setSubiendo(false);
+  }
+
   async function guardar(){
     if(guardando) return;
     setGuardando(true);
-    const data={ instagram:ig.trim().replace(/^@+/,"")||null, whatsapp:wa.trim().replace(/\D/g,"")||null };
+    const data={ instagram:ig.trim().replace(/^@+/,"")||null, whatsapp:wa.trim().replace(/\D/g,"")||null, qr_fondo:fondo||null };
     await onGuardar(data);
     setGuardando(false);
     setGuardado(true);
@@ -1215,6 +1231,18 @@ function QRTab({ profile, onGuardar }) {
         <button onClick={guardar} disabled={guardando} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:14,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>
           {guardando?"Guardando...":guardado?"✅ Guardado":"💾 Guardar cambios"}
         </button>
+      </div>
+
+      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:12}}>
+        <div style={{fontSize:11,letterSpacing:1,color:"#4FC3F7",marginBottom:8}}>🖼️ FONDO DE TU PÁGINA</div>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+          <div style={{width:200,height:112,borderRadius:12,background:fondo?`url(${fondo}) 50% 0%/cover no-repeat`:"url(/qr-fondo.jpg?v=1) 50% 0%/cover no-repeat",border:"1px solid rgba(79,195,247,0.3)",overflow:"hidden",display:"flex",alignItems:"flex-end",justifyContent:"center"}}>
+            {!fondo&&<div style={{fontSize:10,color:"#90CAF9",background:"rgba(0,0,0,0.55)",width:"100%",textAlign:"center",padding:"4px 0"}}>Fondo por defecto</div>}
+          </div>
+        </div>
+        <input ref={fondoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&uploadFondo(e.target.files[0])}/>
+        <button onClick={()=>fondoRef.current.click()} disabled={subiendo} style={{width:"100%",padding:"11px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:10,color:"#4FC3F7",fontSize:12,cursor:"pointer",fontFamily:"inherit",marginBottom:8}}>{subiendo?"Subiendo...":"📷 Subir mi fondo"}</button>
+        {fondo&&<button onClick={()=>setFondo("")} style={{width:"100%",padding:"9px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:10,color:"#90CAF9",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↩ Usar fondo por defecto</button>}
       </div>
 
       <div style={{background:"rgba(129,199,132,0.04)",border:"1px solid rgba(129,199,132,0.25)",borderRadius:14,padding:"14px 16px"}}>
