@@ -51,3 +51,11 @@ ALTER TABLE clases ADD COLUMN IF NOT EXISTS adicional integer DEFAULT 0;
 
 -- 3. (Opcional) Actualizar precios existentes con un valor default para adicional
 -- UPDATE precios SET adicional = 5000 WHERE adicional IS NULL OR adicional = 0;
+
+-- ============================================================
+-- MIGRACIÓN: QR de contacto (Instagram + WhatsApp)
+-- Ejecutar en el SQL Editor de Supabase
+-- ============================================================
+
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS instagram text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS whatsapp text;

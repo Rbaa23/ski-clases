@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import QRCode from "qrcode";
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
@@ -7,6 +8,9 @@ const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || "BCtRqTIFEjR87
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const DEFAULT_PRECIOS = { particular:24000, colectiva:27000, colectiva_extra:1000, colectiva_base:3, requerida:27000, adicional:5000, mostrar_monto:true };
+// Función QR de contacto.
+// Para activarla para TODOS los usuarios: cambiar beta a false.
+const QR_ACCESS = { beta: true, emails: ["chris.vejar@hotmail.es"] };
 const TIPOS = [
   { key:"particular", label:"Particular", color:"#66BB6A", bg:"#0d2a1a" },
   { key:"colectiva",  label:"Colectiva",  color:"#546E7A", bg:"#0d1a1f" },
@@ -1161,6 +1165,82 @@ function CalendarAddModal({fecha,tipo,onConfirm,onCancel,precios,personas,setPer
   );
 }
 
+function QRTab({ profile, onGuardar }) {
+  const [ig, setIg] = useState(profile?.instagram||"");
+  const [wa, setWa] = useState(profile?.whatsapp||"");
+  const [qrUrl, setQrUrl] = useState("");
+  const [copiado, setCopiado] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+
+  const publicUrl = profile?.id ? `${window.location.origin}/u.html?id=${profile.id}` : "";
+
+  useEffect(()=>{
+    if(!publicUrl) return;
+    let activo=true;
+    QRCode.toDataURL(publicUrl,{width:640,margin:2,errorCorrectionLevel:"H",color:{dark:"#0a1628",light:"#ffffff"}})
+      .then(u=>{ if(activo) setQrUrl(u); })
+      .catch(()=>{});
+    return ()=>{ activo=false; };
+  },[publicUrl]);
+
+  async function guardar(){
+    if(guardando) return;
+    setGuardando(true);
+    const data={ instagram:ig.trim().replace(/^@+/,"")||null, whatsapp:wa.trim().replace(/\D/g,"")||null };
+    await onGuardar(data);
+    setGuardando(false);
+    setGuardado(true);
+    setTimeout(()=>setGuardado(false),2000);
+  }
+
+  async function copiar(){
+    try{
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiado(true);
+      setTimeout(()=>setCopiado(false),2000);
+    }catch{}
+  }
+
+  return (
+    <div style={{paddingBottom:20}}>
+      <div style={{fontSize:11,letterSpacing:2,color:"#4FC3F7",textTransform:"uppercase",marginBottom:12}}>Mi QR de contacto</div>
+
+      <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px",marginBottom:12}}>
+        <div style={{fontSize:11,color:"#90CAF9",marginBottom:4}}>📸 Instagram (sin @)</div>
+        <input value={ig} onChange={e=>setIg(e.target.value)} placeholder="ej: tu_usuario" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F7",borderRadius:10,color:"#fff",padding:"10px 12px",fontSize:14,marginBottom:12,boxSizing:"border-box",fontFamily:"inherit"}}/>
+        <div style={{fontSize:11,color:"#90CAF9",marginBottom:4}}>💬 WhatsApp (con código de país)</div>
+        <input value={wa} onChange={e=>setWa(e.target.value)} placeholder="ej: 56912345678" inputMode="tel" style={{width:"100%",background:"#0d2a3a",border:"1px solid #4FC3F7",borderRadius:10,color:"#fff",padding:"10px 12px",fontSize:14,marginBottom:4,boxSizing:"border-box",fontFamily:"inherit"}}/>
+        <div style={{fontSize:11,color:"#607d8b",marginTop:4,marginBottom:12}}>Solo tú ves esta configuración. La persona que escanee el QR verá tus botones.</div>
+        <button onClick={guardar} disabled={guardando} style={{width:"100%",padding:"13px",background:"linear-gradient(90deg,#0277bd,#0288d1)",border:"none",borderRadius:12,color:"#fff",fontSize:14,fontWeight:"bold",cursor:"pointer",fontFamily:"inherit"}}>
+          {guardando?"Guardando...":guardado?"✅ Guardado":"💾 Guardar cambios"}
+        </button>
+      </div>
+
+      <div style={{background:"rgba(129,199,132,0.04)",border:"1px solid rgba(129,199,132,0.25)",borderRadius:14,padding:"14px 16px"}}>
+        <div style={{fontSize:11,letterSpacing:1,color:"#81C784",marginBottom:8}}>🔗 TU ENLACE PÚBLICO</div>
+        <div style={{display:"flex",alignItems:"center",gap:8,background:"#0d2a3a",border:"1px dashed #4FC3F744",borderRadius:10,padding:"8px 10px",marginBottom:12}}>
+          <span style={{fontSize:11,color:"#90CAF9",wordBreak:"break-all",fontFamily:"monospace",flex:1}}>{publicUrl}</span>
+          <button onClick={copiar} style={{flexShrink:0,background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:8,color:"#4FC3F7",padding:"5px 10px",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>{copiado?"✅ Copiado":"Copiar"}</button>
+        </div>
+        <div style={{display:"flex",justifyContent:"center",padding:"12px 0 6px"}}>
+          {qrUrl?(
+            <img src={qrUrl} alt="QR de contacto" style={{width:190,height:190,borderRadius:12,background:"#fff",padding:8,boxShadow:"0 10px 30px rgba(0,0,0,0.5)"}}/>
+          ):(
+            <div style={{width:190,height:190,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(79,195,247,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#607d8b"}}>Generando QR...</div>
+          )}
+        </div>
+        <div style={{fontSize:11,color:"#607d8b",textAlign:"center",margin:"8px 0 12px"}}>Escanéalo con la cámara del celular 📱</div>
+        {qrUrl?(
+          <a href={qrUrl} download="mi-qr.png" style={{display:"block",textAlign:"center",width:"100%",padding:"12px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:12,color:"#4FC3F7",fontSize:13,fontWeight:"bold",textDecoration:"none",fontFamily:"inherit",boxSizing:"border-box"}}>⬇️ Descargar QR</a>
+        ):(
+          <button disabled style={{width:"100%",padding:"12px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:12,color:"#607d8b",fontSize:13,fontFamily:"inherit"}}>⬇️ Descargar QR</button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function SkiTracker() {
   const [user,setUser]=useState(null);
   const [profile,setProfile]=useState(null);
@@ -1397,6 +1477,11 @@ export default function SkiTracker() {
     setShowConfig(false);
   }
 
+  async function guardarQR(data) {
+    const {error}=await supabase.from("profiles").update(data).eq("id",user.id);
+    if(!error) setProfile(p=>({...p,...data}));
+  }
+
   if(loading) return <div style={{minHeight:"100dvh",background:"#000000",display:"flex",alignItems:"center",justifyContent:"center",color:"#4FC3F7",fontFamily:"system-ui,sans-serif",fontSize:16}}>⛷️ Cargando...</div>;
   if(!user) return <AuthScreen onAuth={handleAuth}/>;
   if(profile&&!profile.aprobado&&!profile.is_admin) return <PendienteScreen user={user} onLogout={logout}/>;
@@ -1415,6 +1500,7 @@ export default function SkiTracker() {
   if(showAdmin&&profile?.is_admin) return <AdminPanel onBack={()=>setShowAdmin(false)} pendientesCount={pendientesCount} setPendientesCount={setPendientesCount}/>;
 
   const disc=profile?.disciplina||"ski";
+  const puedeQR=profile?.is_admin||(QR_ACCESS.beta?QR_ACCESS.emails.includes(profile?.email):true);
   const mostrarMonto=precios.mostrar_monto!==false;
   const base=precios.colectiva_base||3;
   const clasesMes=clases.filter(c=>{
@@ -1480,7 +1566,11 @@ export default function SkiTracker() {
 
 
         <div style={{display:"flex"}}>
-          {[["registro","📝 Registro"],["calendario","📊 Estadísticas"]].map(([key,label])=>(
+          {[
+            ["registro","📝 Registro"],
+            ["calendario","📊 Estadísticas"],
+            ...(puedeQR?[["qr","🔗 QR"]]:[])
+          ].map(([key,label])=>(
             <button key={key} onClick={()=>setTab(key)} style={{flex:1,padding:"10px 0",background:tab===key?"rgba(79,195,247,0.15)":"transparent",border:"none",borderBottom:tab===key?"2px solid #4FC3F7":"2px solid transparent",color:tab===key?"#4FC3F7":"#607d8b",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>{label}</button>
           ))}
         </div>
@@ -1493,7 +1583,7 @@ export default function SkiTracker() {
       )}
 
       <div style={{padding:"20px 20px 100px"}}>
-        {tab!=="calendario"&&(
+        {tab==="registro"&&(
           <div style={{background:"linear-gradient(135deg,#0d2a3a,#1a3a50)",border:"1px solid rgba(79,195,247,0.3)",borderRadius:18,padding:"18px 20px",marginBottom:20,textAlign:"center"}}>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
               <button onClick={()=>{const [y,m]=mes.split("-").map(Number);const d=new Date(y,m-2,1);setMes(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`);}} style={{background:"rgba(79,195,247,0.1)",border:"1px solid rgba(79,195,247,0.3)",borderRadius:8,color:"#4FC3F7",width:32,height:32,fontSize:18,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
@@ -1701,6 +1791,10 @@ export default function SkiTracker() {
               <button onClick={()=>setShowAgregarOtro("ingreso")} style={{padding:"11px",background:"rgba(129,199,132,0.1)",border:"1px solid rgba(129,199,132,0.4)",borderRadius:10,color:"#81C784",fontSize:12,cursor:"pointer",fontFamily:"inherit"}}>+ Agregar ingreso</button>
             </div>
           </>
+        )}
+
+        {tab==="qr"&&puedeQR&&(
+          <QRTab profile={profile} onGuardar={guardarQR}/>
         )}
       </div>
 
