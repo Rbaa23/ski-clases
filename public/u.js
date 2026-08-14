@@ -22,7 +22,7 @@
   function render(d) {
     document.title = (d.nombre || 'Contacto') + ' · Contacto';
     if (d.qr_fondo) {
-      document.body.style.background = "linear-gradient(rgba(10,22,40,0.84), rgba(13,42,58,0.9)), url('" + d.qr_fondo + "') 50% 0% / cover no-repeat fixed";
+      document.body.style.background = "linear-gradient(rgba(10,22,40,0.30), rgba(13,42,58,0.42)), url('" + d.qr_fondo + "') 50% 0% / cover no-repeat fixed";
     }
     var av = document.getElementById('avatar');
     if (d.avatar_url) {

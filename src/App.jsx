@@ -1196,7 +1196,11 @@ function QRTab({ profile, onGuardar }) {
     const {error}=await supabase.storage.from("avatars").upload(path,file,{upsert:true});
     if(!error){
       const {data}=supabase.storage.from("avatars").getPublicUrl(path);
-      setFondo(data.publicUrl+"?t="+Date.now());
+      const url=data.publicUrl+"?t="+Date.now();
+      setFondo(url);
+      await onGuardar({ qr_fondo:url });
+      setGuardado(true);
+      setTimeout(()=>setGuardado(false),2000);
     }
     setSubiendo(false);
   }
@@ -1251,7 +1255,7 @@ function QRTab({ profile, onGuardar }) {
             </div>
             <input ref={fondoRef} type="file" accept="image/*" style={{display:"none"}} onChange={e=>e.target.files[0]&&uploadFondo(e.target.files[0])}/>
             <button onClick={()=>fondoRef.current.click()} disabled={subiendo} style={{width:"100%",padding:"11px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:10,color:"#4FC3F7",fontSize:12,cursor:"pointer",fontFamily:"inherit",marginBottom:8}}>{subiendo?"Subiendo...":"📷 Subir mi fondo"}</button>
-            {fondo&&<button onClick={()=>setFondo("")} style={{width:"100%",padding:"9px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:10,color:"#90CAF9",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↩ Usar fondo por defecto</button>}
+            {fondo&&<button onClick={async()=>{setFondo("");await onGuardar({qr_fondo:null});setGuardado(true);setTimeout(()=>setGuardado(false),2000);}} style={{width:"100%",padding:"9px",background:"rgba(255,255,255,0.05)",border:"1px solid #555",borderRadius:10,color:"#90CAF9",fontSize:11,cursor:"pointer",fontFamily:"inherit"}}>↩ Usar fondo por defecto</button>}
           </div>
 
           <div style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:14,padding:"14px 16px"}}>
