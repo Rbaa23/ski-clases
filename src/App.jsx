@@ -1277,7 +1277,7 @@ function QRTab({ profile, onGuardar }) {
               <div style={{width:220,height:220,borderRadius:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(79,195,247,0.2)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,color:"#607d8b"}}>Generando QR...</div>
             )}
           </div>
-          <div style={{fontSize:11,color:"#607d8b",textAlign:"center",margin:"10px 0 14px"}}>Escanéalo con la cámara del celular 📱</div>
+          <div style={{fontSize:11,color:"#ffffff",textAlign:"center",margin:"10px 0 14px"}}>Escanéalo con la cámara del celular 📱</div>
           {qrUrl?(
             <a href={qrUrl} download="mi-qr.png" style={{display:"block",textAlign:"center",width:"100%",padding:"12px",background:"rgba(79,195,247,0.15)",border:"1px solid #4FC3F7",borderRadius:12,color:"#4FC3F7",fontSize:13,fontWeight:"bold",textDecoration:"none",fontFamily:"inherit",boxSizing:"border-box"}}>⬇️ Descargar QR</a>
           ):(
